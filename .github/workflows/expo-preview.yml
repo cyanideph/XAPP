@@ -1,0 +1,36 @@
+name: XAPP Expo Preview
+
+on:
+  workflow_dispatch:
+
+jobs:
+  expo-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Start Expo development server
+        run: |
+          npx expo start --tunnel --non-interactive > expo-preview.log 2>&1 &
+          echo $! > expo.pid
+          sleep 20
+          cat expo-preview.log
+
+      - name: Keep preview alive
+        run: |
+          echo "Expo preview is running. Scan the QR/link shown above with Expo Go."
+          tail -f /dev/null
