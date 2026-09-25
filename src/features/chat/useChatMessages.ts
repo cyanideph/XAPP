@@ -96,9 +96,10 @@ export function useChatMessages({ scope, id }: Props) {
   }, [id, scope, load]);
 
   const broadcastTyping = useCallback(async (typing: boolean) => {
+    if (!supabase) return;
     const channel = channelRef.current;
     if (!channel) return;
-    const { data } = await supabase?.auth.getUser() ?? { data: { user: null } };
+    const { data } = await supabase.auth.getUser();
     const userId = data.user?.id;
     if (!userId) return;
     selfIdRef.current = userId;
