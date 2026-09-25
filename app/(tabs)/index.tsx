@@ -15,7 +15,7 @@ export default function HomeScreen() {
     try {
       const [onlineData, roomData] = await Promise.all([
         listOnlineUsers(200, 0),
-        listPublicRooms(),
+        listPublicRooms(50, 0),
       ]);
       setOnline(Array.isArray(onlineData) ? onlineData.length : 0);
       setRooms(Array.isArray(roomData) ? roomData.length : 0);
