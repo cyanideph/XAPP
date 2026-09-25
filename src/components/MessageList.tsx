@@ -9,11 +9,11 @@ type Props = {
   loadingOlder?: boolean;
   onLoadOlder?: () => Promise<void>;
   onReply?: (message: ChatMessage) => void;
-  onDelete?: (message: ChatMessage) => Promise<void>;
+  onDelete?: (message: ChatMessage) => Promise<void>;\n  onEdit?: (message: ChatMessage) => void;
   onReact?: (message: ChatMessage, reaction: string) => Promise<void>;
 };
 
-export function MessageList({ messages, currentUserId, hasMore, loadingOlder, onLoadOlder, onReply, onDelete, onReact }: Props) {
+export function MessageList({ messages, currentUserId, hasMore, loadingOlder, onLoadOlder, onReply, onDelete, onReact, onEdit }: Props) {
   return (
     <ScrollView contentContainerStyle={{ padding: 16, gap: 10 }}>
       {hasMore ? <Button size="$3" onPress={onLoadOlder} disabled={loadingOlder}>{loadingOlder ? 'Loading…' : 'Load older messages'}</Button> : null}
@@ -29,7 +29,7 @@ export function MessageList({ messages, currentUserId, hasMore, loadingOlder, on
               <XStack gap="$2" marginTop="$2" flexWrap="wrap">
                 {onReply ? <Button size="$2" chromeless onPress={() => onReply(message)}>Reply</Button> : null}
                 {onReact ? <Button size="$2" chromeless onPress={() => onReact(message, 'like')}>Like</Button> : null}
-                {own && onDelete ? <Button size="$2" chromeless onPress={() => onDelete(message)}>Delete</Button> : null}
+                {own && onEdit ? <Button size="$2" chromeless onPress={() => onEdit(message)}>Edit</Button> : null}\n                {own && onDelete ? <Button size="$2" chromeless onPress={() => onDelete(message)}>Delete</Button> : null}
               </XStack>
             </YStack>
           );
