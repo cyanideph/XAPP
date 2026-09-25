@@ -29,8 +29,8 @@ export function useChatMessages({ scope, id }: Props) {
   useEffect(() => { load().catch(() => undefined); }, [load]);
   useEffect(() => {
     if (!supabase) return;
-    const channel = supabase.channel(scope === 'room' ? `room:${id}` : `conversation:${id}`);
-    channel.on('broadcast', { event: scope === 'room' ? 'message.created' : 'conversation.message.changed' }, () => { load().catch(() => undefined); });
+    const channel = supabase.channel(scope === 'room' ? `room:${id}` : `conversation:${id}`, { config: { private: true } });
+    if (scope === 'room') {\n      channel.on('broadcast', { event: 'message.created' }, () => { load().catch(() => undefined); });\n      channel.on('broadcast', { event: 'message.updated' }, () => { load().catch(() => undefined); });\n      channel.on('broadcast', { event: 'message.deleted' }, () => { load().catch(() => undefined); });\n    } else {\n      channel.on('broadcast', { event: 'conversation.message.changed' }, () => { load().catch(() => undefined); });\n    }
     channel.subscribe();
     return () => { void supabase.removeChannel(channel); };
   }, [id, scope, load]);
