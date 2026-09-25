@@ -13,13 +13,13 @@ export default function SignUpScreen() {
   async function submit() {
     if (!supabase || !email.trim() || !password || !username.trim()) return;
     setBusy(true); setMessage('');
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
       options: { data: { username: username.trim() } },
     });
     setMessage(error ? error.message : 'Account created. Check your email if confirmation is required.');
-    if (!error) router.replace('/(tabs)');
+    if (!error && data.session) router.replace('/(tabs)');
     setBusy(false);
   }
 
