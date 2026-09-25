@@ -5,10 +5,10 @@ type Props = {
   onSend: (body: string) => Promise<void>;
   disabled?: boolean;
   editValue?: string | null;
-  onEditCancel?: () => void;
+  onEditCancel?: () => void;\n  onTyping?: () => void;
 };
 
-export function MessageComposer({ onSend, disabled, editValue, onEditCancel }: Props) {
+export function MessageComposer({ onSend, disabled, editValue, onEditCancel, onTyping }: Props) {
   const [value, setValue] = useState('');
 
   useEffect(() => {
@@ -38,7 +38,7 @@ export function MessageComposer({ onSend, disabled, editValue, onEditCancel }: P
       <Input
         flex={1}
         value={value}
-        onChangeText={setValue}
+        onChangeText={(text) => { setValue(text); onTyping?.(); }}
         placeholder={editing ? 'Edit message...' : 'Message...'}
         onSubmitEditing={submit}
         returnKeyType="send"
