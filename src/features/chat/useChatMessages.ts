@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { deleteConversationMessage, deleteRoomMessage, editConversationMessage, editRoomMessage, joinRoom, listConversationMessages, listRoomMessages, markConversationRead, markRoomRead, replyToConversationMessage, replyToRoomMessage, sendConversationMessage, sendRoomMessage, toggleRoomReaction, touchRoomPresence } from './backend';
-import type { ChatMessage } from './types';
+import { deleteConversationMessage, deleteRoomMessage, editConversationMessage, editRoomMessage, joinRoom, listConversationMessages, listProfiles, listRoomMessages, markConversationRead, markRoomRead, replyToConversationMessage, replyToRoomMessage, sendConversationMessage, sendRoomMessage, toggleRoomReaction, touchRoomPresence } from './backend';
+import type { ChatMessage, ChatProfile } from './types';
 
 type Props = { scope: 'room' | 'conversation'; id: string };
 type Cursor = { created_at: string; id: string };
@@ -14,7 +14,7 @@ export function useChatMessages({ scope, id }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [cursor, setCursor] = useState<Cursor | null>(null);
-  const [typingUsers, setTypingUsers] = useState<TypingState>({});
+  const [typingUsers, setTypingUsers] = useState<TypingState>({});\n  const [profiles, setProfiles] = useState<Record<string, ChatProfile>>({});
   const channelRef = useRef<ReturnType<NonNullable<typeof supabase>['channel']> | null>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const selfIdRef = useRef<string | null>(null);
@@ -30,7 +30,7 @@ export function useChatMessages({ scope, id }: Props) {
       const incoming = Array.isArray(page?.items) ? page.items : [];
       setMessages(current => before ? [...incoming.reverse(), ...current] : [...incoming].reverse());
       setHasMore(Boolean(page?.has_more));
-      setCursor(page?.next_cursor ?? null);
+      setCursor(page?.next_cursor ?? null);\n      const ids = [...new Set(incoming.map((item: ChatMessage) => item.sender_id))];\n      if (ids.length) { const people = await listProfiles(ids); setProfiles(current => ({ ...current, ...Object.fromEntries(people.map(person => [person.id, person])) })); }
       if (!before) scope === 'room' ? await markRoomRead(id) : await markConversationRead(id);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to load messages.');
@@ -159,7 +159,7 @@ export function useChatMessages({ scope, id }: Props) {
   }, [load, scope]);
 
   return {
-    messages, loading, sending, error, hasMore, typingUsers,
+    messages, loading, sending, error, hasMore, typingUsers, profiles,
     send, reply, edit, remove, react, onTyping, loadOlder,
     reload: () => load(),
   };
