@@ -91,7 +91,7 @@ export function useChatMessages({ scope, id }: Props) {
       clearInterval(cleanupTimer);
       if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
       channelRef.current = null;
-      void supabase.removeChannel(channel);
+      if (supabase) void supabase.removeChannel(channel);
     };
   }, [id, scope, load]);
 
