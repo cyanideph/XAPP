@@ -1,6 +1,12 @@
 import { rpc } from '../../lib/backend';
 import type { ChatMessage } from './types';
 
+export type MessagePage = {
+  items: ChatMessage[];
+  has_more: boolean;
+  next_cursor: { created_at: string; id: string } | null;
+};
+
 export async function joinRoom(roomId: string) {
   return rpc('join_room', { p_room_id: roomId });
 }
@@ -10,7 +16,7 @@ export async function leaveRoom(roomId: string) {
 }
 
 export async function listRoomMessages(roomId: string, beforeCreatedAt: string | null = null, beforeId: string | null = null, limit = 50) {
-  return rpc<ChatMessage[]>('list_room_messages', { p_room_id: roomId, p_before_created_at: beforeCreatedAt, p_before_id: beforeId, p_limit: limit });
+  return rpc<MessagePage>('list_room_messages', { p_room_id: roomId, p_before_created_at: beforeCreatedAt, p_before_id: beforeId, p_limit: limit });
 }
 
 export async function sendRoomMessage(roomId: string, body: string) {
@@ -18,7 +24,7 @@ export async function sendRoomMessage(roomId: string, body: string) {
 }
 
 export async function listConversationMessages(conversationId: string, beforeCreatedAt: string | null = null, beforeId: string | null = null, limit = 50) {
-  return rpc<ChatMessage[]>('list_conversation_messages', { p_conversation_id: conversationId, p_before_created_at: beforeCreatedAt, p_before_id: beforeId, p_limit: limit });
+  return rpc<MessagePage>('list_conversation_messages', { p_conversation_id: conversationId, p_before_created_at: beforeCreatedAt, p_before_id: beforeId, p_limit: limit });
 }
 
 export async function sendConversationMessage(conversationId: string, body: string) {
