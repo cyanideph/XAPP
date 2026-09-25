@@ -1,5 +1,6 @@
 import { rpc } from '../../lib/backend';
-import type { ChatMessage } from './types';
+import type { ChatMessage, ChatProfile } from './types';
+import { supabase } from '../../lib/supabase';
 
 export type MessagePage = {
   items: ChatMessage[];
@@ -45,6 +46,13 @@ export async function deleteConversationMessage(messageId: string) {
 }
 export async function replyToConversationMessage(conversationId: string, replyToMessageId: string, body: string) {
   return rpc<ChatMessage>('reply_to_conversation_message', { p_conversation_id: conversationId, p_reply_to_id: replyToMessageId, p_body: body, p_metadata: {} });
+}
+
+export async function listProfiles(userIds: string[]) {
+  if (!supabase || userIds.length === 0) return [] as ChatProfile[];
+  const { data, error } = await supabase.from('profiles').select('id,username,display_name,avatar_path').in('id', userIds);
+  if (error) throw error;
+  return (data ?? []) as ChatProfile[];
 }
 
 export async function markRoomRead(roomId: string, readAt = new Date().toISOString()) {
