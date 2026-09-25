@@ -5,7 +5,8 @@ type Props = {
   onSend: (body: string) => Promise<void>;
   disabled?: boolean;
   editValue?: string | null;
-  onEditCancel?: () => void;\n  onTyping?: () => void;
+  onEditCancel?: () => void;
+  onTyping?: () => void;
 };
 
 export function MessageComposer({ onSend, disabled, editValue, onEditCancel, onTyping }: Props) {
