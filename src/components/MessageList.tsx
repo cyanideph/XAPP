@@ -23,7 +23,7 @@ export function MessageList({ messages, currentUserId, hasMore, loadingOlder, on
         {messages.map((message) => {
           const own = message.sender_id === currentUserId;
           return (
-            <YStack key={message.id} alignSelf={own ? 'flex-end' : 'flex-start'} maxWidth="88%" bg={own ? '$color' : '$background'} borderWidth={1} borderColor="$borderColor" borderRadius="$6" p="$3">
+            <YStack key={message.id} als={own ? 'flex-end' : 'flex-start'} maxWidth="88%" bg={own ? '$color' : '$background'} borderWidth={1} borderColor="$borderColor" borderRadius="$6" p="$3">
               <Text fontSize="$2" color={own ? '$background' : '$colorPress'}>{own ? 'You' : (profiles[message.sender_id]?.display_name || profiles[message.sender_id]?.username || 'Member')}</Text>
               {message.reply_to_id ? <Text fontSize="$2" color={own ? '$background' : '$colorPress'}>Replying to a message</Text> : null}
               <Paragraph color={own ? '$background' : '$color'}>{message.body}</Paragraph>
