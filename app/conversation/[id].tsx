@@ -10,7 +10,8 @@ import type { ChatMessage } from '../../src/features/chat/types';
 export default function ConversationScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session } = useSession();
-  const [replyTarget, setReplyTarget] = useState<ChatMessage | null>(null);\n  const [editTarget, setEditTarget] = useState<ChatMessage | null>(null);
+  const [replyTarget, setReplyTarget] = useState<ChatMessage | null>(null);
+  const [editTarget, setEditTarget] = useState<ChatMessage | null>(null);
   const { messages, loading, sending, error, hasMore, loadOlder, send, reply, edit, remove, typingUsers, onTyping } = useChatMessages({ scope: 'conversation', id });
   const submit = async (body: string) => {
     if (replyTarget) { await reply(replyTarget.id, body); setReplyTarget(null); }
