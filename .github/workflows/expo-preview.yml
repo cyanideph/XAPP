@@ -2,6 +2,9 @@ name: XAPP Expo Preview
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/expo-preview.yml"
 
 jobs:
   expo-preview:
@@ -27,10 +30,15 @@ jobs:
         run: |
           npx expo start --tunnel --non-interactive > expo-preview.log 2>&1 &
           echo $! > expo.pid
-          sleep 20
+          for i in {1..30}; do
+            sleep 2
+            if grep -Eiq "exp://|https://.*(exp|expo)" expo-preview.log; then
+              break
+            fi
+          done
           cat expo-preview.log
 
       - name: Keep preview alive
         run: |
-          echo "Expo preview is running. Scan the QR/link shown above with Expo Go."
+          echo "Expo preview is running. Keep this workflow open while testing."
           tail -f /dev/null
