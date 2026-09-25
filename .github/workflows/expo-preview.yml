@@ -1,15 +1,18 @@
-name: XAPP Expo Preview
+name: XAPP Expo QR Preview
 
 on:
   workflow_dispatch:
   push:
-    paths:
-      - ".github/workflows/expo-preview.yml"
+    branches: [main]
 
 jobs:
   expo-preview:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+      CI: "1"
 
     steps:
       - name: Checkout
@@ -23,22 +26,36 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Install Expo tunnel provider
+        run: npm install --no-save @expo/ngrok
+
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Start Expo development server
+      - name: Check Expo configuration
+        run: npx expo config --json > expo-config.json
+
+      - name: Start Expo Go tunnel
         run: |
-          npx expo start --tunnel --non-interactive > expo-preview.log 2>&1 &
+          npx expo start --tunnel --go --non-interactive > expo-preview.log 2>&1 &
           echo $! > expo.pid
-          for i in {1..30}; do
+
+          for i in {1..45}; do
             sleep 2
-            if grep -Eiq "exp://|https://.*(exp|expo)" expo-preview.log; then
+            if grep -Eiq "exp://|exp\.direct|Metro waiting|Logs for your project" expo-preview.log; then
               break
             fi
           done
+
           cat expo-preview.log
 
-      - name: Keep preview alive
+          if ! grep -Eiq "exp://|exp\.direct|Metro waiting|Logs for your project" expo-preview.log; then
+            echo "Expo server did not start successfully."
+            exit 1
+          fi
+
+      - name: Keep Expo QR preview alive
         run: |
-          echo "Expo preview is running. Keep this workflow open while testing."
-          tail -f /dev/null
+          echo "Expo QR preview is running for 30 minutes."
+          echo "Open the workflow log and scan/open the Expo Go URL."
+          tail -f expo-preview.log
