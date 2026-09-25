@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { deleteConversationMessage, deleteRoomMessage, editConversationMessage, editRoomMessage, joinRoom, listConversationMessages, listRoomMessages, markConversationRead, markRoomRead, replyToConversationMessage, replyToRoomMessage, sendConversationMessage, sendRoomMessage, toggleRoomReaction } from './backend';
+import { deleteConversationMessage, deleteRoomMessage, editConversationMessage, editRoomMessage, joinRoom, listConversationMessages, listRoomMessages, markConversationRead, markRoomRead, replyToConversationMessage, replyToRoomMessage, sendConversationMessage, sendRoomMessage, toggleRoomReaction, touchRoomPresence } from './backend';
 import type { ChatMessage } from './types';
 
 type Props = { scope: 'room' | 'conversation'; id: string };
@@ -23,7 +23,7 @@ export function useChatMessages({ scope, id }: Props) {
     setLoading(true);
     setError(null);
     try {
-      if (scope === 'room') await joinRoom(id);
+      if (scope === 'room') { await joinRoom(id); await touchRoomPresence(id); }
       const page = scope === 'room'
         ? await listRoomMessages(id, before?.created_at ?? null, before?.id ?? null, 50)
         : await listConversationMessages(id, before?.created_at ?? null, before?.id ?? null, 50);
