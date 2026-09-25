@@ -55,12 +55,12 @@ export default function DiscoverScreen() {
             <BentoCard title="Public chats" value={String(counts.chats)} description="Active public conversations." />
 
             <YStack gap="$3">
-              <XStack alignItems="center" justifyContent="space-between">
+              <XStack ai="center" jc="space-between">
                 <Text fontSize="$6" fontWeight="800">Public rooms</Text>
                 <Text fontSize="$3" color="$colorPress">{rooms.length} loaded</Text>
               </XStack>
               {rooms.map(room => (
-                <Card key={room.id} padding="$4" borderWidth={1} borderColor="$borderColor" borderRadius="$6" backgroundColor="$background">
+                <Card key={room.id} p="$4" borderWidth={1} borderColor="$borderColor" borderRadius="$6" bg="$background">
                   <YStack gap="$2">
                     <Text fontSize="$5" fontWeight="800">{room.name}</Text>
                     {room.province_code ? <Text fontSize="$3" color="$colorPress">{room.province_code}</Text> : null}
