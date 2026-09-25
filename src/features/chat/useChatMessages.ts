@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { listConversationMessages, listRoomMessages, markConversationRead, markRoomRead, sendConversationMessage, sendRoomMessage } from './backend';
+import { joinRoom, listConversationMessages, listRoomMessages, markConversationRead, markRoomRead, sendConversationMessage, sendRoomMessage } from './backend';
 import type { ChatMessage } from './types';
 
 type Props = { scope: 'room' | 'conversation'; id: string };
@@ -9,22 +9,27 @@ export function useChatMessages({ scope, id }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
+      if (scope === 'room') await joinRoom(id);
       const rows = scope === 'room'
         ? await listRoomMessages(id, null, null, 50)
         : await listConversationMessages(id, null, null, 50);
       setMessages(Array.isArray(rows) ? [...rows].reverse() : []);
       if (scope === 'room') await markRoomRead(id);
       else await markConversationRead(id);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to load messages.');
     } finally {
       setLoading(false);
     }
   }, [id, scope]);
 
-  useEffect(() => { load().catch(() => setLoading(false)); }, [load]);
+  useEffect(() => { load().catch(() => undefined); }, [load]);
 
   useEffect(() => {
     if (!supabase) return;
@@ -41,6 +46,7 @@ export function useChatMessages({ scope, id }: Props) {
     const value = body.trim();
     if (!value || sending) return;
     setSending(true);
+    setError(null);
     try {
       const message = scope === 'room'
         ? await sendRoomMessage(id, value)
@@ -48,10 +54,13 @@ export function useChatMessages({ scope, id }: Props) {
       if (message && typeof message === 'object') {
         setMessages(current => current.some(m => m.id === message.id) ? current : [...current, message]);
       }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to send message.');
+      throw e;
     } finally {
       setSending(false);
     }
   }, [id, scope, sending]);
 
-  return { messages, loading, sending, send, reload: load };
+  return { messages, loading, sending, error, send, reload: load };
 }
