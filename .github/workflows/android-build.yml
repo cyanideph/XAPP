@@ -22,8 +22,7 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Typecheck
-        run: npm run typecheck
+      # Keep typecheck as the gate before any native build work.\n      - name: Typecheck\n        run: npm run typecheck
 
       - name: Generate native Android project
         run: npx expo prebuild --platform android --no-install
