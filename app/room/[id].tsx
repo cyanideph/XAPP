@@ -19,15 +19,16 @@ export default function RoomScreen() {
   useEffect(() => { let active = true; const refresh = async () => { try { const rows = await listOnlineRoomMembers(id, 20, 0); if (active) setOnlineMembers(Array.isArray(rows) ? rows : []); } catch {} }; refresh(); const timer = setInterval(refresh, 30000); return () => { active = false; clearInterval(timer); }; }, [id]);
   const submit = async (body: string) => {
     if (replyTarget) { await reply(replyTarget.id, body); setReplyTarget(null); }
+    else if (editTarget) { await edit(editTarget.id, body); setEditTarget(null); }
     else await send(body);
   };
-  return <YStack flex={1} backgroundColor="$background">
-    <YStack padding="$4" borderBottomWidth={1} borderColor="$borderColor">
+  return <YStack flex={1} bg="$background">
+    <YStack p="$4" borderBottomWidth={1} borderColor="$borderColor">
       <H1 fontSize="$7">Room</H1><Text fontSize="$2" color="$colorPress">{onlineMembers.length} recently active</Text>{error ? <Paragraph color="$red10">{error}</Paragraph> : null}
     </YStack>
-    {loading ? <YStack flex={1} alignItems="center" justifyContent="center"><Spinner /></YStack> :
+    {loading ? <YStack flex={1} ai="center" jc="center"><Spinner /></YStack> :
       <YStack flex={1}><MessageList messages={messages} currentUserId={session?.user.id} hasMore={hasMore} onLoadOlder={loadOlder} profiles={profiles} onReply={m => { setEditTarget(null); setReplyTarget(m); }} onEdit={m => { setReplyTarget(null); setEditTarget(m); }} onDelete={m => remove(m.id)} onReact={(m,r) => react(m.id,r)} /></YStack>}
-    {replyTarget ? <YStack paddingHorizontal="$3" paddingTop="$2"><Text fontSize="$2" color="$colorPress">Replying to: {replyTarget.body.slice(0, 80)}</Text></YStack> : null}
-    <MessageComposer onSend={submit} disabled={sending || loading} />
+    {replyTarget ? <YStack px="$3" pt="$2"><Text fontSize="$2" color="$colorPress">Replying to: {replyTarget.body.slice(0, 80)}</Text></YStack> : null}
+    <MessageComposer onSend={submit} disabled={sending || loading} editValue={editTarget?.body ?? null} onEditCancel={() => setEditTarget(null)} onTyping={onTyping} />
   </YStack>;
 }
