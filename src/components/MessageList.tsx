@@ -11,7 +11,8 @@ type Props = {
   onReply?: (message: ChatMessage) => void;
   onDelete?: (message: ChatMessage) => Promise<void>;
   onEdit?: (message: ChatMessage) => void;
-  onReact?: (message: ChatMessage, reaction: string) => Promise<void>;\n  profiles?: Record<string, ChatProfile>;
+  onReact?: (message: ChatMessage, reaction: string) => Promise<void>;
+  profiles?: Record<string, ChatProfile>;
 };
 
 export function MessageList({ messages, currentUserId, hasMore, loadingOlder, onLoadOlder, onReply, onDelete, onReact, onEdit, profiles = {} }: Props) {
