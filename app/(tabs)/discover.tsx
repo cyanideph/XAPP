@@ -1,24 +1,30 @@
 import { useEffect, useState } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
-import { H1, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
+import { router } from 'expo-router';
+import { Button, Card, H1, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
 import { BentoCard } from '../../src/components/BentoCard';
 import { listOnlineUsers, listPublicChats, listPublicRooms } from '../../src/lib/backend';
 
+type Room = { id: string; name: string; description?: string | null; province_code?: string | null; kind?: string };
+
 export default function DiscoverScreen() {
   const [counts, setCounts] = useState({ users: 0, rooms: 0, chats: 0 });
+  const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
 
   async function load() {
     setLoading(true);
     try {
-      const [users, rooms, chats] = await Promise.all([
+      const [users, roomRows, chats] = await Promise.all([
         listOnlineUsers(50, 0),
-        listPublicRooms(),
+        listPublicRooms(20, 0),
         listPublicChats(50, 0),
       ]);
+      const nextRooms = Array.isArray(roomRows) ? roomRows as Room[] : [];
+      setRooms(nextRooms);
       setCounts({
         users: Array.isArray(users) ? users.length : 0,
-        rooms: Array.isArray(rooms) ? rooms.length : 0,
+        rooms: nextRooms.length,
         chats: Array.isArray(chats) ? chats.length : 0,
       });
     } finally {
@@ -37,7 +43,7 @@ export default function DiscoverScreen() {
         <YStack gap="$2">
           <Text fontSize="$3" color="$colorPress" fontWeight="800" letterSpacing={1}>DISCOVER</Text>
           <H1 fontSize="$10" fontWeight="900">Find your people.</H1>
-          <Paragraph color="$colorPress">Explore the public side of X-App.</Paragraph>
+          <Paragraph color="$colorPress">Explore public rooms and active community spaces.</Paragraph>
         </YStack>
 
         {loading ? <Spinner /> : (
@@ -46,12 +52,26 @@ export default function DiscoverScreen() {
               <BentoCard title="People" flex={1} value={String(counts.users)} description="recently active" />
               <BentoCard title="Rooms" flex={1} value={String(counts.rooms)} description="public" />
             </XStack>
-            <BentoCard title="Public chats" value={String(counts.chats)} description="Discover active public conversations." />
+            <BentoCard title="Public chats" value={String(counts.chats)} description="Active public conversations." />
+
+            <YStack gap="$3">
+              <XStack alignItems="center" justifyContent="space-between">
+                <Text fontSize="$6" fontWeight="800">Public rooms</Text>
+                <Text fontSize="$3" color="$colorPress">{rooms.length} loaded</Text>
+              </XStack>
+              {rooms.map(room => (
+                <Card key={room.id} padding="$4" borderWidth={1} borderColor="$borderColor" borderRadius="$6" backgroundColor="$background">
+                  <YStack gap="$2">
+                    <Text fontSize="$5" fontWeight="800">{room.name}</Text>
+                    {room.province_code ? <Text fontSize="$3" color="$colorPress">{room.province_code}</Text> : null}
+                    {room.description ? <Paragraph color="$colorPress">{room.description}</Paragraph> : null}
+                    <Button alignSelf="flex-start" size="$3" onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })}>Open room</Button>
+                  </YStack>
+                </Card>
+              ))}
+            </YStack>
           </>
         )}
-
-        <BentoCard title="Featured people" description="Featured profiles will use the backend featured-profiles system." />
-        <BentoCard title="Community content" description="Search posts, wikis and polls from the content system." />
       </YStack>
     </ScrollView>
   );
