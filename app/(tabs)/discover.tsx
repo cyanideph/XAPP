@@ -65,7 +65,7 @@ export default function DiscoverScreen() {
                     <Text fontSize="$5" fontWeight="800">{room.name}</Text>
                     {room.province_code ? <Text fontSize="$3" color="$colorPress">{room.province_code}</Text> : null}
                     {room.description ? <Paragraph color="$colorPress">{room.description}</Paragraph> : null}
-                    <Button alignSelf="flex-start" size="$3" onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })}>Open room</Button>
+                    <Button als="flex-start" size="$3" onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })}>Open room</Button>
                   </YStack>
                 </Card>
               ))}
