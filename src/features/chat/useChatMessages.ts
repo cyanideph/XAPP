@@ -10,18 +10,25 @@ export function useChatMessages({ scope, id }: Props) {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [cursor, setCursor] = useState<{ created_at: string; id: string } | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (before: { created_at: string; id: string } | null = null) => {
     setLoading(true);
     setError(null);
     try {
       if (scope === 'room') await joinRoom(id);
-      const rows = scope === 'room'
-        ? await listRoomMessages(id, null, null, 50)
-        : await listConversationMessages(id, null, null, 50);
-      setMessages(Array.isArray(rows) ? [...rows].reverse() : []);
-      if (scope === 'room') await markRoomRead(id);
-      else await markConversationRead(id);
+      const page = scope === 'room'
+        ? await listRoomMessages(id, before?.created_at ?? null, before?.id ?? null, 50)
+        : await listConversationMessages(id, before?.created_at ?? null, before?.id ?? null, 50);
+      const incoming = Array.isArray(page?.items) ? page.items : [];
+      setMessages(current => before ? [...incoming.reverse(), ...current] : [...incoming].reverse());
+      setHasMore(Boolean(page?.has_more));
+      setCursor(page?.next_cursor ?? null);
+      if (!before) {
+        if (scope === 'room') await markRoomRead(id);
+        else await markConversationRead(id);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to load messages.');
     } finally {
@@ -41,6 +48,11 @@ export function useChatMessages({ scope, id }: Props) {
 
     return () => { void supabase.removeChannel(channel); };
   }, [id, scope, load]);
+
+  const loadOlder = useCallback(async () => {
+    if (!hasMore || loading || !cursor) return;
+    await load(cursor);
+  }, [cursor, hasMore, loading, load]);
 
   const send = useCallback(async (body: string) => {
     const value = body.trim();
@@ -62,5 +74,5 @@ export function useChatMessages({ scope, id }: Props) {
     }
   }, [id, scope, sending]);
 
-  return { messages, loading, sending, error, send, reload: load };
+  return { messages, loading, sending, error, hasMore, send, loadOlder, reload: () => load() };
 }
