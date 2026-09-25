@@ -32,8 +32,8 @@ export function BentoCard({
       pressStyle={{ opacity: 0.92, scale: 0.99 }}
       onPress={onPress}
     >
-      <YStack flex={1} jc="space-between" gap="$3">
-        <XStack ai="center" jc="space-between">
+      <YStack flex={1} justifyContent="space-between" gap="$3">
+        <XStack alignItems="center" justifyContent="space-between">
           <Text fontSize="$3" fontWeight="700" color="$color">
             {title}
           </Text>
