@@ -7,12 +7,16 @@ export async function rpc<T = unknown>(name: string, args: Record<string, unknow
   return data as T;
 }
 
-export async function listPublicRooms() {
-  return rpc('list_public_rooms', {});
+export async function listPublicRooms(limit = 20, offset = 0) {
+  return rpc('list_public_rooms', { p_limit: limit, p_offset: offset });
 }
 
-export async function listOnlineUsers(limit = 20, offset = 0) {
-  return rpc('list_online_users', { p_limit: limit, p_offset: offset });
+export async function listOnlineUsers(limit = 20, offset = 0, onlineFor = '2 minutes') {
+  return rpc('list_online_users', {
+    p_limit: limit,
+    p_offset: offset,
+    p_online_for: onlineFor,
+  });
 }
 
 export async function listPublicChats(limit = 20, offset = 0) {
