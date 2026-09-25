@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { listConversationMessages, listRoomMessages, sendConversationMessage, sendRoomMessage } from './backend';
+import { listConversationMessages, listRoomMessages, markConversationRead, markRoomRead, sendConversationMessage, sendRoomMessage } from './backend';
 import type { ChatMessage } from './types';
 
 type Props = { scope: 'room' | 'conversation'; id: string };
@@ -17,23 +17,24 @@ export function useChatMessages({ scope, id }: Props) {
         ? await listRoomMessages(id, null, null, 50)
         : await listConversationMessages(id, null, null, 50);
       setMessages(Array.isArray(rows) ? [...rows].reverse() : []);
+      if (scope === 'room') await markRoomRead(id);
+      else await markConversationRead(id);
     } finally {
       setLoading(false);
     }
   }, [id, scope]);
 
-  useEffect(() => {
-    load().catch(() => setLoading(false));
-  }, [load]);
+  useEffect(() => { load().catch(() => setLoading(false)); }, [load]);
 
   useEffect(() => {
     if (!supabase) return;
-    const channel = supabase.channel(scope === 'room' ? `room:${id}` : `conversation:${id}`);
-    channel.on('broadcast', { event: scope === 'room' ? 'message.created' : 'conversation.message.changed' }, () => {
-      load().catch(() => undefined);
-    }).subscribe();
+    const channelName = scope === 'room' ? `room:${id}` : `conversation:${id}`;
+    const event = scope === 'room' ? 'message.created' : 'conversation.message.changed';
+    const channel = supabase.channel(channelName);
+    channel.on('broadcast', { event }, () => { load().catch(() => undefined); });
+    channel.subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { void supabase.removeChannel(channel); };
   }, [id, scope, load]);
 
   const send = useCallback(async (body: string) => {
@@ -45,7 +46,7 @@ export function useChatMessages({ scope, id }: Props) {
         ? await sendRoomMessage(id, value)
         : await sendConversationMessage(id, value);
       if (message && typeof message === 'object') {
-        setMessages((current) => current.some((m) => m.id === message.id) ? current : [...current, message]);
+        setMessages(current => current.some(m => m.id === message.id) ? current : [...current, message]);
       }
     } finally {
       setSending(false);
