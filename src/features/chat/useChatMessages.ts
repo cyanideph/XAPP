@@ -14,7 +14,8 @@ export function useChatMessages({ scope, id }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [cursor, setCursor] = useState<Cursor | null>(null);
-  const [typingUsers, setTypingUsers] = useState<TypingState>({});\n  const [profiles, setProfiles] = useState<Record<string, ChatProfile>>({});
+  const [typingUsers, setTypingUsers] = useState<TypingState>({});
+  const [profiles, setProfiles] = useState<Record<string, ChatProfile>>({});
   const channelRef = useRef<ReturnType<NonNullable<typeof supabase>['channel']> | null>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const selfIdRef = useRef<string | null>(null);
@@ -30,7 +31,9 @@ export function useChatMessages({ scope, id }: Props) {
       const incoming = Array.isArray(page?.items) ? page.items : [];
       setMessages(current => before ? [...incoming.reverse(), ...current] : [...incoming].reverse());
       setHasMore(Boolean(page?.has_more));
-      setCursor(page?.next_cursor ?? null);\n      const ids = [...new Set(incoming.map((item: ChatMessage) => item.sender_id))];\n      if (ids.length) { const people = await listProfiles(ids); setProfiles(current => ({ ...current, ...Object.fromEntries(people.map(person => [person.id, person])) })); }
+      setCursor(page?.next_cursor ?? null);
+      const ids = [...new Set(incoming.map((item: ChatMessage) => item.sender_id))];
+      if (ids.length) { const people = await listProfiles(ids); setProfiles(current => ({ ...current, ...Object.fromEntries(people.map(person => [person.id, person])) })); }
       if (!before) scope === 'room' ? await markRoomRead(id) : await markConversationRead(id);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to load messages.');
