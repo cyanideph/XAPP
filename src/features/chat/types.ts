@@ -1,6 +1,6 @@
 export type ChatScope = 'room' | 'conversation';
 
-export type ChatMessage = {
+export type ChatProfile = {\n  id: string;\n  username: string;\n  display_name?: string | null;\n  avatar_path?: string | null;\n};\n\nexport type ChatMessage = {
   id: string;
   body: string;
   sender_id: string;
