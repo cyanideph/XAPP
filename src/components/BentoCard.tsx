@@ -8,6 +8,7 @@ type BentoCardProps = {
   icon?: ReactNode;
   children?: ReactNode;
   flex?: number;
+  onPress?: () => void;
 };
 
 export function BentoCard({
@@ -17,6 +18,7 @@ export function BentoCard({
   icon,
   children,
   flex = 1,
+  onPress,
 }: BentoCardProps) {
   return (
     <Card
@@ -28,6 +30,7 @@ export function BentoCard({
       padding="$4"
       minHeight={132}
       pressStyle={{ opacity: 0.92, scale: 0.99 }}
+      onPress={onPress}
     >
       <YStack flex={1} justifyContent="space-between" gap="$3">
         <XStack alignItems="center" justifyContent="space-between">
@@ -36,19 +39,8 @@ export function BentoCard({
           </Text>
           {icon}
         </XStack>
-
-        {value ? (
-          <Text fontSize="$9" fontWeight="800" color="$color">
-            {value}
-          </Text>
-        ) : null}
-
-        {description ? (
-          <Paragraph color="$colorPress" size="$3">
-            {description}
-          </Paragraph>
-        ) : null}
-
+        {value ? <Text fontSize="$9" fontWeight="800" color="$color">{value}</Text> : null}
+        {description ? <Paragraph color="$colorPress" size="$3">{description}</Paragraph> : null}
         {children}
       </YStack>
     </Card>
