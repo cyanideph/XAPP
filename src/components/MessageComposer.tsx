@@ -35,7 +35,7 @@ export function MessageComposer({ onSend, disabled, editValue, onEditCancel, onT
   }
 
   return (
-    <XStack gap="$2" padding="$3" borderTopWidth={1} borderColor="$borderColor" alignItems="center">
+    <XStack gap="$2" p="$3" borderTopWidth={1} borderColor="$borderColor" ai="center">
       <Input
         flex={1}
         value={value}
@@ -43,7 +43,7 @@ export function MessageComposer({ onSend, disabled, editValue, onEditCancel, onT
         placeholder={editing ? 'Edit message...' : 'Message...'}
         onSubmitEditing={submit}
         returnKeyType="send"
-        editable={!disabled}
+        disabled={disabled}
       />
       {editing ? <Button size="$3" chromeless onPress={cancelEdit} disabled={disabled}>Cancel</Button> : null}
       <Button onPress={submit} disabled={disabled || !value.trim()}>{editing ? 'Save' : 'Send'}</Button>
