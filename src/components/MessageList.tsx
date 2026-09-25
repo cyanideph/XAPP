@@ -23,12 +23,12 @@ export function MessageList({ messages, currentUserId, hasMore, loadingOlder, on
         {messages.map((message) => {
           const own = message.sender_id === currentUserId;
           return (
-            <YStack key={message.id} alignSelf={own ? 'flex-end' : 'flex-start'} maxWidth="88%" backgroundColor={own ? '$color' : '$background'} borderWidth={1} borderColor="$borderColor" borderRadius="$6" padding="$3">
+            <YStack key={message.id} alignSelf={own ? 'flex-end' : 'flex-start'} maxWidth="88%" bg={own ? '$color' : '$background'} borderWidth={1} borderColor="$borderColor" borderRadius="$6" p="$3">
               <Text fontSize="$2" color={own ? '$background' : '$colorPress'}>{own ? 'You' : (profiles[message.sender_id]?.display_name || profiles[message.sender_id]?.username || 'Member')}</Text>
               {message.reply_to_id ? <Text fontSize="$2" color={own ? '$background' : '$colorPress'}>Replying to a message</Text> : null}
               <Paragraph color={own ? '$background' : '$color'}>{message.body}</Paragraph>
               {message.edited_at ? <Text fontSize="$2" color={own ? '$background' : '$colorPress'}>edited</Text> : null}
-              <XStack gap="$2" marginTop="$2" flexWrap="wrap">
+              <XStack gap="$2" mt="$2" flexWrap="wrap">
                 {onReply ? <Button size="$2" chromeless onPress={() => onReply(message)}>Reply</Button> : null}
                 {onReact ? <Button size="$2" chromeless onPress={() => onReact(message, 'like')}>Like</Button> : null}
                 {own && onEdit ? <Button size="$2" chromeless onPress={() => onEdit(message)}>Edit</Button> : null}
