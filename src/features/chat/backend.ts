@@ -8,7 +8,9 @@ export type MessagePage = {
 };
 
 export async function joinRoom(roomId: string) { return rpc('join_room', { p_room_id: roomId }); }
-export async function leaveRoom(roomId: string) { return rpc('leave_room', { p_room_id: roomId }); }\nexport async function touchRoomPresence(roomId: string) { return rpc('touch_room_presence', { p_room_id: roomId }); }\nexport async function listOnlineRoomMembers(roomId: string, limit = 20, offset = 0, onlineFor = '2 minutes') { return rpc('list_online_room_members', { p_room_id: roomId, p_limit: limit, p_offset: offset, p_online_for: onlineFor }); }
+export async function leaveRoom(roomId: string) { return rpc('leave_room', { p_room_id: roomId }); }
+export async function touchRoomPresence(roomId: string) { return rpc('touch_room_presence', { p_room_id: roomId }); }
+export async function listOnlineRoomMembers(roomId: string, limit = 20, offset = 0, onlineFor = '2 minutes') { return rpc('list_online_room_members', { p_room_id: roomId, p_limit: limit, p_offset: offset, p_online_for: onlineFor }); }
 
 export async function listRoomMessages(roomId: string, beforeCreatedAt: string | null = null, beforeId: string | null = null, limit = 50) {
   return rpc<MessagePage>('list_room_messages', { p_room_id: roomId, p_before_created_at: beforeCreatedAt, p_before_id: beforeId, p_limit: limit });
