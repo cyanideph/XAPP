@@ -29,7 +29,7 @@ export default function MeScreen() {
         {loading ? <Spinner /> : <BentoCard title="Favorites" value={String(favorites)} description="People you have saved." />}
         <BentoCard title="Notifications" description="Mentions, follows, comments, reactions and invites." />
         <BentoCard title="Settings" description="Notification and chat preferences." />
-        {supabase ? <Button onPress={() => supabase.auth.signOut()}>Sign out</Button> : null}
+        {supabase ? <Button onPress={() => { if (supabase) void supabase.auth.signOut(); }}>Sign out</Button> : null}
       </YStack>
     </ScrollView>
   );
