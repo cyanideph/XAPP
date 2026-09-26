@@ -57,7 +57,16 @@ export async function listRoomCoHostRequests(roomId: string) {
     .order('created_at', { ascending: false })
     .limit(50);
   if (error) throw error;
-  return data ?? [];
+  const rows = data ?? [];
+  if (!rows.length) return rows;
+  const requesterIds = [...new Set(rows.map(row => row.requester_id))];
+  const { data: profiles, error: profileError } = await supabase
+    .from('profiles')
+    .select('id,username,display_name')
+    .in('id', requesterIds);
+  if (profileError) throw profileError;
+  const profileById = new Map((profiles ?? []).map(profile => [profile.id, profile]));
+  return rows.map(row => ({ ...row, requester: profileById.get(row.requester_id) ?? null }));
 }
 
 export async function moderateReportedMessage(messageId: string) {
