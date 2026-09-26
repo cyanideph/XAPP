@@ -44,23 +44,6 @@ export type Room = {
   members_can_invite: boolean;
 };
 
-export type Room = {
-  id: string;
-  slug: string;
-  name: string;
-  description: string | null;
-  kind: string;
-  province_code: string | null;
-  created_by: string;
-  is_active: boolean;
-  is_locked: boolean;
-  created_at: string;
-  updated_at: string;
-  pinned_message_id: string | null;
-  announcement: string | null;
-  view_only: boolean;
-  members_can_invite: boolean;
-};
 
 export async function searchPublicRooms(query: string, limit = 20) {
   return rpc<Room[]>('search_public_rooms', { p_query: query.trim(), p_limit: limit });
