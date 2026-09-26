@@ -8,6 +8,7 @@ import { supabase } from '../../src/lib/supabase';
 type Profile = { username: string; display_name?: string | null };
 
 export default function MeScreen() {
+  const client = supabase;
   const [profile, setProfile] = useState<Profile | null>(null);
   const [favorites, setFavorites] = useState(0);
   const [notifications, setNotifications] = useState(0);
@@ -55,7 +56,7 @@ export default function MeScreen() {
         )}
 
         <BentoCard title="Settings" description="Notification and chat preferences." />
-        {supabase ? <Button onPress={() => { void supabase.auth.signOut(); }}>Sign out</Button> : null}
+        {client ? <Button onPress={() => { void client.auth.signOut(); }}>Sign out</Button> : null}
       </YStack>
     </ScrollView>
   );
