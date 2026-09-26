@@ -48,7 +48,7 @@ type Props = {
   reactionOptions?: string[];
 };
 
-export function MessageList({ messages, currentUserId, hasMore, loadingOlder, onLoadOlder, onReply, onDelete, onReact, onEdit, onReport, profiles = {}, pinnedMessageId, reactionOptions = ['like', 'love', 'laugh', 'sad', 'angry'] }: Props) {
+export function MessageList({ messages, currentUserId, hasMore, loadingOlder, onLoadOlder, onReply, onDelete, onEdit, onReact, onReport, profiles = {}, pinnedMessageId, reactionOptions = ['like', 'love', 'laugh', 'sad', 'angry'] }: Props) {
   return (
     <ScrollView contentContainerStyle={{ padding: 16, gap: 10 }}>
       {hasMore ? <XButton size="$3" onPress={onLoadOlder} disabled={loadingOlder}>{loadingOlder ? 'Loading…' : 'Load older messages'}</XButton> : null}
@@ -58,11 +58,9 @@ export function MessageList({ messages, currentUserId, hasMore, loadingOlder, on
           return (
             <YStack
               key={message.id}
-              style={{
-                alignSelf: own ? "flex-end" : "flex-start",
-                maxWidth: "88%",
-                borderRadius: 22,
-              }}
+              alignSelf={own ? 'flex-end' : 'flex-start'}
+              maxWidth="88%"
+              rounded="$lg"
               bg={own ? '$color' : '$backgroundHover'}
               borderWidth={1}
               borderColor="$borderColor"
