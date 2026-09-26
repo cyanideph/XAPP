@@ -3,6 +3,7 @@ import { RefreshControl, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { H1, ListItem, Paragraph, Separator, Spinner, Switch, Text, YGroup, YStack } from 'tamagui';
 import { getCurrentProfile, listFavorites, listNotifications } from '../../src/lib/backend';
+import { XIcon } from '../../src/components/XIcon';
 import { supabase } from '../../src/lib/supabase';
 import { useXAppTheme, type ThemeMode } from '../../src/theme/theme';
 
@@ -63,7 +64,7 @@ export default function MeScreen() {
             <YStack gap="$2">
               <Text fontSize="$6" fontWeight="800">Account</Text>
               <YGroup borderWidth={1} borderColor="$borderColor" rounded="$4" overflow="hidden">
-                <YGroup.Item><ListItem title="Profile" subTitle={profile ? `@${profile.username}` : 'Unavailable'} iconAfter={<Text color="$colorPress">›</Text>} onPress={() => router.push('/me/profile')} /></YGroup.Item>
+                <YGroup.Item><ListItem title="Profile" subTitle={profile ? `@${profile.username}` : 'Unavailable'} iconAfter={<XIcon name="chevronRight" size={20} color="#8B85FF" />} onPress={() => router.push('/me/profile')} /></YGroup.Item>
                 <Separator />
                 <YGroup.Item><ListItem title="Notifications" subTitle={unread ? `${unread} unread` : 'All caught up'} iconAfter={<Text color="$colorPress">›</Text>} onPress={() => router.push('/me/notifications')} /></YGroup.Item>
                 <Separator />
@@ -90,7 +91,7 @@ export default function MeScreen() {
           <Text fontSize="$6" fontWeight="800">Settings</Text>
           <YGroup borderWidth={1} borderColor="$borderColor" rounded="$4" overflow="hidden">
             <YGroup.Item><ListItem title="App settings" subTitle="Preferences and account settings" iconAfter={<Text color="$colorPress">›</Text>} onPress={() => router.push('/me/settings')} /></YGroup.Item>
-            {supabase ? <><Separator /><YGroup.Item><ListItem title="Sign out" subTitle="End this session" onPress={() => { const client = supabase; if (client) void client.auth.signOut(); }} /></YGroup.Item></> : null}
+            {supabase ? <><Separator /><YGroup.Item><ListItem icon={<XIcon name="logout" size={20} color="#8B85FF" />} title="Sign out" subTitle="End this session" onPress={() => { const client = supabase; if (client) void client.auth.signOut(); }} /></YGroup.Item></> : null}
           </YGroup>
         </YStack>
       </YStack>
