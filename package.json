@@ -33,7 +33,7 @@
     "react-native-ios-utilities": "5.1.2",
     "sf-symbols-typescript": "2.2.0",
     "lucide-react-native": "^1.48.0",
-    "react-native-svg": "^15.15.4"
+    "react-native-svg": "15.15.4"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
