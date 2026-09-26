@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
-import { Button, H1, Input, Paragraph, Text, YStack } from 'tamagui';
+import { H1, Input, Paragraph, Text, YStack } from 'tamagui';
+import { XButton } from '../../src/components/XButton';
 import { BentoCard } from '../../src/components/BentoCard';
 import { supabase } from '../../src/lib/supabase';
 
@@ -37,10 +38,10 @@ export default function ForgotPasswordScreen() {
           <Input autoCapitalize="none" autoCorrect={false} keyboardType="email-address" placeholder="Email" value={email} onChangeText={setEmail} />
           {error ? <Paragraph color="$red10">{error}</Paragraph> : null}
           {message ? <Paragraph>{message}</Paragraph> : null}
-          <Button onPress={() => { void submit(); }} disabled={busy || !email.trim()}>{busy ? 'Sending…' : 'Send reset link'}</Button>
+          <XButton onPress={() => { void submit(); }} disabled={busy || !email.trim()}>{busy ? 'Sending…' : 'Send reset link'}</XButton>
         </YStack>
       </BentoCard>
-      <Button chromeless onPress={() => router.replace('/(auth)/sign-in')}>Back to sign in</Button>
+      <XButton chromeless onPress={() => router.replace('/(auth)/sign-in')}>Back to sign in</XButton>
     </YStack>
   );
 }
