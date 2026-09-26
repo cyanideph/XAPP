@@ -60,12 +60,13 @@ export function MessageList({ messages, currentUserId, hasMore, loadingOlder, on
               style={{
                 alignSelf: own ? "flex-end" : "flex-start",
                 maxWidth: "88%",
-                borderRadius: 24,
+                borderRadius: 22,
               }}
-              bg={own ? '$color' : '$background'}
+              bg={own ? '$color' : '$backgroundHover'}
               borderWidth={1}
               borderColor="$borderColor"
               p="$3"
+              gap="$1"
             >
               <Text fontSize="$2" color={own ? '$background' : '$colorPress'}>{own ? 'You' : (profiles[message.sender_id]?.display_name || profiles[message.sender_id]?.username || 'Member')}</Text>
               {pinnedMessageId === message.id ? <Text fontSize="$2" fontWeight="800" color={own ? '$background' : '$colorPress'}>Pinned</Text> : null}
