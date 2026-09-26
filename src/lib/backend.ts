@@ -23,6 +23,17 @@ export async function getCurrentProfile() {
   return data;
 }
 
+export async function hasContentAdminAccess() {
+  if (!supabase) throw new Error('Supabase is not configured.');
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError) throw userError;
+  const userId = userData.user?.id;
+  if (!userId) return false;
+  const { data, error } = await supabase.from('room_members').select('role').eq('user_id', userId).in('role', ['owner', 'admin']).limit(1);
+  if (error) throw error;
+  return Boolean(data?.length);
+}
+
 export type PublicProfile = {
   id: string;
   username: string;
