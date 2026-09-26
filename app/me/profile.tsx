@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { Button, H1, Input, Paragraph, Text, YStack } from 'tamagui';
+import { XButton } from '../../src/components/XButton';
 import { BentoCard } from '../../src/components/BentoCard';
 import { getCurrentProfile, updateCurrentProfile } from '../../src/lib/backend';
 
@@ -14,7 +15,7 @@ export default function ProfileScreen() {
     <Input value={profile.display_name ?? ''} onChangeText={v => setProfile({ ...profile, display_name: v })} placeholder="Display name" />
     <Input value={profile.status_text ?? ''} onChangeText={v => setProfile({ ...profile, status_text: v })} placeholder="Status" /><Input value={profile.bio ?? ''} onChangeText={v => setProfile({ ...profile, bio: v })} placeholder="Bio" />
     {error ? <Paragraph color="$red10">{error}</Paragraph> : null}{saved ? <Paragraph>Profile saved.</Paragraph> : null}
-    </BentoCard><Button onPress={() => { setSaved(false); setError(''); void updateCurrentProfile(profile).then(setProfile).then(() => setSaved(true)).catch(e => setError(e instanceof Error ? e.message : 'Unable to save profile.')); }}>Save profile</Button>
+    </BentoCard><XButton onPress={() => { setSaved(false); setError(''); void updateCurrentProfile(profile).then(setProfile).then(() => setSaved(true)).catch(e => setError(e instanceof Error ? e.message : 'Unable to save profile.')); }}>Save profile</XButton>
     <Button chromeless onPress={() => router.back()}>Back</Button>
   </YStack></ScrollView>;
 }
