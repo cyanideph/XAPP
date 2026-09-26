@@ -6,6 +6,7 @@ import { getProfile, listProfileComments, addProfileComment, deleteProfileCommen
 
 export default function ViewProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<any>(null);
   const [comments, setComments] = useState<ProfileComment[]>([]);
   const [following, setFollowing] = useState(false);
@@ -28,6 +29,7 @@ export default function ViewProfileScreen() {
   }, [id]);
 
   useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void import('../../src/lib/supabase').then(({ supabase }) => supabase?.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id ?? null))); }, []);
 
   const act = async (fn: () => Promise<unknown>, after?: () => void) => {
     setBusy(true); setError('');
@@ -59,7 +61,7 @@ export default function ViewProfileScreen() {
         <XStack gap="$2">
           <Button size="$2" onPress={() => void act(() => toggleProfileCommentVote(comment.id, 1))}>Like</Button>
           <Button size="$2" chromeless onPress={() => void act(() => toggleProfileCommentVote(comment.id, -1))}>Dislike</Button>
-          <Button size="$2" chromeless onPress={() => void act(() => deleteProfileComment(comment.id), () => setComments(v => v.filter(x => x.id !== comment.id)))}>Delete</Button>
+          {currentUserId === comment.author_id ? <Button size="$2" chromeless onPress={() => void act(() => deleteProfileComment(comment.id), () => setComments(v => v.filter(x => x.id !== comment.id)))}>Delete</Button> : null}
         </XStack>
       </YStack>)}
       <Button chromeless onPress={() => router.back()}>Back</Button>
