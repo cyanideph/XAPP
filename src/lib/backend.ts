@@ -162,7 +162,7 @@ export async function listPendingConversationInvites(limit = 50) {
       const conversationId = String(item.payload?.conversation_id ?? '');
       if (!inviteId || !conversationId) return null;
 
-      return {
+      const invite: ConversationInvite = {
         notification_id: item.id,
         invite_id: inviteId,
         conversation_id: conversationId,
@@ -170,6 +170,7 @@ export async function listPendingConversationInvites(limit = 50) {
         inviter: item.actor_id ? profileById.get(item.actor_id) ?? null : null,
         created_at: item.created_at,
       };
+      return invite;
     })
     .filter((item): item is ConversationInvite => Boolean(item));
 }
