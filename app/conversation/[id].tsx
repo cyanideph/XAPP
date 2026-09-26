@@ -93,10 +93,10 @@ export default function ConversationScreen() {
 
       {replyTarget ? (
         <YStack px="$3" pt="$2">
-          <BentoCard
-            title="Replying"
-            description={(replyTarget.body ?? '').slice(0, 80) || 'Message'}
-          />
+          <YStack gap="$1">
+<Text fontSize="$4" fontWeight="800">Replying</Text>
+<Text color="$colorPress">{(replyTarget.body ?? '').slice(0, 80) || 'Message'}</Text>
+</YStack>
         </YStack>
       ) : null}
 
