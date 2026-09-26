@@ -95,6 +95,47 @@ export async function strikeRoomMember(
   });
 }
 
+export async function setRoomChatSettings(
+  roomId: string,
+  announcement: string | null,
+  viewOnly: boolean,
+  membersCanInvite: boolean,
+) {
+  return rpc('set_room_chat_settings', {
+    p_room_id: roomId,
+    p_announcement: announcement,
+    p_view_only: viewOnly,
+    p_members_can_invite: membersCanInvite,
+  });
+}
+
+export async function setRoomLock(roomId: string, locked: boolean, reason: string | null = null) {
+  return rpc('set_room_lock', {
+    p_room_id: roomId,
+    p_locked: locked,
+    p_reason: reason,
+  });
+}
+
+export async function setRoomMemberChatPreferences(
+  roomId: string,
+  notificationsEnabled: boolean | null = null,
+  isPinned: boolean | null = null,
+) {
+  return rpc('set_room_member_chat_preferences', {
+    p_room_id: roomId,
+    p_notifications_enabled: notificationsEnabled,
+    p_is_pinned: isPinned,
+  });
+}
+
+export async function setRoomPinnedMessage(roomId: string, messageId: string | null) {
+  return rpc('set_room_pinned_message', {
+    p_room_id: roomId,
+    p_message_id: messageId,
+  });
+}
+
 export async function listRoomMessages(roomId: string, beforeCreatedAt: string | null = null, beforeId: string | null = null, limit = 50) {
   return rpc<MessagePage>('list_room_messages', { p_room_id: roomId, p_before_created_at: beforeCreatedAt, p_before_id: beforeId, p_limit: limit });
 }

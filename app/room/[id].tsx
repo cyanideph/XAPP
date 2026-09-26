@@ -1,9 +1,9 @@
 import { useCallback, useState, useEffect } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { Alert } from 'react-native';
-import { Button, H1, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
+import { Button, H1, Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
 import { MessageComposer } from '../../src/components/MessageComposer';
-import { listOnlineRoomMembers, listRoomMembers, listRoomCoHosts, setRoomCoHost, kickRoomMember, moderateRoomMember, strikeRoomMember, type RoomMember } from '../../src/features/chat/backend';
+import { listOnlineRoomMembers, listRoomMembers, listRoomCoHosts, setRoomCoHost, kickRoomMember, moderateRoomMember, strikeRoomMember, setRoomChatSettings, setRoomLock, setRoomMemberChatPreferences, setRoomPinnedMessage, type RoomMember } from '../../src/features/chat/backend';
 import { createRoomInvite, listOnlineUsers } from '../../src/lib/backend';
 import { MessageList } from '../../src/components/MessageList';
 import { useSession } from '../../src/hooks/useSession';
@@ -27,6 +27,13 @@ export default function RoomScreen() {
   const [coHostIds, setCoHostIds] = useState<Set<string>>(new Set());
   const [adminOpen, setAdminOpen] = useState(false);
   const [adminBusy, setAdminBusy] = useState<string | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsBusy, setSettingsBusy] = useState<string | null>(null);
+  const [announcementDraft, setAnnouncementDraft] = useState('');
+  const [viewOnlyDraft, setViewOnlyDraft] = useState(false);
+  const [membersCanInviteDraft, setMembersCanInviteDraft] = useState(true);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [roomPinned, setRoomPinned] = useState(false);
   const [room, setRoom] = useState<Room | null>(null);
   const [roomError, setRoomError] = useState<string | null>(null);
   const loadRoom = useCallback(async () => {
@@ -152,6 +159,82 @@ export default function RoomScreen() {
     ]);
   }, [coHostIds, id]);
 
+  const loadSettings = useCallback(async () => {
+    setSettingsBusy('load');
+    setRoomError(null);
+    try {
+      const [freshRoom, memberRows] = await Promise.all([
+        getRoom(id),
+        listRoomMembers(id, 100, 0),
+      ]);
+      setRoom(freshRoom);
+      setAnnouncementDraft(freshRoom?.announcement ?? '');
+      setViewOnlyDraft(Boolean(freshRoom?.view_only));
+      setMembersCanInviteDraft(freshRoom?.members_can_invite !== false);
+      const selfMember = (Array.isArray(memberRows) ? memberRows : []).find(member => member.user_id === session?.user.id);
+      setNotificationsEnabled(selfMember?.chat_notifications_enabled ?? true);
+      setRoomPinned(selfMember?.is_pinned ?? false);
+      setSettingsOpen(true);
+    } catch (e) {
+      setRoomError(e instanceof Error ? e.message : 'Unable to load Room settings.');
+    } finally {
+      setSettingsBusy(null);
+    }
+  }, [id, session?.user.id]);
+
+  const saveChatSettings = useCallback(async () => {
+    setSettingsBusy('chat');
+    setRoomError(null);
+    try {
+      const updated = await setRoomChatSettings(id, announcementDraft.trim() || null, viewOnlyDraft, membersCanInviteDraft);
+      setRoom(updated as Room);
+    } catch (e) {
+      setRoomError(e instanceof Error ? e.message : 'Unable to save Room settings.');
+    } finally {
+      setSettingsBusy(null);
+    }
+  }, [announcementDraft, id, membersCanInviteDraft, viewOnlyDraft]);
+
+  const toggleRoomLock = useCallback(async () => {
+    if (!room) return;
+    const locked = !room.is_locked;
+    setSettingsBusy('lock');
+    setRoomError(null);
+    try {
+      const updated = await setRoomLock(id, locked, locked ? 'Room settings' : 'Room unlocked');
+      setRoom(updated as Room);
+    } catch (e) {
+      setRoomError(e instanceof Error ? e.message : 'Unable to update Room lock.');
+    } finally {
+      setSettingsBusy(null);
+    }
+  }, [id, room]);
+
+  const saveMemberPreferences = useCallback(async () => {
+    setSettingsBusy('prefs');
+    setRoomError(null);
+    try {
+      await setRoomMemberChatPreferences(id, notificationsEnabled, roomPinned);
+    } catch (e) {
+      setRoomError(e instanceof Error ? e.message : 'Unable to save your Room preferences.');
+    } finally {
+      setSettingsBusy(null);
+    }
+  }, [id, notificationsEnabled, roomPinned]);
+
+  const pinRoomMessage = useCallback(async (messageId: string | null) => {
+    setSettingsBusy(messageId ? 'pin-' + messageId : 'unpin');
+    setRoomError(null);
+    try {
+      const updated = await setRoomPinnedMessage(id, messageId);
+      setRoom(updated as Room);
+    } catch (e) {
+      setRoomError(e instanceof Error ? e.message : 'Unable to update the pinned message.');
+    } finally {
+      setSettingsBusy(null);
+    }
+  }, [id]);
+
   const submit = async (body: string) => {
     if (replyTarget) { await reply(replyTarget.id, body); setReplyTarget(null); }
     else if (editTarget) { await edit(editTarget.id, body); setEditTarget(null); }
@@ -172,6 +255,9 @@ export default function RoomScreen() {
           <Button size="$2" chromeless disabled={adminBusy === 'load'} onPress={() => { void loadAdministration(); }}>
             {adminBusy === 'load' ? 'Loading…' : 'Admin'}
           </Button>
+          <Button size="$2" chromeless disabled={settingsBusy === 'load'} onPress={() => { void loadSettings(); }}>
+            {settingsBusy === 'load' ? 'Loading…' : 'Settings'}
+          </Button>
           <Button size="$2" chromeless disabled={inviteLoading} onPress={() => { void loadInviteCandidates(); }}>
             {inviteLoading ? 'Loading…' : 'Invite'}
           </Button>
@@ -189,6 +275,64 @@ export default function RoomScreen() {
           </XStack>;
         })}
         {!members.length ? <Text color="$colorPress">No members found.</Text> : null}
+      </YStack> : null}
+      {settingsOpen ? <YStack gap="$2" pt="$2" borderWidth={1} borderColor="$borderColor" p="$2">
+        <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+          <Text fontSize="$3" fontWeight="800">Room settings</Text>
+          <Text color="$colorPress" onPress={() => setSettingsOpen(false)}>Hide</Text>
+        </XStack>
+        <Text fontSize="$2" color="$colorPress">Room controls are enforced by Supabase authorization.</Text>
+        <Text fontWeight="700">Announcement</Text>
+        <Input value={announcementDraft} onChangeText={setAnnouncementDraft} placeholder="Optional Room announcement" />
+        <XStack gap="$2" flexWrap="wrap">
+          <Button size="$2" disabled={settingsBusy !== null} onPress={() => setViewOnlyDraft(value => !value)}>
+            {viewOnlyDraft ? 'View-only: ON' : 'View-only: OFF'}
+          </Button>
+          <Button size="$2" disabled={settingsBusy !== null} onPress={() => setMembersCanInviteDraft(value => !value)}>
+            {membersCanInviteDraft ? 'Member invites: ON' : 'Member invites: OFF'}
+          </Button>
+          <Button size="$2" disabled={settingsBusy !== null} onPress={() => { void saveChatSettings(); }}>
+            {settingsBusy === 'chat' ? 'Saving…' : 'Save chat settings'}
+          </Button>
+        </XStack>
+        <XStack gap="$2" flexWrap="wrap">
+          <Button size="$2" disabled={settingsBusy !== null} onPress={() => { void toggleRoomLock(); }}>
+            {settingsBusy === 'lock' ? 'Updating…' : room?.is_locked ? 'Unlock Room' : 'Lock Room'}
+          </Button>
+          <Button size="$2" disabled={settingsBusy !== null} onPress={() => { void pinRoomMessage(null); }}>
+            {settingsBusy === 'unpin' ? 'Clearing…' : 'Clear pinned message'}
+          </Button>
+        </XStack>
+        <Text fontWeight="700">Pinned message</Text>
+        {room?.pinned_message_id ? (
+          <YStack gap="$1" p="$2" borderWidth={1} borderColor="$borderColor">
+            <Text fontSize="$2" color="$colorPress">Pinned message ID: {room.pinned_message_id}</Text>
+            {messages.filter(message => message.id === room.pinned_message_id).map(message => (
+              <Text key={message.id}>{message.body}</Text>
+            ))}
+          </YStack>
+        ) : <Text fontSize="$2" color="$colorPress">No message is pinned.</Text>}
+        <Text fontSize="$2" color="$colorPress">Choose a recent Room message to pin.</Text>
+        {messages.slice(0, 10).map(message => (
+          <XStack key={'pin-' + message.id} gap="$2" style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text flex={1} numberOfLines={2}>{message.body}</Text>
+            <Button size="$2" disabled={settingsBusy !== null} onPress={() => { void pinRoomMessage(message.id); }}>
+              {settingsBusy === 'pin-' + message.id ? 'Pinning…' : room?.pinned_message_id === message.id ? 'Pinned' : 'Pin'}
+            </Button>
+          </XStack>
+        ))}
+        <Text fontWeight="700">My Room preferences</Text>
+        <XStack gap="$2" flexWrap="wrap">
+          <Button size="$2" disabled={settingsBusy !== null} onPress={() => setNotificationsEnabled(value => !value)}>
+            {notificationsEnabled ? 'Notifications: ON' : 'Notifications: OFF'}
+          </Button>
+          <Button size="$2" disabled={settingsBusy !== null} onPress={() => setRoomPinned(value => !value)}>
+            {roomPinned ? 'Room pinned: ON' : 'Room pinned: OFF'}
+          </Button>
+          <Button size="$2" disabled={settingsBusy !== null} onPress={() => { void saveMemberPreferences(); }}>
+            {settingsBusy === 'prefs' ? 'Saving…' : 'Save my preferences'}
+          </Button>
+        </XStack>
       </YStack> : null}
       {adminOpen ? <YStack gap="$2" pt="$2">
         <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
