@@ -174,6 +174,23 @@ export function useChatMessages({ scope, id }: Props) {
     }
   }, [broadcastTyping, id, scope, sending]);
 
+  const sendMedia = useCallback(async (body: string, metadata: Record<string, unknown>) => {
+    if (scope !== 'room' || sending) return null;
+    setSending(true);
+    setError(null);
+    try {
+      await broadcastTyping(false);
+      const message = await sendRoomMessage(id, body.trim(), 'media', metadata);
+      if (message) setMessages(current => current.some(m => m.id === message.id) ? current : [...current, message]);
+      return message ?? null;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to send media.');
+      throw e;
+    } finally {
+      setSending(false);
+    }
+  }, [broadcastTyping, id, scope, sending]);
+
   const sendSticker = useCallback(async (stickerId: string) => {
     if (scope !== 'room' || !stickerId.trim() || sending) return null;
     setSending(true);
@@ -218,7 +235,7 @@ export function useChatMessages({ scope, id }: Props) {
 
   return {
     messages, loading, sending, error, hasMore, typingUsers, profiles,
-    send, sendSticker, reply, edit, remove, react, onTyping, loadOlder,
+    send, sendMedia, sendSticker, reply, edit, remove, react, onTyping, loadOlder,
     reload: () => load(),
   };
 }

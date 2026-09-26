@@ -168,6 +168,111 @@ export async function sendRoomSticker(
   });
 }
 
+export type RoomMedia = {
+  id: string;
+  owner_id: string;
+  bucket: string;
+  path: string;
+  mime_type: string | null;
+  size_bytes: number | null;
+  width: number | null;
+  height: number | null;
+  duration_ms: number | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  content_id: string | null;
+  room_id: string | null;
+  message_id: string | null;
+  caption: string | null;
+  filename: string | null;
+  position: number;
+};
+
+export type RoomMediaAsset = {
+  uri: string;
+  mimeType?: string | null;
+  fileName?: string | null;
+  fileSize?: number;
+  width?: number;
+  height?: number;
+  duration?: number | null;
+  type?: string | null;
+};
+
+export async function uploadRoomMedia(roomId: string, asset: RoomMediaAsset, caption = '') {
+  if (!supabase) throw new Error('Supabase is not configured.');
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError) throw userError;
+  const user = userData.user;
+  if (!user) throw new Error('You must be signed in.');
+  if (!asset.uri) throw new Error('Selected media has no file URI.');
+  const size = asset.fileSize ?? null;
+  if (size !== null && size > 50 * 1024 * 1024) throw new Error('Media must be 50 MB or smaller.');
+
+  const mimeType = asset.mimeType || (asset.type === 'video' ? 'video/mp4' : 'image/jpeg');
+  const rawName = (asset.fileName || 'upload').replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 80) || 'upload';
+  const extension = (rawName.split('.').pop() || mimeType.split('/')[1] || 'bin').replace(/[^a-zA-Z0-9]/g, '').slice(0, 12) || 'bin';
+  const baseName = rawName.includes('.') ? rawName.slice(0, -(extension.length + 1)) || 'upload' : rawName;
+  const path = `${user.id}/${roomId}/${Date.now()}-${baseName}.${extension}`;
+  const bytes = await fetch(asset.uri).then(response => {
+    if (!response.ok) throw new Error('Unable to read the selected media.');
+    return response.arrayBuffer();
+  });
+  if (bytes.byteLength > 50 * 1024 * 1024) throw new Error('Media must be 50 MB or smaller.');
+
+  const { error: uploadError } = await supabase.storage.from('room-media').upload(path, bytes, {
+    contentType: mimeType,
+    cacheControl: '3600',
+    upsert: false,
+  });
+  if (uploadError) throw uploadError;
+
+  try {
+    const { data, error } = await supabase.from('media').insert({
+      owner_id: user.id,
+      bucket: 'room-media',
+      path,
+      mime_type: mimeType,
+      size_bytes: size ?? bytes.byteLength,
+      width: asset.width ?? null,
+      height: asset.height ?? null,
+      duration_ms: asset.duration ?? null,
+      metadata: { source: 'room-upload' },
+      room_id: roomId,
+      caption: caption.trim() || null,
+      filename: asset.fileName ?? rawName,
+      position: 0,
+    }).select('*').single();
+    if (error) throw error;
+    return data as RoomMedia;
+  } catch (error) {
+    await supabase.storage.from('room-media').remove([path]).catch(() => undefined);
+    throw error;
+  }
+}
+
+export async function attachRoomMediaToMessage(mediaId: string, messageId: string) {
+  if (!supabase) throw new Error('Supabase is not configured.');
+  const { data, error } = await supabase.from('media').update({ message_id: messageId }).eq('id', mediaId).select('*').single();
+  if (error) throw error;
+  return data as RoomMedia;
+}
+
+export async function deleteRoomMedia(media: Pick<RoomMedia, 'id' | 'bucket' | 'path'>) {
+  if (!supabase) throw new Error('Supabase is not configured.');
+  const { error: rowError } = await supabase.from('media').delete().eq('id', media.id);
+  if (rowError) throw rowError;
+  const { error: storageError } = await supabase.storage.from(media.bucket).remove([media.path]);
+  if (storageError) throw storageError;
+}
+
+export async function createRoomMediaUrl(bucket: string, path: string) {
+  if (!supabase) return null;
+  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 3600);
+  if (error) return null;
+  return data.signedUrl;
+}
+
 export async function setRoomMessageMentions(messageId: string, mentionedUserIds: string[]) {
   return rpc('set_room_message_mentions', {
     p_message_id: messageId,

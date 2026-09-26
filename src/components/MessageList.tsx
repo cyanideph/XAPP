@@ -1,6 +1,35 @@
-import { ScrollView } from 'react-native';
+import { Image, Linking, ScrollView } from 'react-native';
+import { useEffect, useState } from 'react';
 import { Button, Paragraph, Text, XStack, YStack } from 'tamagui';
 import type { ChatMessage, ChatProfile } from '../features/chat/types';
+import { createRoomMediaUrl } from '../features/chat/backend';
+
+function RoomMediaPreview({ message }: { message: ChatMessage }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const metadata = message.metadata ?? {};
+  const bucket = typeof metadata.bucket === 'string' ? metadata.bucket : null;
+  const path = typeof metadata.path === 'string' ? metadata.path : null;
+  const mimeType = typeof metadata.mime_type === 'string' ? metadata.mime_type : '';
+  const filename = typeof metadata.filename === 'string' ? metadata.filename : 'Media';
+
+  useEffect(() => {
+    let active = true;
+    if (!bucket || !path) return () => { active = false; };
+    void createRoomMediaUrl(bucket, path).then(signedUrl => {
+      if (active) setUrl(signedUrl);
+    });
+    return () => { active = false; };
+  }, [bucket, path]);
+
+  if (!bucket || !path) return <Text>Media attachment unavailable.</Text>;
+  if (!url) return <Text>Loading media…</Text>;
+  if (mimeType.startsWith('image/')) {
+    return <Image source={{ uri: url }} style={{ width: 240, height: 180, borderRadius: 12 }} resizeMode="cover" />;
+  }
+  return <Button size="$2" chromeless onPress={() => { void Linking.openURL(url); }}>
+    {mimeType.startsWith('video/') ? 'Open video' : `Open ${filename}`}
+  </Button>;
+}
 
 type Props = {
   messages: ChatMessage[];
@@ -42,8 +71,10 @@ export function MessageList({ messages, currentUserId, hasMore, loadingOlder, on
               {message.reply_to_id ? <Text fontSize="$2" color={own ? '$background' : '$colorPress'}>Replying to a message</Text> : null}
               {message.kind === 'sticker'
                 ? <Text fontSize="$7">{String(message.metadata?.sticker_id ?? 'sticker')}</Text>
-                : <Paragraph color={own ? '$background' : '$color'}>{message.body ?? ''}</Paragraph>}
-              {message.kind && message.kind !== 'text' && message.kind !== 'sticker'
+                : message.kind === 'media'
+                  ? <YStack gap="$2"><RoomMediaPreview message={message} />{message.body ? <Paragraph color={own ? '$background' : '$color'}>{message.body}</Paragraph> : null}</YStack>
+                  : <Paragraph color={own ? '$background' : '$color'}>{message.body ?? ''}</Paragraph>}
+              {message.kind && message.kind !== 'text' && message.kind !== 'sticker' && message.kind !== 'media'
                 ? <Text fontSize="$2" color={own ? '$background' : '$colorPress'}>{message.kind}</Text>
                 : null}
               {message.edited_at ? <Text fontSize="$2" color={own ? '$background' : '$colorPress'}>edited</Text> : null}
