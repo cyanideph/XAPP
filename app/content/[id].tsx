@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ScrollView } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Button, H1, Input, Paragraph, Spinner, Text, YStack } from 'tamagui';
-import { addContentComment, deleteContentComment, getProfile, listContentComments, listContentFeed, toggleContentCommentVote, toggleContentReaction, toggleContentSave, type ContentComment, type ContentItem } from '../../src/lib/backend';
+import { addContentComment, deleteContentComment, listContentComments, listContentFeed, toggleContentCommentVote, toggleContentReaction, toggleContentSave, type ContentComment, type ContentItem } from '../../src/lib/backend';
 
 export default function ContentDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
