@@ -1,5 +1,6 @@
 import { createTamagui } from 'tamagui';
 import { createV5Theme, defaultConfig } from '@tamagui/config/v5';
+import { animations } from '@tamagui/config/v5-rn';
 
 const lightPalette = [
   '#FFFFFF',
@@ -39,6 +40,7 @@ const themes = createV5Theme({
 export const tamaguiConfig = createTamagui({
   ...defaultConfig,
   themes,
+  animations,
   settings: {
     ...defaultConfig.settings,
     styleCompat: 'react-native',
