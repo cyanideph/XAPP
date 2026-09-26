@@ -155,6 +155,71 @@ export async function toggleRoomReaction(messageId: string, reaction: string) {
   return rpc('toggle_room_message_reaction', { p_message_id: messageId, p_reaction: reaction });
 }
 
+export type RoomReportStatus = 'open' | 'reviewing' | 'resolved' | 'dismissed';
+export type RoomReport = {
+  id: string;
+  room_id: string | null;
+  reporter_id: string;
+  reported_user_id: string | null;
+  message_id: string | null;
+  reason: string;
+  status: RoomReportStatus;
+  resolution: string | null;
+  resolved_by: string | null;
+  created_at: string;
+  resolved_at: string | null;
+};
+
+export async function createRoomReport(
+  roomId: string,
+  reason: string,
+  reportedUserId: string | null = null,
+  messageId: string | null = null,
+) {
+  if (!supabase) throw new Error('Supabase is not configured.');
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError) throw userError;
+  if (!userData.user) throw new Error('You must be signed in.');
+  const { data, error } = await supabase.from('reports').insert({
+    room_id: roomId,
+    reported_user_id: reportedUserId,
+    message_id: messageId,
+    reason: reason.trim(),
+    reporter_id: userData.user.id,
+  }).select('*').single();
+  if (error) throw error;
+  return data as RoomReport;
+}
+
+export async function listRoomReports(roomId: string, status: RoomReportStatus | null = null, limit = 50, offset = 0) {
+  return rpc<RoomReport[]>('list_room_reports', {
+    p_room_id: roomId,
+    p_status: status,
+    p_limit: limit,
+    p_offset: offset,
+  });
+}
+
+export async function updateRoomReport(
+  reportId: string,
+  status: RoomReportStatus,
+  resolution: string | null = null,
+) {
+  if (!supabase) throw new Error('Supabase is not configured.');
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError) throw userError;
+  if (!userData.user) throw new Error('You must be signed in.');
+  const resolved = status === 'resolved' || status === 'dismissed';
+  const { data, error } = await supabase.from('reports').update({
+    status,
+    resolution: resolution?.trim() || null,
+    resolved_by: resolved ? userData.user.id : null,
+    resolved_at: resolved ? new Date().toISOString() : null,
+  }).eq('id', reportId).select('*').single();
+  if (error) throw error;
+  return data as RoomReport;
+}
+
 export async function listConversationMessages(conversationId: string, beforeCreatedAt: string | null = null, beforeId: string | null = null, limit = 50) {
   return rpc<MessagePage>('list_conversation_messages', { p_conversation_id: conversationId, p_before_created_at: beforeCreatedAt, p_before_id: beforeId, p_limit: limit });
 }
