@@ -110,7 +110,7 @@ export default function HomeScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { void load(true); }} />}
       contentContainerStyle={{ padding: 20, paddingTop: 64, paddingBottom: 40 }}
     >
-      <YStack w="100%" maxW={960} self="center" gap="$6">
+      <YStack maxW={960} self="center" gap="$6">
         <YStack gap="$2">
           <Text fontSize="$3" color="$colorPress" fontWeight="800" letterSpacing={1}>X-APP</Text>
           <H1 fontSize="$10" fontWeight="900">Your space.</H1>
@@ -136,7 +136,7 @@ export default function HomeScreen() {
 
         <BentoCard title="Share something" description="Post a short update to the community.">
           <YStack gap="$3">
-            <Input value={postBody} onChangeText={setPostBody} placeholder="What’s happening?" multiline minHeight={96} />
+            <Input value={postBody} onChangeText={setPostBody} placeholder="What’s happening?" multiline minH={96} />
             <XStack justify="flex-end">
               <XButton onPress={() => { void publish(); }} disabled={posting || !postBody.trim()}>
                 {posting ? 'Posting…' : 'Post'}
