@@ -29,7 +29,7 @@ export default function Notifications() {
                 <ListItem
                   title={x.type}
                   subTitle={String(x.payload?.message ?? x.payload?.text ?? 'You have a new notification.')}
-                  iconAfter={x.read_at ? '✓' : '•'}
+                  iconAfter={<Text color="$colorPress">{x.read_at ? "✓" : "•"}</Text>}
                   onPress={() => { if (!x.read_at) void markNotificationRead(x.id).then(load); }}
                 />
                 {index < n.length - 1 ? <Separator /> : null}
