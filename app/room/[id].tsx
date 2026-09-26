@@ -2,7 +2,7 @@ import { useCallback, useState, useEffect } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { Badge, H1, Input, ListItem, Menu, Paragraph, Separator, Spinner, Switch, Text, XStack, YGroup, YStack } from 'tamagui';
+import { H1, Input, ListItem, Menu, Paragraph, Separator, Spinner, Switch, Text, XStack, YGroup, YStack } from 'tamagui';
 import { XButton } from '../../src/components/XButton';
 import { MessageComposer } from '../../src/components/MessageComposer';
 import { listOnlineRoomMembers, listRoomMembers, listRoomCoHosts, setRoomCoHost, kickRoomMember, moderateRoomMember, strikeRoomMember, setRoomChatSettings, setRoomLock, setRoomMemberChatPreferences, setRoomPinnedMessage, setRoomMessageMentions, createRoomReport, listRoomReports, updateRoomReport, uploadRoomMedia, attachRoomMediaToMessage, deleteRoomMedia, type RoomMember, type RoomReport } from '../../src/features/chat/backend';
@@ -377,15 +377,13 @@ export default function RoomScreen() {
               {room?.province_code ? `${room.province_code} · ` : ''}{onlineMembers.filter(member => member.is_online).length} online
             </Text>
           </YStack>
-          <Badge theme="green" size="$3" circular>
-            {onlineMembers.filter(member => member.is_online).length}
-          </Badge>
+          <Text bg="$brandSoft" color="$brandColor" px="$3" py="$2" rounded="$6" fontWeight="800">{onlineMembers.filter(member => member.is_online).length}</Text>
         </XStack>
         {room?.description ? <Paragraph color="$colorPress">{room.description}</Paragraph> : null}
         <XStack gap="$2" flexWrap="wrap">
-          {room?.announcement ? <Badge size="$2">{room.announcement}</Badge> : null}
-          {room?.view_only ? <Badge size="$2">View-only</Badge> : null}
-          {room?.is_locked ? <Badge size="$2" theme="red">Locked</Badge> : null}
+          {room?.announcement ? <Text bg="$backgroundHover" color="$colorPress" px="$2" py="{room.announcement}" rounded="$4" fontSize="$2">{room.announcement}</Text> : null}
+          {room?.view_only ? <Text bg="$backgroundHover" color="$colorPress" px="$2" py="View-only" rounded="$4" fontSize="$2">View-only</Text> : null}
+          {room?.is_locked ? <Text bg="$red3" color="$red10" px="$2" py="$1" rounded="$4" fontSize="$2">Locked</Text> : null}
         </XStack>
         {roomError ? <Paragraph color="$red10">{roomError}</Paragraph> : null}
         {error ? <Paragraph color="$red10">{error}</Paragraph> : null}
@@ -420,7 +418,7 @@ export default function RoomScreen() {
 
     {replyTarget ? <YStack px="$3" pt="$2"><Text fontSize="$2" color="$colorPress">Replying to: {(replyTarget.body ?? '').slice(0, 80)}</Text></YStack> : null}
     {Object.keys(typingUsers).length ? <XStack px="$3" pb="$2" items="center"><Text fontSize="$2" color="$colorPress">{Object.keys(typingUsers).map(userId => profiles[userId]?.display_name || profiles[userId]?.username || 'Someone').slice(0, 2).join(', ')} {Object.keys(typingUsers).length === 1 ? 'is' : 'are'} typing…</Text></XStack> : null}
-    {onlineMembers.length ? <XStack px="$3" pb="$2" gap="$2" flexWrap="wrap"><Text fontSize="$2" color="$colorPress">Online:</Text>{onlineMembers.filter(member => member.is_online).slice(0, 8).map(member => <Badge key={member.user_id} size="$2">{member.nickname || 'Member'}</Badge>)}</XStack> : null}
+    {onlineMembers.length ? <XStack px="$3" pb="$2" gap="$2" flexWrap="wrap"><Text fontSize="$2" color="$colorPress">Online:</Text>{onlineMembers.filter(member => member.is_online).slice(0, 8).map(member => <Text key={member.user_id} bg="$backgroundHover" color="$colorPress" px="$2" py="$1" rounded="$4" fontSize="$2">{member.nickname || "Member"}</Text>)}</XStack> : null}
 
     {reportTarget ? <YStack mx="$3" mb="$2" gap="$2" p="$3" borderWidth={1} borderColor="$borderColor">
       <XStack items="center" justify="space-between">
@@ -439,7 +437,7 @@ export default function RoomScreen() {
         <Text fontSize="$3" fontWeight="800">Members {members.length ? `(${members.length})` : ''}</Text>
         <XButton size="$2" chromeless onPress={() => setMembersOpen(false)}>Hide</XButton>
       </XStack>
-      <YGroup bordered>
+      <YGroup borderWidth={1} borderColor="$borderColor">
         {members.map(member => {
           const profile = member.profile;
           return <YGroup.Item key={member.user_id}>
@@ -461,7 +459,7 @@ export default function RoomScreen() {
       </XStack>
       <Text fontSize="$2" color="$colorPress">Room controls are enforced by Supabase authorization.</Text>
       <Input value={announcementDraft} onChangeText={setAnnouncementDraft} placeholder="Optional Room announcement" />
-      <YGroup bordered>
+      <YGroup borderWidth={1} borderColor="$borderColor">
         <YGroup.Item>
           <ListItem title="View-only mode" subTitle={viewOnlyDraft ? 'Members can read but not send messages.' : 'Members can send messages.'}
             iconAfter={<Switch size="$3" checked={viewOnlyDraft} onCheckedChange={setViewOnlyDraft} disabled={settingsBusy !== null} />} />
@@ -487,7 +485,7 @@ export default function RoomScreen() {
       {room?.pinned_message_id ? (
         <ListItem title={messages.find(message => message.id === room.pinned_message_id)?.body || 'Pinned message'} subTitle={`ID: ${room.pinned_message_id}`} iconAfter={<XButton size="$2" chromeless onPress={() => { void pinRoomMessage(null); }}>Clear</XButton>} />
       ) : <Text fontSize="$2" color="$colorPress">No message is pinned.</Text>}
-      <YGroup bordered>
+      <YGroup borderWidth={1} borderColor="$borderColor">
         {messages.slice(0, 10).map(message => (
           <YGroup.Item key={'pin-' + message.id}>
             <ListItem title={message.body} subTitle={room?.pinned_message_id === message.id ? 'Currently pinned' : 'Pin this message'}
@@ -497,7 +495,7 @@ export default function RoomScreen() {
       </YGroup>
 
       <Text fontSize="$3" fontWeight="800" pt="$2">My Room preferences</Text>
-      <YGroup bordered>
+      <YGroup borderWidth={1} borderColor="$borderColor">
         <YGroup.Item>
           <ListItem title="Notifications" subTitle={notificationsEnabled ? 'Room notifications are enabled.' : 'Room notifications are muted.'}
             iconAfter={<Switch size="$3" checked={notificationsEnabled} onCheckedChange={setNotificationsEnabled} disabled={settingsBusy !== null} />} />
@@ -521,7 +519,7 @@ export default function RoomScreen() {
         <XButton size="$2" chromeless onPress={() => setAdminOpen(false)}>Hide</XButton>
       </XStack>
       <Text fontSize="$2" color="$colorPress">Controls are enforced by the Supabase Room authorization rules.</Text>
-      <YGroup bordered>
+      <YGroup borderWidth={1} borderColor="$borderColor">
         {members.map(member => {
           const label = member.profile?.display_name || member.profile?.username || member.nickname || 'Member';
           const isSelf = member.user_id === session?.user.id;
@@ -555,7 +553,7 @@ export default function RoomScreen() {
         <XButton size="$2" chromeless onPress={() => setInviteOpen(false)}>Hide</XButton>
       </XStack>
       <Input value={inviteQuery} onChangeText={setInviteQuery} placeholder="Search by username or name" returnKeyType="search" onSubmitEditing={() => { void loadInviteCandidates(inviteQuery); }} />
-      <YGroup bordered>
+      <YGroup borderWidth={1} borderColor="$borderColor">
         {inviteCandidates.map(user => (
           <YGroup.Item key={user.user_id}>
             <ListItem title={user.display_name || user.username} subTitle={`@${user.username}`}
