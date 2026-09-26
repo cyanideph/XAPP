@@ -42,7 +42,7 @@ export function MessageComposer({ onSend, disabled, editValue, onEditCancel, onT
     <XStack gap="$2" p="$3" borderTopWidth={1} borderColor="$borderColor" style={{ alignItems: "center", flexWrap: "wrap" }}>
       {!editing && onPickMedia ? <XButton size="$2" chromeless disabled={disabled} onPress={() => { void onPickMedia(); }}>+ Media</XButton> : null}
       {!editing && onSendSticker ? (
-        <Menu>
+        <Menu native={false}>
           <Menu.Trigger asChild action="press">
             <XButton size="$2" chromeless disabled={disabled}>Stickers</XButton>
           </Menu.Trigger>
