@@ -191,7 +191,6 @@ export default function DiscoverScreen() {
                       </Menu>
                     </XStack>
                   } />
-                />
               )) : (
                 <ListItem title="No public rooms yet" subTitle="Create the first community room or refresh to check again." onPress={() => { void load(); }} />
               )}
