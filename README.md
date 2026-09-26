@@ -2,10 +2,11 @@
 
 Modern React Native social/chat client built with:
 
-- Expo
+- Expo 57
 - Expo Router
+- React Native 0.86
 - TypeScript
-- Tamagui
+- Tamagui 2.7.7
 - Supabase
 
 ## Design direction
@@ -14,59 +15,34 @@ Modern React Native social/chat client built with:
 
 Claymorphism has been intentionally removed from the design direction.
 
-## Theme
+## Backend integration
 
-X-App follows the device light/dark preference through Tamagui and React Native.
+The frontend uses the existing Supabase backend through:
 
-## Backend
-
-Supabase is wired through:
-
-- `EXPO_PUBLIC_SUPABASE_URL`
-- `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+- one shared Supabase client: `src/lib/supabase.ts`
+- shared RPC wrapper: `src/lib/backend.ts`
+- existing chat backend adapter: `src/features/chat/backend.ts`
+- Expo Router screens for auth, discovery, rooms, conversations and profile
 
 Never place a service-role key in the mobile app.
 
-### Existing chat architecture
+## Current frontend stage
 
-The chat implementation is already integrated and should be extended rather than duplicated.
+The frontend is connected to real backend data for authentication, public room discovery, online-user counts, favorites, notifications, profile data and realtime room/conversation messaging.
 
-- `src/lib/supabase.ts` — single Supabase client
-- `src/lib/backend.ts` — shared RPC wrapper
-- `src/features/chat/backend.ts` — room/conversation message RPCs
-- `src/features/chat/useChatMessages.ts` — shared message state, pagination, realtime and typing
-- `src/components/MessageList.tsx` — shared message UI
-- `src/components/MessageComposer.tsx` — shared composer
-- `app/room/[id].tsx` — room chat
-- `app/conversation/[id].tsx` — direct conversation chat
+Remaining frontend work is UI/product completion and verification; it must reuse the existing backend contracts rather than introduce duplicate services.
 
-The backend already provides room and conversation message RPCs, membership checks, read state, reactions, replies, and Realtime broadcasts. Do not introduce a second message service, Supabase client, or parallel realtime implementation without first auditing the existing path.
+## Verification
 
-## Current stage
+Before merging frontend work, verify:
 
-The project has moved beyond UI scaffolding. Authentication, Supabase data access, room/conversation messaging, pagination, profiles, presence, typing broadcasts and realtime message updates are implemented.
+1. TypeScript typecheck
+2. Expo Doctor/dependency health
+3. Expo preview/QR workflow
+4. Auth → profile provisioning
+5. Room discovery → room open → send/edit/reply/delete/reaction
+6. Conversation messaging
+7. Realtime updates and typing
+8. Light/dark rendering
 
-Remaining work should be treated as incremental hardening and feature completion rather than a fresh chat implementation.
-
-## Development checks
-
-Run:
-
-```bash
-npm run typecheck
-npx expo install --check
-npx expo-doctor@latest
-```
-
-CI runs the same validation before starting the Expo Go preview.
-
-## Security
-
-The mobile client uses only the Supabase anonymous/public key. Database authorization remains the source of truth for authenticated access to rooms, conversations and messages.
-
-Security-advisor findings involving existing SECURITY DEFINER functions and UzzapBot tables should be reviewed separately from chat changes so backend behavior is not unintentionally changed.
-
-## References
-
-- https://tamagui.dev/bento/cart
-- https://tamagui.dev/docs/guides/expo
+No backend schema or RPC changes are included in this frontend branch.
