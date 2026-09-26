@@ -284,6 +284,51 @@ export async function listNotifications(limit = 20, offset = 0) {
 }
 
 
+export type NotificationItem = {
+  id: string; user_id: string; actor_id: string | null; type: string;
+  payload: Record<string, unknown>; read_at: string | null; created_at: string;
+};
+export type NotificationPage = { items: NotificationItem[]; has_more: boolean; next_cursor: { created_at: string; id: string } | null };
+
+export async function listNotifications(limit = 50, beforeCreatedAt: string | null = null, beforeId: string | null = null) {
+  const page = await rpc<NotificationPage>('list_notifications', { p_before_created_at: beforeCreatedAt, p_before_id: beforeId, p_limit: limit });
+  return { items: Array.isArray(page?.items) ? page.items : [], has_more: Boolean(page?.has_more), next_cursor: page?.next_cursor ?? null };
+}
+export async function markAllNotificationsRead() { return rpc<number>('mark_all_notifications_read'); }
+export async function deleteNotification(notificationId: string) { return rpc<boolean>('delete_notification', { p_notification_id: notificationId }); }
+export async function clearNotifications() { return rpc<number>('clear_notifications'); }
+export type NotificationPreferences = {
+  user_id: string; follow_enabled: boolean; block_enabled: boolean; content_comment_enabled: boolean; comment_reply_enabled: boolean;
+  content_reaction_enabled: boolean; room_message_reaction_enabled: boolean; profile_comment_enabled: boolean; mention_enabled: boolean;
+  room_invite_enabled: boolean; conversation_invite_enabled: boolean;
+};
+export async function getNotificationPreferences() { return rpc<NotificationPreferences>('get_notification_preferences'); }
+export async function setNotificationPreferences(value: Omit<NotificationPreferences, 'user_id'>) {
+  return rpc<NotificationPreferences>('set_notification_preferences', {
+    p_follow_enabled:value.follow_enabled,p_block_enabled:value.block_enabled,p_content_comment_enabled:value.content_comment_enabled,
+    p_comment_reply_enabled:value.comment_reply_enabled,p_content_reaction_enabled:value.content_reaction_enabled,
+    p_room_message_reaction_enabled:value.room_message_reaction_enabled,p_profile_comment_enabled:value.profile_comment_enabled,
+    p_mention_enabled:value.mention_enabled,p_room_invite_enabled:value.room_invite_enabled,p_conversation_invite_enabled:value.conversation_invite_enabled,
+  });
+}
+export async function updateCurrentProfile(values: { username: string; display_name: string | null; bio: string | null; status_text: string | null }) {
+  if (!supabase) throw new Error('Supabase is not configured.');
+  const { data: u, error: ue } = await supabase.auth.getUser(); if (ue) throw ue; if (!u.user) throw new Error('You must be signed in.');
+  const { data, error } = await supabase.from('profiles').update({
+    username:values.username.trim().toLowerCase(),display_name:values.display_name?.trim()||null,bio:values.bio?.trim()||null,
+    status_text:values.status_text?.trim()||null,updated_at:new Date().toISOString(),
+  }).eq('id',u.user.id).select('id,username,display_name,avatar_path,bio,status_text').single();
+  if (error) throw error; return data;
+}
+export async function listFollowing(userId: string, limit = 50) { return rpc('list_following', { p_user_id:userId,p_limit:limit }); }
+export async function listFollowers(userId: string, limit = 50) { return rpc('list_followers', { p_user_id:userId,p_limit:limit }); }
+export async function listBlockedUsers(limit = 100) { return rpc('list_blocked_users', { p_limit:limit }); }
+export async function listProfileVisitors(limit = 50) { return rpc('list_profile_visitors', { p_limit:limit }); }
+export async function toggleFollow(targetUserId: string) { return rpc<boolean>('toggle_follow', { p_target_user_id:targetUserId }); }
+export async function toggleBlock(targetUserId: string) { return rpc<boolean>('toggle_block', { p_target_user_id:targetUserId }); }
+export async function toggleFavorite(targetUserId: string) { return rpc<boolean>('toggle_favorite', { p_target_user_id:targetUserId }); }
+
+
 export type ContentItem = {
   id: string;
   author_id: string;
