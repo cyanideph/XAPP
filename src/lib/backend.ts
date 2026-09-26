@@ -433,7 +433,14 @@ export async function searchContent(query: string, limit = 30, offset = 0) {
   return { items: Array.isArray(page?.items) ? page.items : [], has_more: Boolean(page?.has_more) };
 }
 export async function listCategoryContent(categoryId: string, limit = 50, beforeCreatedAt: string | null = null, beforeId: string | null = null) {
-  return rpc<{ items: ContentItem[]; has_more: boolean }>('list_category_content', { p_category_id: categoryId, p_limit: limit, p_before_created_at: beforeCreatedAt, p_before_id: beforeId });
+  const page = await rpc<{ items: ContentItem[]; has_more: boolean }>('list_category_content', { p_category_id: categoryId, p_limit: limit, p_before_created_at: beforeCreatedAt, p_before_id: beforeId });
+  const items = Array.isArray(page?.items) ? page.items : [];
+  if (!items.length || !supabase) return { items: [] as ContentItem[], has_more: Boolean(page?.has_more) };
+  const authorIds = [...new Set(items.map(item => item.author_id))];
+  const { data: profiles, error } = await supabase.from('profiles').select('id,username,display_name,avatar_path').in('id', authorIds);
+  if (error) throw error;
+  const byId = new Map((profiles ?? []).map(profile => [profile.id, profile]));
+  return { items: items.map(item => ({ ...item, author: byId.get(item.author_id) ?? null })), has_more: Boolean(page?.has_more) };
 }
 export async function addContentComment(contentId: string, body: string, parentId: string | null = null) {
   return rpc<ContentComment>('add_content_comment', { p_content_id: contentId, p_body: body.trim(), p_parent_id: parentId });
