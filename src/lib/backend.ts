@@ -276,13 +276,8 @@ export async function markNotificationRead(notificationId: string) {
 }
 
 export async function listFavorites(limit = 20, offset = 0) {
-  return rpc('list_favorite_users', { p_limit: limit, p_offset: offset });
+  return rpc<any[]>('list_favorite_users', { p_limit: limit, p_offset: offset });
 }
-
-export async function listNotifications(limit = 20, offset = 0) {
-  return rpc('list_notifications', { p_limit: limit, p_offset: offset });
-}
-
 
 export type NotificationItem = {
   id: string; user_id: string; actor_id: string | null; type: string;
@@ -320,14 +315,13 @@ export async function updateCurrentProfile(values: { username: string; display_n
   }).eq('id',u.user.id).select('id,username,display_name,avatar_path,bio,status_text').single();
   if (error) throw error; return data;
 }
-export async function listFollowing(userId: string, limit = 50) { return rpc('list_following', { p_user_id:userId,p_limit:limit }); }
-export async function listFollowers(userId: string, limit = 50) { return rpc('list_followers', { p_user_id:userId,p_limit:limit }); }
-export async function listBlockedUsers(limit = 100) { return rpc('list_blocked_users', { p_limit:limit }); }
-export async function listProfileVisitors(limit = 50) { return rpc('list_profile_visitors', { p_limit:limit }); }
+export async function listFollowing(userId: string, limit = 50) { return rpc<any[]>('list_following', { p_user_id:userId,p_limit:limit }); }
+export async function listFollowers(userId: string, limit = 50) { return rpc<any[]>('list_followers', { p_user_id:userId,p_limit:limit }); }
+export async function listBlockedUsers(limit = 100) { return rpc<any[]>('list_blocked_users', { p_limit:limit }); }
+export async function listProfileVisitors(limit = 50) { return rpc<any[]>('list_profile_visitors', { p_limit:limit }); }
 export async function toggleFollow(targetUserId: string) { return rpc<boolean>('toggle_follow', { p_target_user_id:targetUserId }); }
 export async function toggleBlock(targetUserId: string) { return rpc<boolean>('toggle_block', { p_target_user_id:targetUserId }); }
 export async function toggleFavorite(targetUserId: string) { return rpc<boolean>('toggle_favorite', { p_target_user_id:targetUserId }); }
-
 
 export type ContentItem = {
   id: string;
