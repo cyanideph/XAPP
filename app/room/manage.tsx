@@ -53,12 +53,22 @@ export default function ManageRoomScreen() {
 
     <YStack gap="$2">
       <Text fontSize="$6" fontWeight="800">Co-host requests ({requests.filter(r => r.status === 'pending').length})</Text>
-      <YGroup borderWidth={1} borderColor="$borderColor" rounded="$4" overflow="hidden">{requests.filter(r => r.status === 'pending').map(request => <YGroup.Item key={request.id}><ListItem title={request.requester?.display_name || request.requester?.username || `User ${request.requester_id.slice(0, 8)}`} subTitle="Pending co-host request" iconAfter={<XStack gap="$2">
-        <Text flex={1}>{request.requester?.display_name || request.requester?.username || `User ${request.requester_id.slice(0, 8)}`}</Text>
-        <XButton size="$2" disabled={busy !== null} onPress={() => { void run('accept-' + request.id, () => acceptRoomCoHostRequest(request.id)); }}>Accept</XButton>
-        <XButton size="$2" chromeless disabled={busy !== null} onPress={() => { void run('decline-' + request.id, () => declineRoomCoHostRequest(request.id)); }}>Decline</XButton>
-      </XStack>)}
-      </YGroup>}{!requests.some(r => r.status === 'pending') ? <Text color="$colorPress">No pending co-host requests.</Text> : null}
+      {requests.filter(r => r.status === 'pending').length ? (
+        <YGroup borderWidth={1} borderColor="$borderColor" rounded="$4" overflow="hidden">
+          {requests.filter(r => r.status === 'pending').map(request => (
+            <YGroup.Item key={request.id}>
+              <ListItem
+                title={request.requester?.display_name || request.requester?.username || `User ${request.requester_id.slice(0, 8)}`}
+                subTitle="Pending co-host request"
+                iconAfter={<XStack gap="$2">
+                  <XButton size="$2" disabled={busy !== null} onPress={() => { void run('accept-' + request.id, () => acceptRoomCoHostRequest(request.id)); }}>Accept</XButton>
+                  <XButton size="$2" chromeless disabled={busy !== null} onPress={() => { void run('decline-' + request.id, () => declineRoomCoHostRequest(request.id)); }}>Decline</XButton>
+                </XStack>}
+              />
+            </YGroup.Item>
+          ))}
+        </YGroup>
+      ) : <Text color="$colorPress">No pending co-host requests.</Text>}
     </YStack>
 
     <YStack gap="$2">
