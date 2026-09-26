@@ -112,7 +112,7 @@ export default function ContentDetail() {
                 >
                   Save
                 </XButton>
-                <XButton chromeless onPress={() => setEditing(false)}>Cancel</XButton>
+                <XButton chromeless icon={<XIcon name="close" size={18} color="#8B85FF" />} onPress={() => setEditing(false)}>Cancel</XButton>
               </XStack>
             </YStack>
           </YStack>
@@ -211,10 +211,11 @@ export default function ContentDetail() {
 
         {isOwner ? (
           <XStack gap="$2">
-            <XButton disabled={busy} onPress={() => setEditing(true)}>Edit</XButton>
+            <XButton disabled={busy} icon={<XIcon name="pencil" size={18} color="#FFFFFF" />} onPress={() => setEditing(true)}>Edit</XButton>
             <XButton
               disabled={busy}
               chromeless
+              icon={<XIcon name="trash" size={18} color="#8B85FF" />}
               onPress={() => Alert.alert('Delete post', 'Delete this post?', [
                 { text: 'Cancel' },
                 {
