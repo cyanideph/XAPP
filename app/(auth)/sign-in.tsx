@@ -10,21 +10,26 @@ export default function SignInScreen() {
   const [error, setError] = useState('');
 
   async function submit() {
-    if (!supabase || !email.trim() || !password) return;
+    const value = email.trim().toLowerCase();
+    if (!supabase || !value || !password || busy) return;
     setBusy(true); setError('');
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-    if (error) setError(error.message);
-    else router.replace('/(tabs)');
-    setBusy(false);
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email: value, password });
+      if (signInError) { setError(signInError.message); return; }
+      router.replace('/(tabs)');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to sign in.');
+    } finally { setBusy(false); }
   }
 
-  return <YStack flex={1} p="$5" style={{ justifyContent: "center" }} gap="$4" bg="$background">
+  return <YStack flex={1} p="$5" style={{ justifyContent: 'center' }} gap="$4" bg="$background">
     <YStack gap="$2"><Text fontSize="$3" fontWeight="800" color="$colorPress">X-APP</Text><H1 fontSize="$10">Welcome back.</H1><Paragraph color="$colorPress">Sign in to continue.</Paragraph></YStack>
     <YStack gap="$3">
-      <Input autoCapitalize="none" keyboardType="email-address" placeholder="Email" value={email} onChangeText={setEmail} />
-      <Input secureTextEntry placeholder="Password" value={password} onChangeText={setPassword} onSubmitEditing={submit} />
+      <Input autoCapitalize="none" autoCorrect={false} keyboardType="email-address" placeholder="Email" value={email} onChangeText={setEmail} />
+      <Input secureTextEntry placeholder="Password" value={password} onChangeText={setPassword} onSubmitEditing={() => { void submit(); }} />
       {error ? <Paragraph color="$red10">{error}</Paragraph> : null}
-      <Button onPress={submit} disabled={busy || !email.trim() || !password}>{busy ? 'Signing in…' : 'Sign in'}</Button>
+      <Button onPress={() => { void submit(); }} disabled={busy || !email.trim() || !password}>{busy ? 'Signing in…' : 'Sign in'}</Button>
+      <Button chromeless onPress={() => router.push('/(auth)/forgot-password')}>Forgot password?</Button>
       <Button chromeless onPress={() => router.push('/(auth)/sign-up')}>Create an account</Button>
     </YStack>
   </YStack>;
