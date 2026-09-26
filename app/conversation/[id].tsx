@@ -22,7 +22,7 @@ export default function ConversationScreen() {
     <YStack p="$4" borderBottomWidth={1} borderColor="$borderColor">
       <H1 fontSize="$7">Chat</H1>{error ? <Paragraph color="$red10">{error}</Paragraph> : null}
     </YStack>
-    {loading ? <YStack flex={1} ai="center" jc="center"><Spinner /></YStack> :
+    {loading ? <YStack flex={1} alignItems="center" justifyContent="center"><Spinner /></YStack> :
       <YStack flex={1}><MessageList messages={messages} currentUserId={session?.user.id} hasMore={hasMore} onLoadOlder={loadOlder} profiles={profiles} onReply={m => { setEditTarget(null); setReplyTarget(m); }} onEdit={m => { setReplyTarget(null); setEditTarget(m); }} onDelete={m => remove(m.id)} /></YStack>}
     {replyTarget ? <YStack px="$3" pt="$2"><Text fontSize="$2" color="$colorPress">Replying to: {replyTarget.body.slice(0, 80)}</Text></YStack> : null}
     <MessageComposer onSend={submit} disabled={sending || loading} editValue={editTarget?.body ?? null} onEditCancel={() => setEditTarget(null)} onTyping={onTyping} />
