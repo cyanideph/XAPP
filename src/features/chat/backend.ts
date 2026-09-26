@@ -34,6 +34,67 @@ export async function listRoomMembers(roomId: string, limit = 50, offset = 0) {
   return rows.map(row => ({ ...row, profile: profileById.get(row.user_id) ?? null }));
 }
 
+
+export type RoomCoHost = {
+  room_id: string;
+  user_id: string;
+  assigned_by: string;
+  created_at: string;
+};
+
+export async function listRoomCoHosts(roomId: string) {
+  return rpc<RoomCoHost[]>('list_room_co_hosts', { p_room_id: roomId });
+}
+
+export async function setRoomCoHost(roomId: string, targetUserId: string, enabled: boolean) {
+  return rpc('set_room_co_host', {
+    p_room_id: roomId,
+    p_target_user_id: targetUserId,
+    p_enabled: enabled,
+  });
+}
+
+export async function kickRoomMember(roomId: string, targetUserId: string, allowRejoin = true, reason: string | null = null) {
+  return rpc('kick_room_member', {
+    p_room_id: roomId,
+    p_target_user_id: targetUserId,
+    p_allow_rejoin: allowRejoin,
+    p_reason: reason,
+  });
+}
+
+export type RoomMemberModerationAction = 'warn' | 'mute' | 'kick' | 'ban' | 'unban';
+
+export async function moderateRoomMember(
+  roomId: string,
+  targetUserId: string,
+  action: RoomMemberModerationAction,
+  durationMinutes: number | null = null,
+  reason: string | null = null,
+) {
+  return rpc('moderate_room_member', {
+    p_room_id: roomId,
+    p_target_user_id: targetUserId,
+    p_action: action,
+    p_duration_minutes: durationMinutes,
+    p_reason: reason,
+  });
+}
+
+export async function strikeRoomMember(
+  roomId: string,
+  targetUserId: string,
+  durationMinutes: number | null = null,
+  reason: string | null = null,
+) {
+  return rpc('strike_room_member', {
+    p_room_id: roomId,
+    p_target_user_id: targetUserId,
+    p_duration_minutes: durationMinutes,
+    p_reason: reason,
+  });
+}
+
 export async function listRoomMessages(roomId: string, beforeCreatedAt: string | null = null, beforeId: string | null = null, limit = 50) {
   return rpc<MessagePage>('list_room_messages', { p_room_id: roomId, p_before_created_at: beforeCreatedAt, p_before_id: beforeId, p_limit: limit });
 }
