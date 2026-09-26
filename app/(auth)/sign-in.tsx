@@ -18,7 +18,7 @@ export default function SignInScreen() {
     setBusy(false);
   }
 
-  return <YStack flex={1} p="$5" jc="center" gap="$4" bg="$background">
+  return <YStack flex={1} p="$5" justifyContent="center" gap="$4" bg="$background">
     <YStack gap="$2"><Text fontSize="$3" fontWeight="800" color="$colorPress">X-APP</Text><H1 fontSize="$10">Welcome back.</H1><Paragraph color="$colorPress">Sign in to continue.</Paragraph></YStack>
     <YStack gap="$3">
       <Input autoCapitalize="none" keyboardType="email-address" placeholder="Email" value={email} onChangeText={setEmail} />
