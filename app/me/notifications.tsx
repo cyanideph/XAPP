@@ -1,7 +1,57 @@
-import { useCallback,useEffect,useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { Button,H1,Spinner,Text,YStack } from 'tamagui';
+import { H1, Spinner, Text, YStack } from 'tamagui';
 import { BentoCard } from '../../src/components/BentoCard';
-import { listNotifications,markAllNotificationsRead,markNotificationRead } from '../../src/lib/backend';
-export default function Notifications(){const[n,setN]=useState<any[]>([]);const[l,setL]=useState(true);const load=useCallback(async()=>{setL(true);try{setN((await listNotifications(50)).items)}finally{setL(false)}},[]);useEffect(()=>{void load()},[load]);return <ScrollView contentContainerStyle={{padding:20,paddingTop:64}}><YStack gap="$3"><H1>Notifications.</H1><XButton onPress={()=>void markAllNotificationsRead().then(load)}>Mark all read</XButton>{l?<Spinner/>:n.length?n.map(x=><BentoCard key={x.id} title={x.type} description={String(x.payload?.message??x.payload?.text??'You have a new notification.')} value={x.read_at?'READ':'NEW'}><Text fontWeight={x.read_at?'400':'800'}>{x.type}</Text><Text>{String(x.payload?.message??x.payload?.text??'You have a new notification.')}</Text><XButton size="$2"onPress={()=>void markNotificationRead(x.id).then(load)}>{x.read_at?'Read':'Mark read'}</XButton></BentoCard>):<BentoCard title="You're all caught up" description="New notifications will appear here."/>}<XButton chromeless onPress={()=>router.back()}>Back</XButton></YStack></ScrollView>}
+import { XButton } from '../../src/components/XButton';
+import { listNotifications, markAllNotificationsRead, markNotificationRead } from '../../src/lib/backend';
+
+export default function Notifications() {
+  const [n, setN] = useState<any[]>([]);
+  const [l, setL] = useState(true);
+
+  const load = useCallback(async () => {
+    setL(true);
+    try {
+      setN((await listNotifications(50)).items);
+    } finally {
+      setL(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  return (
+    <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 64 }}>
+      <YStack gap="$3">
+        <H1>Notifications.</H1>
+        <XButton onPress={() => void markAllNotificationsRead().then(load)}>Mark all read</XButton>
+        {l ? (
+          <Spinner />
+        ) : n.length ? (
+          n.map(x => (
+            <BentoCard
+              key={x.id}
+              title={x.type}
+              description={String(x.payload?.message ?? x.payload?.text ?? 'You have a new notification.')}
+              value={x.read_at ? 'READ' : 'NEW'}
+            >
+              <Text fontWeight={x.read_at ? '400' : '800'}>{x.type}</Text>
+              <Text>{String(x.payload?.message ?? x.payload?.text ?? 'You have a new notification.')}</Text>
+              <XButton size="$2" onPress={() => void markNotificationRead(x.id).then(load)}>
+                {x.read_at ? 'Read' : 'Mark read'}
+              </XButton>
+            </BentoCard>
+          ))
+        ) : (
+          <BentoCard title="You're all caught up" description="New notifications will appear here." />
+        )}
+        <XButton chromeless onPress={() => router.back()}>
+          Back
+        </XButton>
+      </YStack>
+    </ScrollView>
+  );
+}
