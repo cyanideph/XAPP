@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { Button, Card, H1, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
+import { Button, Card, H1, Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
 import { BentoCard } from '../../src/components/BentoCard';
 import { listOnlineUsers, listPublicChats, listPublicRooms, searchContent, type ContentItem } from '../../src/lib/backend';
 
