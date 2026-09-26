@@ -106,7 +106,7 @@ export default function DiscoverScreen() {
             </XStack>
             <XStack gap="$2" items="center">
               <XButton size="$3" chromeless={!selectedCategory} onPress={() => { void selectCategory(null); }}>All topics</XButton>
-              <Menu>
+              <Menu native={false}>
                 <Menu.Trigger asChild action="press">
                   <XButton size="$3" chromeless>Choose topic</XButton>
                 </Menu.Trigger>
@@ -180,7 +180,7 @@ export default function DiscoverScreen() {
                   iconAfter={
                     <XStack gap="$2" items="center">
                       <XButton size="$2" onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })}>Open</XButton>
-                      <Menu>
+                      <Menu native={false}>
                         <Menu.Trigger asChild action="press">
                           <XButton size="$2" chromeless>More</XButton>
                         </Menu.Trigger>
