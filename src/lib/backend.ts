@@ -44,7 +44,6 @@ export type Room = {
   members_can_invite: boolean;
 };
 
-
 export async function searchPublicRooms(query: string, limit = 20) {
   return rpc<Room[]>('search_public_rooms', { p_query: query.trim(), p_limit: limit });
 }
@@ -60,7 +59,9 @@ export async function getRoom(roomId: string) {
   return data as Room | null;
 }
 
-
+export async function joinRoom(roomId: string) {
+  return rpc('join_room', { p_room_id: roomId });
+}
 
 export type RoomInvite = {
   id: string;
