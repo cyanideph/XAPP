@@ -126,7 +126,7 @@ export default function DiscoverScreen() {
 
         {categories.length ? (
           <YStack gap="$3">
-            <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+            <XStack items="center" justify="space-between">
               <Text fontSize="$6" fontWeight="800">Topics</Text>
               <XButton size="$2" chromeless onPress={() => { void selectCategory(null); }}>Clear</XButton>
             </XStack>
@@ -190,7 +190,7 @@ export default function DiscoverScreen() {
 
             {results.length ? (
               <YStack gap="$3">
-                <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+                <XStack items="center" justify="space-between">
                   <Text fontSize="$6" fontWeight="800">{selectedCategory ? 'Topic posts' : 'Content results'}</Text>
                   <Text fontSize="$3" color="$colorPress">{results.length} loaded</Text>
                 </XStack>
@@ -206,7 +206,7 @@ export default function DiscoverScreen() {
             ) : null}
 
             <YStack gap="$3">
-              <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+              <XStack items="center" justify="space-between">
                 <Text fontSize="$6" fontWeight="800">Public rooms</Text>
                 <Text fontSize="$3" color="$colorPress">{rooms.length} loaded</Text>
               </XStack>
