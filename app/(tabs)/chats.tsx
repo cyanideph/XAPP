@@ -3,6 +3,7 @@ import { RefreshControl, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { Button, H1, Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
 import { BentoCard } from '../../src/components/BentoCard';
+import { XButton } from '../../src/components/XButton';
 import {
   listMyConversations,
   searchPublicRooms,
@@ -141,21 +142,21 @@ export default function ChatsScreen() {
                     description={invite.inviter ? `@${invite.inviter.username} invited you` : 'You have a pending conversation invitation.'}
                   >
                     <XStack gap="$2">
-                      <Button
+                      <XButton
                         size="$3"
                         disabled={inviteBusy === invite.invite_id}
                         onPress={() => { void respondToInvite(invite, true); }}
                       >
                         Accept
-                      </Button>
-                      <Button
+                      </XButton>
+                      <XButton
                         size="$3"
                         chromeless
                         disabled={inviteBusy === invite.invite_id}
                         onPress={() => { void respondToInvite(invite, false); }}
                       >
                         Decline
-                      </Button>
+                      </XButton>
                     </XStack>
                   </BentoCard>
                 ))}
@@ -197,7 +198,7 @@ export default function ChatsScreen() {
             <YStack gap="$3">
               <YStack gap="$2">
                 <Input value={roomQuery} onChangeText={setRoomQuery} placeholder="Search public rooms" returnKeyType="search" onSubmitEditing={() => { void searchRooms(); }} />
-                <Button size="$3" disabled={roomSearching} onPress={() => { void searchRooms(); }}>{roomSearching ? 'Searching…' : 'Search rooms'}</Button>
+                <XButton size="$3" disabled={roomSearching} onPress={() => { void searchRooms(); }}>{roomSearching ? 'Searching…' : 'Search rooms'}</XButton>
               </YStack>
               <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
                 <Text fontSize="$6" fontWeight="800">Public rooms</Text>
@@ -221,7 +222,7 @@ export default function ChatsScreen() {
               )}
             </YStack>
 
-            <Button chromeless onPress={() => router.push('/(tabs)/discover')}>Discover more rooms</Button>
+            <XButton chromeless onPress={() => router.push('/(tabs)/discover')}>Discover more rooms</XButton>
           </>
         )}
       </YStack>
