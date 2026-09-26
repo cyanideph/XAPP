@@ -61,6 +61,63 @@ export async function getRoom(roomId: string) {
 }
 
 
+
+export type RoomInvite = {
+  id: string;
+  room_id: string;
+  inviter_id: string;
+  invitee_id: string;
+  created_at: string;
+  accepted_at: string | null;
+  declined_at: string | null;
+  room: Pick<Room, 'id' | 'name' | 'province_code'> | null;
+  inviter: { id: string; username: string; display_name: string | null } | null;
+};
+
+export async function createRoomInvite(roomId: string, inviteeId: string) {
+  return rpc('create_room_invite', { p_room_id: roomId, p_invitee_id: inviteeId });
+}
+
+export async function respondRoomInvite(inviteId: string, accept: boolean) {
+  return rpc('respond_room_invite', { p_invite_id: inviteId, p_accept: accept });
+}
+
+export async function listPendingRoomInvites(limit = 50) {
+  if (!supabase) throw new Error('Supabase is not configured.');
+
+  const { data, error } = await supabase
+    .from('room_invites')
+    .select('id,room_id,inviter_id,invitee_id,created_at,accepted_at,declined_at')
+    .is('accepted_at', null)
+    .is('declined_at', null)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  const rows = data ?? [];
+  if (!rows.length) return [] as RoomInvite[];
+
+  const roomIds = [...new Set(rows.map(row => row.room_id))];
+  const inviterIds = [...new Set(rows.map(row => row.inviter_id))];
+
+  const [{ data: rooms, error: roomsError }, { data: profiles, error: profilesError }] = await Promise.all([
+    supabase.from('rooms').select('id,name,province_code').in('id', roomIds),
+    supabase.from('profiles').select('id,username,display_name').in('id', inviterIds),
+  ]);
+
+  if (roomsError) throw roomsError;
+  if (profilesError) throw profilesError;
+
+  const roomById = new Map((rooms ?? []).map(room => [room.id, room]));
+  const profileById = new Map((profiles ?? []).map(profile => [profile.id, profile]));
+
+  return rows.map(row => ({
+    ...row,
+    room: roomById.get(row.room_id) ?? null,
+    inviter: profileById.get(row.inviter_id) ?? null,
+  })) as RoomInvite[];
+}
+
 export async function listOnlineUsers(limit = 20, offset = 0, onlineFor = '2 minutes') {
   return rpc('list_online_users', {
     p_limit: limit,

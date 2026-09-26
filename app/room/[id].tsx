@@ -1,8 +1,9 @@
 import { useCallback, useState, useEffect } from 'react';
 import { useLocalSearchParams } from 'expo-router';
-import { H1, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
+import { Button, H1, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
 import { MessageComposer } from '../../src/components/MessageComposer';
 import { listOnlineRoomMembers, listRoomMembers, type RoomMember } from '../../src/features/chat/backend';
+import { createRoomInvite, listOnlineUsers } from '../../src/lib/backend';
 import { MessageList } from '../../src/components/MessageList';
 import { useSession } from '../../src/hooks/useSession';
 import { useChatMessages } from '../../src/features/chat/useChatMessages';
@@ -18,6 +19,10 @@ export default function RoomScreen() {
   const [members, setMembers] = useState<RoomMember[]>([]);
   const [membersOpen, setMembersOpen] = useState(false);
   const [membersLoading, setMembersLoading] = useState(false);
+  const [inviteCandidates, setInviteCandidates] = useState<Array<{ user_id: string; username: string; display_name: string | null }>>([]);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteBusy, setInviteBusy] = useState<string | null>(null);
   const [room, setRoom] = useState<Room | null>(null);
   const [roomError, setRoomError] = useState<string | null>(null);
   const loadRoom = useCallback(async () => {
@@ -41,6 +46,44 @@ export default function RoomScreen() {
     }
   }, [id]);
 
+  const loadInviteCandidates = useCallback(async () => {
+    setInviteLoading(true);
+    setRoomError(null);
+    try {
+      const [memberRows, onlineUsers] = await Promise.all([
+        listRoomMembers(id, 100, 0),
+        listOnlineUsers(50, 0),
+      ]);
+      const roomUserIds = new Set((Array.isArray(memberRows) ? memberRows : []).map(member => member.user_id));
+      const candidates = (Array.isArray(onlineUsers) ? onlineUsers : [])
+        .filter((user): user is { user_id: string; username: string; display_name: string | null } =>
+          typeof user?.user_id === 'string' && typeof user?.username === 'string' && !roomUserIds.has(user.user_id),
+        )
+        .map(user => ({ user_id: user.user_id, username: user.username, display_name: user.display_name ?? null }));
+      setMembers(Array.isArray(memberRows) ? memberRows : []);
+      setInviteCandidates(candidates);
+      setInviteOpen(true);
+    } catch (e) {
+      setRoomError(e instanceof Error ? e.message : 'Unable to load people to invite.');
+    } finally {
+      setInviteLoading(false);
+    }
+  }, [id]);
+
+  const inviteUser = useCallback(async (userId: string) => {
+    if (inviteBusy) return;
+    setInviteBusy(userId);
+    setRoomError(null);
+    try {
+      await createRoomInvite(id, userId);
+      setInviteCandidates(current => current.filter(user => user.user_id !== userId));
+    } catch (e) {
+      setRoomError(e instanceof Error ? e.message : 'Unable to send room invitation.');
+    } finally {
+      setInviteBusy(null);
+    }
+  }, [id, inviteBusy]);
+
   const submit = async (body: string) => {
     if (replyTarget) { await reply(replyTarget.id, body); setReplyTarget(null); }
     else if (editTarget) { await edit(editTarget.id, body); setEditTarget(null); }
@@ -57,9 +100,14 @@ export default function RoomScreen() {
     <YStack px="$3" pb="$2" gap="$2">
       <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
         <Text fontSize="$3" fontWeight="800">Members {members.length ? `(${members.length})` : ''}</Text>
-        <Text onPress={() => { if (membersOpen) setMembersOpen(false); else void loadMembers(); }} color="$colorPress">
-          {membersOpen ? 'Hide' : membersLoading ? 'Loading…' : 'Show'}
-        </Text>
+        <XStack gap="$2">
+          <Button size="$2" chromeless disabled={inviteLoading} onPress={() => { void loadInviteCandidates(); }}>
+            {inviteLoading ? 'Loading…' : 'Invite'}
+          </Button>
+          <Text onPress={() => { if (membersOpen) setMembersOpen(false); else void loadMembers(); }} color="$colorPress">
+            {membersOpen ? 'Hide' : membersLoading ? 'Loading…' : 'Show'}
+          </Text>
+        </XStack>
       </XStack>
       {membersOpen ? <YStack gap="$2">
         {members.map(member => {
@@ -70,6 +118,28 @@ export default function RoomScreen() {
           </XStack>;
         })}
         {!members.length ? <Text color="$colorPress">No members found.</Text> : null}
+      </YStack> : null}
+      {inviteOpen ? <YStack gap="$2" pt="$2">
+        <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+          <Text fontSize="$3" fontWeight="800">Invite people</Text>
+          <Text color="$colorPress" onPress={() => setInviteOpen(false)}>Hide</Text>
+        </XStack>
+        {inviteCandidates.map(user => (
+          <XStack key={user.user_id} gap="$2" style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+            <YStack flex={1}>
+              <Text fontWeight="700">{user.display_name || user.username}</Text>
+              <Text fontSize="$2" color="$colorPress">@{user.username}</Text>
+            </YStack>
+            <Button
+              size="$2"
+              disabled={inviteBusy === user.user_id}
+              onPress={() => { void inviteUser(user.user_id); }}
+            >
+              {inviteBusy === user.user_id ? 'Sending…' : 'Invite'}
+            </Button>
+          </XStack>
+        ))}
+        {!inviteCandidates.length ? <Text color="$colorPress">No online people available to invite.</Text> : null}
       </YStack> : null}
     </YStack>
     <MessageComposer onSend={submit} disabled={sending || loading || room?.view_only || room?.is_locked} editValue={editTarget?.body ?? null} onEditCancel={() => setEditTarget(null)} onTyping={onTyping} />
