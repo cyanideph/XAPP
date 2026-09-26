@@ -1,4 +1,5 @@
 import { Stack, usePathname, useRouter } from 'expo-router';
+import { useTheme } from 'tamagui';
 import { useEffect } from 'react';
 import { Spinner, YStack, TamaguiProvider } from 'tamagui';
 import { tamaguiConfig } from '../tamagui.config';
@@ -7,6 +8,7 @@ import { XAppThemeProvider, useXAppTheme } from '../src/theme/theme';
 
 function AppShell() {
   const { resolvedMode } = useXAppTheme();
+  const theme = useTheme();
   const { session, loading } = useSession();
   const pathname = usePathname();
   const router = useRouter();
@@ -25,7 +27,15 @@ function AppShell() {
           <Spinner color="$brandBackground" />
         </YStack>
       ) : (
-        <Stack screenOptions={{ headerShown: false }}>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            headerStyle: { backgroundColor: theme.background.val },
+            headerTintColor: theme.color.val,
+            headerTitleStyle: { color: theme.color.val, fontWeight: '700' },
+            headerShadowVisible: false,
+          }}
+        >
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="room/[id]" options={{ headerShown: true, title: 'Room' }} />
