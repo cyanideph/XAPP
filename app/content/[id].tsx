@@ -123,7 +123,7 @@ export default function ContentDetail() {
               {item.body ? <Paragraph fontSize="$5">{item.body}</Paragraph> : null}
               <XStack gap="$2" items="center">
                 <XButton disabled={busy} onPress={() => void act(() => toggleContentReaction(item.id, 'like'))}>Like</XButton>
-                <Menu>
+                <Menu native={false}>
                   <Menu.Trigger asChild action="press">
                     <XButton size="$2" chromeless disabled={busy}>More</XButton>
                   </Menu.Trigger>
@@ -185,7 +185,7 @@ export default function ContentDetail() {
                     title={<Text fontWeight="800">@{comment.author?.username || 'user'}</Text>}
                     subTitle={comment.body}
                     iconAfter={
-                      <Menu>
+                      <Menu native={false}>
                         <Menu.Trigger asChild action="press">
                           <XButton size="$2" chromeless>More</XButton>
                         </Menu.Trigger>
