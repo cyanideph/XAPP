@@ -1,41 +1,60 @@
 import { useCallback, useEffect, useState } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { Button, H1, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
+import { Button, H1, Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
 import { BentoCard } from '../../src/components/BentoCard';
-import { BentoStat } from '../../src/components/BentoStat';
-import { listOnlineUsers, listPublicChats } from '../../src/lib/backend';
+import {
+  checkIn,
+  createContent,
+  listContentCategories,
+  listContentFeed,
+  listFeaturedProfiles,
+  listOnlineUsers,
+  listPublicChats,
+  listPublicRooms,
+  toggleContentReaction,
+  toggleContentSave,
+} from '../../src/lib/backend';
 
 type OnlineUser = { user_id: string; username: string; display_name?: string | null; status_text?: string | null };
-type PublicChat = {
-  id: string;
-  name: string;
-  description?: string | null;
-  province_code?: string | null;
-  member_count?: number | string | null;
-  online_count?: number | string | null;
-};
+type PublicChat = { id: string; name: string; description?: string | null; province_code?: string | null; member_count?: number | string | null; online_count?: number | string | null };
+type Room = { id: string; name: string; description?: string | null; province_code?: string | null; kind?: string };
+type Content = Awaited<ReturnType<typeof listContentFeed>>['items'][number];
+type Featured = Awaited<ReturnType<typeof listFeaturedProfiles>>[number];
 
 export default function HomeScreen() {
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
-  const [rooms, setRooms] = useState<PublicChat[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [chats, setChats] = useState<PublicChat[]>([]);
+  const [feed, setFeed] = useState<Content[]>([]);
+  const [featured, setFeatured] = useState<Featured[]>([]);
+  const [categories, setCategories] = useState<Awaited<ReturnType<typeof listContentCategories>>>([]);
+  const [postBody, setPostBody] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [posting, setPosting] = useState(false);
+  const [checkingIn, setCheckingIn] = useState(false);
+  const [checkin, setCheckin] = useState<{ streak: number; points: number; already_checked_in: boolean } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async (isRefresh = false) => {
-    if (isRefresh) setRefreshing(true);
-    else setLoading(true);
+    if (isRefresh) setRefreshing(true); else setLoading(true);
     setError(null);
-
     try {
-      const [onlineData, roomData] = await Promise.all([
+      const [online, publicChats, publicRooms, content, people, contentCategories] = await Promise.all([
         listOnlineUsers(6, 0),
         listPublicChats(6, 0),
+        listPublicRooms(6, 0),
+        listContentFeed(10),
+        listFeaturedProfiles(6, 0),
+        listContentCategories(),
       ]);
-
-      setOnlineUsers(Array.isArray(onlineData) ? onlineData as OnlineUser[] : []);
-      setRooms(Array.isArray(roomData) ? roomData as PublicChat[] : []);
+      setOnlineUsers(Array.isArray(online) ? online as OnlineUser[] : []);
+      setChats(Array.isArray(publicChats) ? publicChats as PublicChat[] : []);
+      setRooms(Array.isArray(publicRooms) ? publicRooms as Room[] : []);
+      setFeed(content.items);
+      setFeatured(people);
+      setCategories(contentCategories);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to load Home data.');
     } finally {
@@ -46,38 +65,114 @@ export default function HomeScreen() {
 
   useEffect(() => { void load(); }, [load]);
 
+  async function publish() {
+    const body = postBody.trim();
+    if (!body || posting) return;
+    setPosting(true);
+    setError(null);
+    try {
+      await createContent('post', null, body);
+      setPostBody('');
+      await load(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to publish.');
+    } finally {
+      setPosting(false);
+    }
+  }
+
+  async function doCheckIn() {
+    if (checkingIn) return;
+    setCheckingIn(true);
+    setError(null);
+    try {
+      const result = await checkIn();
+      setCheckin(result);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to check in.');
+    } finally {
+      setCheckingIn(false);
+    }
+  }
+
+  async function react(contentId: string) {
+    try { await toggleContentReaction(contentId, 'like'); await load(true); }
+    catch (e) { setError(e instanceof Error ? e.message : 'Unable to react.'); }
+  }
+
+  async function save(contentId: string) {
+    try { await toggleContentSave(contentId); await load(true); }
+    catch (e) { setError(e instanceof Error ? e.message : 'Unable to save.'); }
+  }
+
   return (
     <ScrollView
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { void load(true); }} />}
-      contentContainerStyle={{ padding: 20, paddingTop: 64, paddingBottom: 32 }}
+      contentContainerStyle={{ padding: 20, paddingTop: 64, paddingBottom: 40 }}
     >
       <YStack gap="$5">
         <YStack gap="$2">
           <Text fontSize="$3" color="$colorPress" fontWeight="800" letterSpacing={1}>X-APP</Text>
           <H1 fontSize="$10" fontWeight="900">Your space.</H1>
-          <Paragraph color="$colorPress">People, rooms and conversations at a glance.</Paragraph>
+          <Paragraph color="$colorPress">People, rooms, conversations and community posts at a glance.</Paragraph>
         </YStack>
 
-        {error ? (
-          <BentoCard
-            title="Unable to load Home"
-            description={error}
-            onPress={() => { void load(); }}
-          />
+        {error ? <BentoCard title="Unable to complete Home action" description={error} onPress={() => { void load(); }} /> : null}
+
+        <BentoCard title="Check in" description={checkin ? (checkin.already_checked_in ? `Already checked in · ${checkin.streak} day streak · +${checkin.points} points` : `Checked in · ${checkin.streak} day streak · +${checkin.points} points`) : 'Keep your community streak going.'}>
+          <Button onPress={() => { void doCheckIn(); }} disabled={checkingIn || Boolean(checkin?.already_checked_in)}>
+            {checkingIn ? 'Checking in…' : checkin?.already_checked_in ? 'Done today' : 'Check in'}
+          </Button>
+        </BentoCard>
+
+        <BentoCard title="Share something" description="Post a short update to the community.">
+          <YStack gap="$2">
+            <Input value={postBody} onChangeText={setPostBody} placeholder="What’s happening?" multiline />
+            <Button onPress={() => { void publish(); }} disabled={posting || !postBody.trim()}>
+              {posting ? 'Posting…' : 'Post'}
+            </Button>
+          </YStack>
+        </BentoCard>
+
+        {!loading && categories.length ? (
+          <YStack gap="$2">
+            <Text fontSize="$6" fontWeight="800">Topics</Text>
+            <XStack gap="$2" flexWrap="wrap">
+              {categories.slice(0, 8).map(category => <Button key={category.id} size="$2" chromeless>{category.name}</Button>)}
+            </XStack>
+          </YStack>
+        ) : null}
+
+        <YStack gap="$3">
+          <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text fontSize="$6" fontWeight="800">Community feed</Text>
+            <Button size="$2" chromeless onPress={() => router.push('/(tabs)/discover')}>Discover</Button>
+          </XStack>
+          {loading ? <Spinner /> : feed.length ? feed.map(item => (
+            <BentoCard
+              key={item.id}
+              title={item.author?.display_name || item.author?.username || 'Community member'}
+              description={item.body || item.title || 'Community post'}
+              value={item.kind}
+            >
+              <XStack gap="$2">
+                <Button size="$2" onPress={() => { void react(item.id); }}>Like</Button>
+                <Button size="$2" chromeless onPress={() => { void save(item.id); }}>Save</Button>
+              </XStack>
+            </BentoCard>
+          )) : <BentoCard title="No community posts yet" description="Be the first to share something." />}
+        </YStack>
+
+        {!loading && featured.length ? (
+          <YStack gap="$3">
+            <Text fontSize="$6" fontWeight="800">Featured people</Text>
+            {featured.map(item => <BentoCard key={item.profile.id} title={item.profile.display_name || item.profile.username} description={item.profile.status_text || item.profile.bio || `@${item.profile.username}`} />)}
+          </YStack>
         ) : null}
 
         <XStack gap="$3">
-          <BentoCard title="People" flex={1}>
-            {loading ? <Spinner /> : <BentoStat label="recently active" value={onlineUsers.length} />}
-          </BentoCard>
-          <BentoCard title="Rooms" flex={1}>
-            {loading ? <Spinner /> : <BentoStat label="public rooms shown" value={rooms.length} />}
-          </BentoCard>
-        </XStack>
-
-        <XStack gap="$3">
-          <BentoCard title="Discover" description="Find people and public rooms." onPress={() => router.push('/(tabs)/discover')} />
-          <BentoCard title="Chats" description="Open conversations and realtime rooms." onPress={() => router.push('/(tabs)/chats')} />
+          <BentoCard title="People" flex={1}>{loading ? <Spinner /> : <Text fontSize="$9" fontWeight="800">{onlineUsers.length}</Text>}</BentoCard>
+          <BentoCard title="Rooms" flex={1}>{loading ? <Spinner /> : <Text fontSize="$9" fontWeight="800">{rooms.length}</Text>}</BentoCard>
         </XStack>
 
         <YStack gap="$3">
@@ -85,16 +180,9 @@ export default function HomeScreen() {
             <Text fontSize="$6" fontWeight="800">Recently active</Text>
             <Button size="$2" chromeless onPress={() => router.push('/(tabs)/discover')}>See all</Button>
           </XStack>
-
           {loading ? <Spinner /> : onlineUsers.length ? onlineUsers.map(user => (
-            <BentoCard
-              key={user.user_id}
-              title={user.display_name || user.username}
-              description={user.status_text ? `@${user.username} · ${user.status_text}` : `@${user.username}`}
-            />
-          )) : (
-            <BentoCard title="No one else is recently active" description="Refresh to check the community again." />
-          )}
+            <BentoCard key={user.user_id} title={user.display_name || user.username} description={user.status_text ? `@${user.username} · ${user.status_text}` : `@${user.username}`} />
+          )) : <BentoCard title="No one else is recently active" description="Refresh to check the community again." />}
         </YStack>
 
         <YStack gap="$3">
@@ -102,27 +190,22 @@ export default function HomeScreen() {
             <Text fontSize="$6" fontWeight="800">Public rooms</Text>
             <Button size="$2" chromeless onPress={() => router.push('/(tabs)/discover')}>See all</Button>
           </XStack>
-
           {loading ? <Spinner /> : rooms.length ? rooms.map(room => (
-            <BentoCard
-              key={room.id}
-              title={room.name}
-              description={
-                room.province_code
-                  ? `${room.province_code} · ${room.description ?? 'Open realtime room'}`
-                  : (room.description ?? 'Open realtime room')
-              }
-              value={
-                room.member_count != null || room.online_count != null
-                  ? `${room.member_count ?? 0} members · ${room.online_count ?? 0} online`
-                  : undefined
-              }
-              onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })}
-            />
-          )) : (
-            <BentoCard title="No public rooms yet" description="Refresh to check the community again." />
-          )}
+            <BentoCard key={room.id} title={room.name} description={room.province_code ? `${room.province_code} · ${room.description ?? 'Open realtime room'}` : (room.description ?? 'Open realtime room')} onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })} />
+          )) : <BentoCard title="No public rooms yet" description="Refresh to check the community again." />}
         </YStack>
+
+        <YStack gap="$3">
+          <Text fontSize="$6" fontWeight="800">Public chats</Text>
+          {loading ? <Spinner /> : chats.length ? chats.map(chat => (
+            <BentoCard key={chat.id} title={chat.name} description={chat.province_code ? `${chat.province_code} · ${chat.description ?? 'Public conversation'}` : (chat.description ?? 'Public conversation')} value={`${chat.member_count ?? 0} members · ${chat.online_count ?? 0} online`} onPress={() => router.push({ pathname: '/room/[id]', params: { id: chat.id } })} />
+          )) : <BentoCard title="No public chats yet" description="Discover more community spaces." />}
+        </YStack>
+
+        <XStack gap="$3">
+          <BentoCard title="Discover" description="Find people and community spaces." onPress={() => router.push('/(tabs)/discover')} />
+          <BentoCard title="Chats" description="Open conversations and realtime rooms." onPress={() => router.push('/(tabs)/chats')} />
+        </XStack>
       </YStack>
     </ScrollView>
   );
