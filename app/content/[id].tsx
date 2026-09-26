@@ -3,7 +3,6 @@ import { Alert, ScrollView } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
 import { XButton } from '../../src/components/XButton';
-import { BentoCard } from '../../src/components/BentoCard';
 import {
   addContentComment,
   deleteContent,
@@ -94,7 +93,9 @@ export default function ContentDetail() {
         {error ? <Paragraph color="$red10">{error}</Paragraph> : null}
 
         {editing ? (
-          <BentoCard title="Edit post" description="Update your community post.">
+          <YStack gap="$3">
+<Text fontSize="$5" fontWeight="800">Edit post</Text>
+<Paragraph color="$colorPress">Update your community post.</Paragraph>
             <YStack gap="$3">
               <Input value={editTitle} onChangeText={setEditTitle} placeholder="Title" />
               <Input value={editBody} onChangeText={setEditBody} multiline placeholder="Post text" />
@@ -112,7 +113,7 @@ export default function ContentDetail() {
                 <XButton chromeless onPress={() => setEditing(false)}>Cancel</XButton>
               </XStack>
             </YStack>
-          </BentoCard>
+          </YStack>
         ) : (
           <BentoCard title={item.title || 'Community post'} description={`@${item.author?.username || 'user'} · ${item.kind}`}>
             <YStack gap="$3">
@@ -123,11 +124,13 @@ export default function ContentDetail() {
                 <XButton disabled={busy} chromeless onPress={() => void act(() => repostContent(item.id))}>Repost</XButton>
               </XStack>
             </YStack>
-          </BentoCard>
+          </YStack>
         )}
 
         {item.kind === 'poll' ? (
-          <BentoCard title="Poll" description="Choose an option.">
+          <YStack gap="$3">
+<Text fontSize="$5" fontWeight="800">Poll</Text>
+<Paragraph color="$colorPress">Choose an option.</Paragraph>
             <YStack gap="$2">
               {pollOptions.map(option => (
                 <XButton key={option.id} disabled={busy} onPress={() => void act(() => voteContentPoll(item.id, option.id))}>
@@ -135,10 +138,12 @@ export default function ContentDetail() {
                 </XButton>
               ))}
             </YStack>
-          </BentoCard>
+          </YStack>
         ) : null}
 
-        <BentoCard title="Comments" description="Join the conversation.">
+        <YStack gap="$3">
+<Text fontSize="$5" fontWeight="800">Comments</Text>
+<Paragraph color="$colorPress">Join the conversation.</Paragraph>
           <YStack gap="$2">
             <Input value={body} onChangeText={setBody} placeholder={replyTo ? 'Write a reply' : 'Write a comment'} />
             <XStack gap="$2">
@@ -177,7 +182,7 @@ export default function ContentDetail() {
               </YStack>
             ))}
           </YStack>
-        </BentoCard>
+        </YStack>
 
         {isOwner ? (
           <XStack gap="$2">
