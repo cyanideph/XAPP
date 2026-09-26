@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { H1, Input, ListItem, Paragraph, Separator, Spinner, Text, YGroup, XStack, YStack } from 'tamagui';
+import { H1, Input, ListItem, Menu, Paragraph, Separator, Spinner, Text, YGroup, XStack, YStack } from 'tamagui';
 import { XButton } from '../../src/components/XButton';
 import {
   checkIn,
@@ -138,11 +138,20 @@ export default function HomeScreen() {
               <Text fontSize="$6" fontWeight="800">Topics</Text>
               <XButton size="$2" chromeless onPress={() => router.push('/(tabs)/discover')}>Explore</XButton>
             </XStack>
-            <XStack gap="$2" flexWrap="wrap">
-              {categories.slice(0, 8).map(category => (
-                <XButton key={category.id} size="$2" chromeless>{category.name}</XButton>
-              ))}
-            </XStack>
+            <Menu>
+              <Menu.Trigger asChild action="press">
+                <XButton size="$3" chromeless>Browse topics</XButton>
+              </Menu.Trigger>
+              <Menu.Portal>
+                <Menu.Content>
+                  {categories.slice(0, 8).map(category => (
+                    <Menu.Item key={category.id} onSelect={() => router.push('/(tabs)/discover')}>
+                      <Menu.ItemTitle>{category.name}</Menu.ItemTitle>
+                    </Menu.Item>
+                  ))}
+                </Menu.Content>
+              </Menu.Portal>
+            </Menu>
           </YStack>
         ) : null}
 
@@ -157,7 +166,15 @@ export default function HomeScreen() {
             <XButton size="$2" chromeless onPress={() => router.push('/(tabs)/discover')}>Discover</XButton>
           </XStack>
           {loading ? <Spinner /> : feed.length ? feed.map(item => (
-            <ListItem key={item.id} title={item.author?.display_name || item.author?.username || 'Community member'} subTitle={(item.body || item.title || 'Community post') + ' · ' + item.kind} iconAfter={<XStack gap="$2"><XButton size="$2" onPress={() => { void react(item.id); }}>Like</XButton><XButton size="$2" chromeless onPress={() => { void save(item.id); }}>Save</XButton></XStack>} onPress={() => router.push({ pathname: '/content/[id]', params: { id: item.id } })} />
+            <ListItem key={item.id} title={item.author?.display_name || item.author?.username || 'Community member'} subTitle={(item.body || item.title || 'Community post') + ' · ' + item.kind} iconAfter={<XStack gap="$2" items="center">
+              <XButton size="$2" onPress={() => { void react(item.id); }}>Like</XButton>
+              <Menu>
+                <Menu.Trigger asChild action="press"><XButton size="$2" chromeless>More</XButton></Menu.Trigger>
+                <Menu.Portal><Menu.Content>
+                  <Menu.Item onSelect={() => { void save(item.id); }}><Menu.ItemTitle>Save</Menu.ItemTitle></Menu.Item>
+                </Menu.Content></Menu.Portal>
+              </Menu>
+            </XStack>} onPress={() => router.push({ pathname: '/content/[id]', params: { id: item.id } })} />
           )) : <ListItem title="No community posts yet" subTitle="Be the first to share something." />}
         </YStack>
 
