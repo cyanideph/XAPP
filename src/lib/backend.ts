@@ -354,6 +354,31 @@ export type FeaturedProfile = {
   position: number;
 };
 
+export async function getContent(contentId: string) {
+  if (!supabase) throw new Error('Supabase is not configured.');
+  const { data, error } = await supabase
+    .from('contents')
+    .select('id,author_id,room_id,kind,title,body,metadata,is_published,is_featured,is_hidden,created_at,updated_at')
+    .eq('id', contentId)
+    .eq('is_published', true)
+    .eq('is_hidden', false)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles').select('id,username,display_name,avatar_path').eq('id', data.author_id).maybeSingle();
+  if (profileError) throw profileError;
+  return { ...data, author: profile ?? null } as ContentItem;
+}
+
+export type PollOption = { id: string; content_id: string; label: string; position: number };
+export async function listPollOptions(contentId: string) {
+  if (!supabase) throw new Error('Supabase is not configured.');
+  const { data, error } = await supabase.from('poll_options').select('id,content_id,label,position').eq('content_id', contentId).order('position', { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as PollOption[];
+}
+
 export async function listContentFeed(limit = 20, beforeCreatedAt: string | null = null, beforeId: string | null = null) {
   const page = await rpc<{ items: ContentItem[]; has_more: boolean }>('list_content_feed', {
     p_room_id: null,
@@ -408,7 +433,14 @@ export async function searchContent(query: string, limit = 30, offset = 0) {
   return { items: Array.isArray(page?.items) ? page.items : [], has_more: Boolean(page?.has_more) };
 }
 export async function listCategoryContent(categoryId: string, limit = 50, beforeCreatedAt: string | null = null, beforeId: string | null = null) {
-  return rpc<{ items: ContentItem[]; has_more: boolean }>('list_category_content', { p_category_id: categoryId, p_limit: limit, p_before_created_at: beforeCreatedAt, p_before_id: beforeId });
+  const page = await rpc<{ items: ContentItem[]; has_more: boolean }>('list_category_content', { p_category_id: categoryId, p_limit: limit, p_before_created_at: beforeCreatedAt, p_before_id: beforeId });
+  const items = Array.isArray(page?.items) ? page.items : [];
+  if (!items.length || !supabase) return { items: [] as ContentItem[], has_more: Boolean(page?.has_more) };
+  const authorIds = [...new Set(items.map(item => item.author_id))];
+  const { data: profiles, error } = await supabase.from('profiles').select('id,username,display_name,avatar_path').in('id', authorIds);
+  if (error) throw error;
+  const byId = new Map((profiles ?? []).map(profile => [profile.id, profile]));
+  return { items: items.map(item => ({ ...item, author: byId.get(item.author_id) ?? null })), has_more: Boolean(page?.has_more) };
 }
 export async function addContentComment(contentId: string, body: string, parentId: string | null = null) {
   return rpc<ContentComment>('add_content_comment', { p_content_id: contentId, p_body: body.trim(), p_parent_id: parentId });
