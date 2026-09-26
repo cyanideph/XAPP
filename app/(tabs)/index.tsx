@@ -169,7 +169,7 @@ export default function HomeScreen() {
                 <Text fontSize="$6" fontWeight="800">Featured people</Text>
                 <XButton size="$2" chromeless onPress={() => router.push('/(tabs)/discover')}>Discover</XButton>
               </XStack>
-              <YGroup borderWidth="1" borderColor="$borderColor" rounded="$4" overflow="hidden">
+              <YGroup borderWidth={1} borderColor="$borderColor" rounded="$4" overflow="hidden">
                 {featured.map(item => (
                   <YGroup.Item key={item.profile.id}><ListItem key={item.profile.id} title={item.profile.display_name || item.profile.username} subTitle={item.profile.status_text || item.profile.bio || `@${item.profile.username}`} iconAfter={<Text color="$colorPress">›</Text>} onPress={() => router.push({ pathname: '/me/view-profile', params: { id: item.profile.id } })} /></YGroup.Item>
                 ))}
