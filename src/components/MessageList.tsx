@@ -14,9 +14,10 @@ type Props = {
   onReact?: (message: ChatMessage, reaction: string) => Promise<void>;
   onReport?: (message: ChatMessage) => void;
   profiles?: Record<string, ChatProfile>;
+  pinnedMessageId?: string | null;
 };
 
-export function MessageList({ messages, currentUserId, hasMore, loadingOlder, onLoadOlder, onReply, onDelete, onReact, onEdit, onReport, profiles = {} }: Props) {
+export function MessageList({ messages, currentUserId, hasMore, loadingOlder, onLoadOlder, onReply, onDelete, onReact, onEdit, onReport, profiles = {}, pinnedMessageId }: Props) {
   return (
     <ScrollView contentContainerStyle={{ padding: 16, gap: 10 }}>
       {hasMore ? <Button size="$3" onPress={onLoadOlder} disabled={loadingOlder}>{loadingOlder ? 'Loading…' : 'Load older messages'}</Button> : null}
@@ -37,8 +38,14 @@ export function MessageList({ messages, currentUserId, hasMore, loadingOlder, on
               p="$3"
             >
               <Text fontSize="$2" color={own ? '$background' : '$colorPress'}>{own ? 'You' : (profiles[message.sender_id]?.display_name || profiles[message.sender_id]?.username || 'Member')}</Text>
+              {pinnedMessageId === message.id ? <Text fontSize="$2" fontWeight="800" color={own ? '$background' : '$colorPress'}>Pinned</Text> : null}
               {message.reply_to_id ? <Text fontSize="$2" color={own ? '$background' : '$colorPress'}>Replying to a message</Text> : null}
-              <Paragraph color={own ? '$background' : '$color'}>{message.body}</Paragraph>
+              {message.kind === 'sticker'
+                ? <Text fontSize="$7">{String(message.metadata?.sticker_id ?? 'sticker')}</Text>
+                : <Paragraph color={own ? '$background' : '$color'}>{message.body ?? ''}</Paragraph>}
+              {message.kind && message.kind !== 'text' && message.kind !== 'sticker'
+                ? <Text fontSize="$2" color={own ? '$background' : '$colorPress'}>{message.kind}</Text>
+                : null}
               {message.edited_at ? <Text fontSize="$2" color={own ? '$background' : '$colorPress'}>edited</Text> : null}
               <XStack gap="$2" mt="$2" flexWrap="wrap">
                 {onReply ? <Button size="$2" chromeless onPress={() => onReply(message)}>Reply</Button> : null}
