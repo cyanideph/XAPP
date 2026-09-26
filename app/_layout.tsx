@@ -16,6 +16,7 @@ function AppNavigation() {
         headerTintColor: theme.color.val,
         headerTitleStyle: { color: theme.color.val, fontWeight: '700' },
         headerShadowVisible: false,
+        contentStyle: { backgroundColor: theme.background.val },
       }}
     >
       <Stack.Screen name="(auth)" />
