@@ -11,12 +11,18 @@ export function XButton({ loading = false, disabled, children, chromeless, ...pr
       {...props}
       chromeless={chromeless}
       disabled={disabled || loading}
+      {...(chromeless ? {} : {
+        bg: '$brandBackground',
+        color: '$brandColor',
+        borderColor: '$brandBackground',
+      })}
       rounded="$6"
       fontWeight="700"
-      pressStyle={{ opacity: 0.88, scale: 0.985 }}
-      hoverStyle={chromeless ? undefined : { background: '$backgroundHover' }}
-      focusStyle={{ borderColor: '$borderColorFocus' }}
-      focusVisibleStyle={{ borderColor: '$borderColorFocus', outlineColor: '$outlineColor', outlineWidth: 2, outlineStyle: 'solid' }}
+      pressStyle={{ opacity: 0.88, scale: 0.985, bg: chromeless ? '$backgroundPress' : '$brandBackgroundPress' }}
+      hoverStyle={chromeless ? undefined : { background: '$brandBackgroundHover', borderColor: '$brandBackgroundHover' }}
+      focusStyle={{ borderColor: '$focusRing' }}
+      focusVisibleStyle={{ borderColor: '$focusRing', outlineColor: '$outlineColor', outlineWidth: 2, outlineStyle: 'solid' }}
+      disabledStyle={{ opacity: 0.5 }}
     >
       {loading ? 'Loading…' : children}
     </Button>
