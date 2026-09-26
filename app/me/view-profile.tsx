@@ -137,7 +137,7 @@ export default function PublicProfileScreen() {
             {currentUserId !== profile.id ? (
               <XStack gap="$2" flexWrap="wrap">
                 <XButton disabled={busy !== ''} onPress={() => void runAction('follow')}>{state.following ? 'Unfollow' : 'Follow'}</XButton>
-                <Menu><Menu.Trigger asChild action="press"><XButton size="$2" chromeless disabled={busy !== ''}>More</XButton></Menu.Trigger><Menu.Portal><Menu.Content><Menu.Item onSelect={() => { void runAction('favorite'); }}><Menu.ItemTitle>{state.favorite ? 'Unfavorite' : 'Favorite'}</Menu.ItemTitle></Menu.Item><Menu.Item destructive={!state.blocked} onSelect={() => { void runAction('block'); }}><Menu.ItemTitle>{state.blocked ? 'Unblock' : 'Block'}</Menu.ItemTitle></Menu.Item></Menu.Content></Menu.Portal></Menu>
+                <Menu native={false}><Menu.Trigger asChild action="press"><XButton size="$2" chromeless disabled={busy !== ''}>More</XButton></Menu.Trigger><Menu.Portal><Menu.Content><Menu.Item onSelect={() => { void runAction('favorite'); }}><Menu.ItemTitle>{state.favorite ? 'Unfavorite' : 'Favorite'}</Menu.ItemTitle></Menu.Item><Menu.Item destructive={!state.blocked} onSelect={() => { void runAction('block'); }}><Menu.ItemTitle>{state.blocked ? 'Unblock' : 'Block'}</Menu.ItemTitle></Menu.Item></Menu.Content></Menu.Portal></Menu>
               </XStack>
             ) : (
               <Text color="$colorPress">This is your profile.</Text>
@@ -164,7 +164,7 @@ export default function PublicProfileScreen() {
                             <Text fontWeight="800">@{comment.author?.username || 'user'}</Text>
                             <Paragraph>{comment.body}</Paragraph>
                           </YStack>
-                          <Menu>
+                          <Menu native={false}>
                             <Menu.Trigger asChild action="press"><XButton size="$2" chromeless>More</XButton></Menu.Trigger>
                             <Menu.Portal><Menu.Content>
                               <Menu.Item onSelect={() => { void voteComment(comment.id, 1); }}><Menu.ItemTitle>Upvote ({vote ? vote.upvotes : 0})</Menu.ItemTitle></Menu.Item>
