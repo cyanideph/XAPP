@@ -57,9 +57,31 @@ export async function listRoomCoHostRequests(roomId: string) {
     .order('created_at', { ascending: false })
     .limit(50);
   if (error) throw error;
-  return data ?? [];
+  const rows = data ?? [];
+  if (!rows.length) return rows;
+  const requesterIds = [...new Set(rows.map(row => row.requester_id))];
+  const { data: profiles, error: profileError } = await supabase
+    .from('profiles')
+    .select('id,username,display_name')
+    .in('id', requesterIds);
+  if (profileError) throw profileError;
+  const profileById = new Map((profiles ?? []).map(profile => [profile.id, profile]));
+  return rows.map(row => ({ ...row, requester: profileById.get(row.requester_id) ?? null }));
 }
 
 export async function moderateReportedMessage(messageId: string) {
   return rpc('moderate_room_message', { p_message_id: messageId, p_action: 'delete', p_reason: 'Removed after Room report review' });
+}
+
+export async function searchRoomInviteCandidates(query: string, limit = 50) {
+  if (!supabase) throw new Error('Supabase is not configured.');
+  const value = query.trim();
+  if (value.length < 2) return [] as Array<{ user_id: string; username: string; display_name: string | null }>;
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id,username,display_name')
+    .or(`username.ilike.%${value}%,display_name.ilike.%${value}%`)
+    .limit(limit);
+  if (error) throw error;
+  return (data ?? []).map(row => ({ user_id: row.id, username: row.username, display_name: row.display_name ?? null }));
 }

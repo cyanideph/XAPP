@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { deleteConversationMessage, deleteRoomMessage, editConversationMessage, editRoomMessage, joinRoom, leaveRoom, listConversationMessages, listProfiles, listRoomMessages, markConversationRead, markRoomRead, replyToConversationMessage, replyToRoomMessage, sendConversationMessage, sendRoomMessage, sendRoomSticker, toggleRoomReaction, touchRoomPresence } from './backend';
+import { deleteConversationMessage, deleteRoomMessage, deleteRoomMedia, editConversationMessage, editRoomMessage, joinRoom, leaveRoom, listConversationMessages, listProfiles, listRoomMessages, markConversationRead, markRoomRead, replyToConversationMessage, replyToRoomMessage, sendConversationMessage, sendRoomMessage, sendRoomSticker, toggleRoomReaction, touchRoomPresence } from './backend';
 import type { ChatMessage, ChatProfile } from './types';
 
 type Props = { scope: 'room' | 'conversation'; id: string };
@@ -225,7 +225,18 @@ export function useChatMessages({ scope, id }: Props) {
 
   const remove = useCallback(async (messageId: string) => {
     const message = scope === 'room' ? await deleteRoomMessage(messageId) : await deleteConversationMessage(messageId);
-    if (message) setMessages(current => current.map(m => m.id === message.id ? message : m));
+    if (message) {
+      setMessages(current => current.map(m => m.id === message.id ? message : m));
+      if (scope === 'room' && message.kind === 'media') {
+        const metadata = message.metadata ?? {};
+        const mediaId = typeof metadata.media_id === 'string' ? metadata.media_id : null;
+        const bucket = typeof metadata.bucket === 'string' ? metadata.bucket : null;
+        const path = typeof metadata.path === 'string' ? metadata.path : null;
+        if (mediaId && bucket && path) {
+          await deleteRoomMedia({ id: mediaId, bucket, path }).catch(() => undefined);
+        }
+      }
+    }
   }, [scope]);
 
   const react = useCallback(async (messageId: string, reaction: string) => {

@@ -44,9 +44,10 @@ type Props = {
   onReport?: (message: ChatMessage) => void;
   profiles?: Record<string, ChatProfile>;
   pinnedMessageId?: string | null;
+  reactionOptions?: string[];
 };
 
-export function MessageList({ messages, currentUserId, hasMore, loadingOlder, onLoadOlder, onReply, onDelete, onReact, onEdit, onReport, profiles = {}, pinnedMessageId }: Props) {
+export function MessageList({ messages, currentUserId, hasMore, loadingOlder, onLoadOlder, onReply, onDelete, onReact, onEdit, onReport, profiles = {}, pinnedMessageId, reactionOptions = ['like', 'love', 'laugh', 'sad', 'angry'] }: Props) {
   return (
     <ScrollView contentContainerStyle={{ padding: 16, gap: 10 }}>
       {hasMore ? <Button size="$3" onPress={onLoadOlder} disabled={loadingOlder}>{loadingOlder ? 'Loading…' : 'Load older messages'}</Button> : null}
@@ -80,7 +81,15 @@ export function MessageList({ messages, currentUserId, hasMore, loadingOlder, on
               {message.edited_at ? <Text fontSize="$2" color={own ? '$background' : '$colorPress'}>edited</Text> : null}
               <XStack gap="$2" mt="$2" flexWrap="wrap">
                 {onReply ? <Button size="$2" chromeless onPress={() => onReply(message)}>Reply</Button> : null}
-                {onReact ? <Button size="$2" chromeless onPress={() => onReact(message, 'like')}>Like</Button> : null}
+                {onReact ? (
+                  <XStack gap="$1" flexWrap="wrap">
+                    {reactionOptions.map(reaction => (
+                      <Button key={reaction} size="$2" chromeless onPress={() => onReact(message, reaction)}>
+                        {reaction === 'like' ? 'Like' : reaction === 'love' ? 'Love' : reaction === 'laugh' ? 'Haha' : reaction === 'sad' ? 'Sad' : 'Angry'}
+                      </Button>
+                    ))}
+                  </XStack>
+                ) : null}
                 {onReport && !own ? <Button size="$2" chromeless onPress={() => onReport(message)}>Report</Button> : null}
                 {own && onEdit ? <Button size="$2" chromeless onPress={() => onEdit(message)}>Edit</Button> : null}
                 {own && onDelete ? <Button size="$2" chromeless onPress={() => onDelete(message)}>Delete</Button> : null}

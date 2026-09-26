@@ -10,6 +10,7 @@ import { MessageList } from '../../src/components/MessageList';
 import { useSession } from '../../src/hooks/useSession';
 import { useChatMessages } from '../../src/features/chat/useChatMessages';
 import { getRoom, type Room } from '../../src/lib/backend';
+import { searchRoomInviteCandidates } from '../../src/features/chat/roomManagement';
 import type { ChatMessage } from '../../src/features/chat/types';
 
 export default function RoomScreen() {
@@ -25,6 +26,7 @@ export default function RoomScreen() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteLoading, setInviteLoading] = useState(false);
   const [inviteBusy, setInviteBusy] = useState<string | null>(null);
+  const [inviteQuery, setInviteQuery] = useState('');
   const [coHostIds, setCoHostIds] = useState<Set<string>>(new Set());
   const [adminOpen, setAdminOpen] = useState(false);
   const [adminBusy, setAdminBusy] = useState<string | null>(null);
@@ -63,29 +65,30 @@ export default function RoomScreen() {
     }
   }, [id]);
 
-  const loadInviteCandidates = useCallback(async () => {
+  const loadInviteCandidates = useCallback(async (query = inviteQuery) => {
     setInviteLoading(true);
     setRoomError(null);
     try {
-      const [memberRows, onlineUsers] = await Promise.all([
-        listRoomMembers(id, 100, 0),
-        listOnlineUsers(50, 0),
-      ]);
-      const roomUserIds = new Set((Array.isArray(memberRows) ? memberRows : []).map(member => member.user_id));
-      const candidates = (Array.isArray(onlineUsers) ? onlineUsers : [])
-        .filter((user): user is { user_id: string; username: string; display_name: string | null } =>
-          typeof user?.user_id === 'string' && typeof user?.username === 'string' && !roomUserIds.has(user.user_id),
-        )
-        .map(user => ({ user_id: user.user_id, username: user.username, display_name: user.display_name ?? null }));
-      setMembers(Array.isArray(memberRows) ? memberRows : []);
-      setInviteCandidates(candidates);
+      const memberRows = await listRoomMembers(id, 100, 0);
+      const roomMembers = (Array.isArray(memberRows) ? memberRows : []) as RoomMember[];
+      const roomUserIds = new Set(roomMembers.map(member => member.user_id));
+      let candidates: Array<{ user_id: string; username: string; display_name: string | null }>;
+      if (query.trim().length >= 2) {
+        candidates = await searchRoomInviteCandidates(query, 50);
+      } else {
+        const onlineRows = await listOnlineUsers(50, 0);
+        const onlineUsers = (Array.isArray(onlineRows) ? onlineRows : []) as Array<{ user_id: string; username: string; display_name: string | null }>;
+        candidates = onlineUsers.filter(user => !roomUserIds.has(user.user_id));
+      }
+      setMembers(roomMembers);
+      setInviteCandidates(candidates.filter(user => !roomUserIds.has(user.user_id)));
       setInviteOpen(true);
     } catch (e) {
       setRoomError(e instanceof Error ? e.message : 'Unable to load people to invite.');
     } finally {
       setInviteLoading(false);
     }
-  }, [id]);
+  }, [id, inviteQuery]);
 
   const inviteUser = useCallback(async (userId: string) => {
     if (inviteBusy) return;
@@ -518,6 +521,10 @@ export default function RoomScreen() {
           <Text fontSize="$3" fontWeight="800">Invite people</Text>
           <Text color="$colorPress" onPress={() => setInviteOpen(false)}>Hide</Text>
         </XStack>
+        <Input value={inviteQuery} onChangeText={setInviteQuery} placeholder="Search by username or name" returnKeyType="search" onSubmitEditing={() => { void loadInviteCandidates(inviteQuery); }} />
+        <Button size="$2" disabled={inviteLoading || inviteQuery.trim().length < 2} onPress={() => { void loadInviteCandidates(inviteQuery); }}>
+          {inviteLoading ? 'Searching…' : 'Search'}
+        </Button>
         {inviteCandidates.map(user => (
           <XStack key={user.user_id} gap="$2" style={{ alignItems: 'center', justifyContent: 'space-between' }}>
             <YStack flex={1}>
@@ -533,7 +540,7 @@ export default function RoomScreen() {
             </Button>
           </XStack>
         ))}
-        {!inviteCandidates.length ? <Text color="$colorPress">No online people available to invite.</Text> : null}
+        {!inviteCandidates.length ? <Text color="$colorPress">No matching people available to invite.</Text> : null}
       </YStack> : null}
     </YStack>
     <MessageComposer onSend={submit} onSendSticker={async stickerId => { await sendSticker(stickerId); }} onPickMedia={pickMedia} disabled={sending || loading || mediaBusy || room?.view_only || room?.is_locked} editValue={editTarget?.body ?? null} onEditCancel={() => setEditTarget(null)} onTyping={onTyping} />

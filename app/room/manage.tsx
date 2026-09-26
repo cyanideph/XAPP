@@ -9,7 +9,7 @@ export default function ManageRoomScreen() {
   const [members, setMembers] = useState<RoomMember[]>([]);
   const [banned, setBanned] = useState<RoomManagementMember[]>([]);
   const [muted, setMuted] = useState<RoomManagementMember[]>([]);
-  const [requests, setRequests] = useState<Array<{ id: string; requester_id: string; status: string; created_at: string }>>([]);
+  const [requests, setRequests] = useState<Array<{ id: string; requester_id: string; status: string; created_at: string; requester?: { username: string; display_name: string | null } | null }>>([]);
   const [reports, setReports] = useState<RoomReport[]>([]);
   const [coHosts, setCoHosts] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState<string | null>(null);
@@ -53,7 +53,7 @@ export default function ManageRoomScreen() {
     <YStack gap="$2">
       <Text fontSize="$6" fontWeight="800">Co-host requests ({requests.filter(r => r.status === 'pending').length})</Text>
       {requests.filter(r => r.status === 'pending').map(request => <XStack key={request.id} gap="$2" p="$2" borderWidth={1} borderColor="$borderColor" style={{ alignItems: 'center', justifyContent: 'space-between' }}>
-        <Text flex={1}>User {request.requester_id}</Text>
+        <Text flex={1}>{request.requester?.display_name || request.requester?.username || `User ${request.requester_id.slice(0, 8)}`}</Text>
         <Button size="$2" disabled={busy !== null} onPress={() => { void run('accept-' + request.id, () => acceptRoomCoHostRequest(request.id)); }}>Accept</Button>
         <Button size="$2" chromeless disabled={busy !== null} onPress={() => { void run('decline-' + request.id, () => declineRoomCoHostRequest(request.id)); }}>Decline</Button>
       </XStack>)}
