@@ -3,7 +3,7 @@ import { Alert, ScrollView } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Button, Card, H1, Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
 import {
-  addContentComment, deleteContent, deleteContentComment, editContent, getContent, listContentComments,
+  addContentComment, deleteContent, deleteContentComment, editContent, getContent, getCurrentProfile, listContentComments,
   listPollOptions, repostContent, toggleContentCommentVote, toggleContentReaction, toggleContentSave,
   voteContentPoll, type ContentComment, type ContentItem, type PollOption,
 } from '../../src/lib/backend';
@@ -14,6 +14,8 @@ export default function ContentDetail() {
   const [comments, setComments] = useState<ContentComment[]>([]);
   const [pollOptions, setPollOptions] = useState<PollOption[]>([]);
   const [body, setBody] = useState('');
+  const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [editBody, setEditBody] = useState('');
   const [editTitle, setEditTitle] = useState('');
   const [editing, setEditing] = useState(false);
@@ -25,9 +27,10 @@ export default function ContentDetail() {
     if (!id) return;
     setLoading(true); setError('');
     try {
-      const found = await getContent(id);
+      const [found, profile] = await Promise.all([getContent(id), getCurrentProfile()]);
       if (!found) throw new Error('Content not found.');
       setItem(found);
+      setCurrentUserId(profile?.id ?? null);
       setEditTitle(found.title ?? '');
       setEditBody(found.body ?? '');
       setComments(await listContentComments(id, 50));
@@ -48,7 +51,7 @@ export default function ContentDetail() {
   if (loading) return <YStack flex={1} style={{ justifyContent: 'center', alignItems: 'center' }}><Spinner /></YStack>;
   if (!item) return <YStack flex={1} p="$4" gap="$4"><Paragraph>{error || 'Content not found.'}</Paragraph><Button onPress={() => router.back()}>Back</Button></YStack>;
 
-  const isOwner = false;
+  const isOwner = currentUserId === item.author_id;
 
   return <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 64, paddingBottom: 32 }}>
     <YStack gap="$4">
@@ -79,17 +82,17 @@ export default function ContentDetail() {
 
       <YStack gap="$2">
         <Text fontSize="$6" fontWeight="800">Comments</Text>
-        <Input value={body} onChangeText={setBody} placeholder="Write a comment" />
-        <Button disabled={busy || !body.trim()} onPress={() => void act(async () => {
-          await addContentComment(item.id, body.trim()); setBody(''); setComments(await listContentComments(item.id, 50));
-        })}>Comment</Button>
+        <Input value={body} onChangeText={setBody} placeholder={replyTo ? "Write a reply" : "Write a comment"} />
+        <XStack gap="$2"><Button disabled={busy || !body.trim()} onPress={() => void act(async () => {
+          await addContentComment(item.id, body.trim(), replyTo); setBody(''); setReplyTo(null); setComments(await listContentComments(item.id, 50));
+        })}>{replyTo ? "Reply" : "Comment"}</Button>{replyTo ? <Button chromeless onPress={() => setReplyTo(null)}>Cancel reply</Button> : null}</XStack>
       </YStack>
 
       {comments.map(c => <Card key={c.id} p="$3" borderWidth={1} borderColor="$borderColor"><YStack gap="$2">
         <Text fontWeight="800">@{c.author?.username || 'user'}</Text>
         <Text>{c.body}</Text>
         <XStack gap="$2"><Button size="$2" onPress={() => void act(() => toggleContentCommentVote(c.id, 1))}>Like</Button>
-          <Button size="$2" chromeless onPress={() => void act(async () => { await addContentComment(item.id, '', c.id); })}>Reply</Button>
+          <Button size="$2" chromeless onPress={() => setReplyTo(c.id)}>Reply</Button>
           <Button size="$2" chromeless onPress={() => void act(async () => {
             await deleteContentComment(c.id); setComments(v => v.filter(x => x.id !== c.id));
           })}>Delete</Button>
