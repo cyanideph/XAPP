@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { router } from 'expo-router';
-import { H1, Paragraph, Spinner, Text, XButton, XStack, YGroup, YStack } from 'tamagui';
+import { H1, Paragraph, Spinner, Text, XStack, YGroup, YStack } from 'tamagui';
 import { XButton as ActionButton } from '../../src/components/XButton';
 import { XListItem } from '../../src/components/XListItem';
 import { joinRoom, listPendingRoomInvites, respondRoomInvite, type RoomInvite } from '../../src/lib/backend';
@@ -22,14 +22,12 @@ export default function RoomInvitesScreen() {
       {loading ? <Spinner color="$brandBackground" /> : invites.length ? (
         <YGroup>
           {invites.map(invite => <YGroup.Item key={invite.id}>
-            <XListItem
-              title={invite.room?.name || 'Room invitation'}
+            <XListItem title={invite.room?.name || 'Room invitation'}
               subTitle={invite.inviter ? `@${invite.inviter.username} invited you` : 'You have been invited to this Room.'}
               iconAfter={<XStack gap="$2">
                 <ActionButton size="$2" disabled={busy === invite.id} onPress={() => void respond(invite, true)}>{busy === invite.id ? 'Joining…' : 'Accept'}</ActionButton>
                 <ActionButton size="$2" chromeless disabled={busy === invite.id} onPress={() => void respond(invite, false)}>Decline</ActionButton>
-              </XStack>}
-            />
+              </XStack>} />
           </YGroup.Item>)}
         </YGroup>
       ) : <Text color="$colorPress">No pending invitations.</Text>}
