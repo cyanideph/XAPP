@@ -2,7 +2,8 @@ import { useCallback, useState, useEffect } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { Button, H1, Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
+import { H1, Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
+import { XButton } from '../../src/components/XButton';
 import { MessageComposer } from '../../src/components/MessageComposer';
 import { listOnlineRoomMembers, listRoomMembers, listRoomCoHosts, setRoomCoHost, kickRoomMember, moderateRoomMember, strikeRoomMember, setRoomChatSettings, setRoomLock, setRoomMemberChatPreferences, setRoomPinnedMessage, setRoomMessageMentions, createRoomReport, listRoomReports, updateRoomReport, uploadRoomMedia, attachRoomMediaToMessage, deleteRoomMedia, type RoomMember, type RoomReport } from '../../src/features/chat/backend';
 import { createRoomInvite, listOnlineUsers } from '../../src/lib/backend';
@@ -403,23 +404,23 @@ export default function RoomScreen() {
       </XStack>
       <Text fontSize="$2" color="$colorPress">Your report is visible to Room staff for review.</Text>
       <Input value={reportReason} onChangeText={setReportReason} placeholder="Reason for report" multiline />
-      <Button size="$2" disabled={reportBusy} onPress={() => { void submitReport(); }}>
+      <XButton size="$2" disabled={reportBusy} onPress={() => { void submitReport(); }}>
         {reportBusy ? 'Submitting…' : 'Submit report'}
-      </Button>
+      </XButton>
     </YStack> : null}
     <YStack px="$3" pb="$2" gap="$2">
       <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
         <Text fontSize="$3" fontWeight="800">Members {members.length ? `(${members.length})` : ''}</Text>
         <XStack gap="$2">
-          <Button size="$2" chromeless disabled={adminBusy === 'load'} onPress={() => { void loadAdministration(); }}>
+          <XButton size="$2" chromeless disabled={adminBusy === 'load'} onPress={() => { void loadAdministration(); }}>
             {adminBusy === 'load' ? 'Loading…' : 'Admin'}
-          </Button>
-          <Button size="$2" chromeless disabled={settingsBusy === 'load'} onPress={() => { void loadSettings(); }}>
+          </XButton>
+          <XButton size="$2" chromeless disabled={settingsBusy === 'load'} onPress={() => { void loadSettings(); }}>
             {settingsBusy === 'load' ? 'Loading…' : 'Settings'}
-          </Button>
-          <Button size="$2" chromeless disabled={inviteLoading} onPress={() => { void loadInviteCandidates(); }}>
+          </XButton>
+          <XButton size="$2" chromeless disabled={inviteLoading} onPress={() => { void loadInviteCandidates(); }}>
             {inviteLoading ? 'Loading…' : 'Invite'}
-          </Button>
+          </XButton>
           <Text onPress={() => { if (membersOpen) setMembersOpen(false); else void loadMembers(); }} color="$colorPress">
             {membersOpen ? 'Hide' : membersLoading ? 'Loading…' : 'Show'}
           </Text>
@@ -435,8 +436,8 @@ export default function RoomScreen() {
             {report.reported_user_id ? <Text fontSize="$2" color="$colorPress">Member: {report.reported_user_id}</Text> : null}
             <XStack gap="$2" flexWrap="wrap">
               {report.status !== 'resolved' && report.status !== 'dismissed' ? <>
-                <Button size="$2" disabled={reportBusy} onPress={() => { void resolveReport(report.id, 'resolved'); }}>Resolve</Button>
-                <Button size="$2" disabled={reportBusy} onPress={() => { void resolveReport(report.id, 'dismissed'); }}>Dismiss</Button>
+                <XButton size="$2" disabled={reportBusy} onPress={() => { void resolveReport(report.id, 'resolved'); }}>Resolve</XButton>
+                <XButton size="$2" disabled={reportBusy} onPress={() => { void resolveReport(report.id, 'dismissed'); }}>Dismiss</XButton>
               </> : null}
             </XStack>
           </YStack>
@@ -459,23 +460,23 @@ export default function RoomScreen() {
         <Text fontWeight="700">Announcement</Text>
         <Input value={announcementDraft} onChangeText={setAnnouncementDraft} placeholder="Optional Room announcement" />
         <XStack gap="$2" flexWrap="wrap">
-          <Button size="$2" disabled={settingsBusy !== null} onPress={() => setViewOnlyDraft(value => !value)}>
+          <XButton size="$2" disabled={settingsBusy !== null} onPress={() => setViewOnlyDraft(value => !value)}>
             {viewOnlyDraft ? 'View-only: ON' : 'View-only: OFF'}
-          </Button>
-          <Button size="$2" disabled={settingsBusy !== null} onPress={() => setMembersCanInviteDraft(value => !value)}>
+          </XButton>
+          <XButton size="$2" disabled={settingsBusy !== null} onPress={() => setMembersCanInviteDraft(value => !value)}>
             {membersCanInviteDraft ? 'Member invites: ON' : 'Member invites: OFF'}
-          </Button>
-          <Button size="$2" disabled={settingsBusy !== null} onPress={() => { void saveChatSettings(); }}>
+          </XButton>
+          <XButton size="$2" disabled={settingsBusy !== null} onPress={() => { void saveChatSettings(); }}>
             {settingsBusy === 'chat' ? 'Saving…' : 'Save chat settings'}
-          </Button>
+          </XButton>
         </XStack>
         <XStack gap="$2" flexWrap="wrap">
-          <Button size="$2" disabled={settingsBusy !== null} onPress={() => { void toggleRoomLock(); }}>
+          <XButton size="$2" disabled={settingsBusy !== null} onPress={() => { void toggleRoomLock(); }}>
             {settingsBusy === 'lock' ? 'Updating…' : room?.is_locked ? 'Unlock Room' : 'Lock Room'}
-          </Button>
-          <Button size="$2" disabled={settingsBusy !== null} onPress={() => { void pinRoomMessage(null); }}>
+          </XButton>
+          <XButton size="$2" disabled={settingsBusy !== null} onPress={() => { void pinRoomMessage(null); }}>
             {settingsBusy === 'unpin' ? 'Clearing…' : 'Clear pinned message'}
-          </Button>
+          </XButton>
         </XStack>
         <Text fontWeight="700">Pinned message</Text>
         {room?.pinned_message_id ? (
@@ -490,22 +491,22 @@ export default function RoomScreen() {
         {messages.slice(0, 10).map(message => (
           <XStack key={'pin-' + message.id} gap="$2" style={{ alignItems: 'center', justifyContent: 'space-between' }}>
             <Text flex={1} numberOfLines={2}>{message.body}</Text>
-            <Button size="$2" disabled={settingsBusy !== null} onPress={() => { void pinRoomMessage(message.id); }}>
+            <XButton size="$2" disabled={settingsBusy !== null} onPress={() => { void pinRoomMessage(message.id); }}>
               {settingsBusy === 'pin-' + message.id ? 'Pinning…' : room?.pinned_message_id === message.id ? 'Pinned' : 'Pin'}
-            </Button>
+            </XButton>
           </XStack>
         ))}
         <Text fontWeight="700">My Room preferences</Text>
         <XStack gap="$2" flexWrap="wrap">
-          <Button size="$2" disabled={settingsBusy !== null} onPress={() => setNotificationsEnabled(value => !value)}>
+          <XButton size="$2" disabled={settingsBusy !== null} onPress={() => setNotificationsEnabled(value => !value)}>
             {notificationsEnabled ? 'Notifications: ON' : 'Notifications: OFF'}
-          </Button>
-          <Button size="$2" disabled={settingsBusy !== null} onPress={() => setRoomPinned(value => !value)}>
+          </XButton>
+          <XButton size="$2" disabled={settingsBusy !== null} onPress={() => setRoomPinned(value => !value)}>
             {roomPinned ? 'Room pinned: ON' : 'Room pinned: OFF'}
-          </Button>
-          <Button size="$2" disabled={settingsBusy !== null} onPress={() => { void saveMemberPreferences(); }}>
+          </XButton>
+          <XButton size="$2" disabled={settingsBusy !== null} onPress={() => { void saveMemberPreferences(); }}>
             {settingsBusy === 'prefs' ? 'Saving…' : 'Save my preferences'}
-          </Button>
+          </XButton>
         </XStack>
       </YStack> : null}
       {adminOpen ? <YStack gap="$2" pt="$2">
@@ -527,14 +528,14 @@ export default function RoomScreen() {
               {busy ? <Spinner size="small" /> : null}
             </XStack>
             {!isSelf && member.role !== 'owner' ? <XStack gap="$2" flexWrap="wrap">
-              <Button size="$2" disabled={busy} onPress={() => runAdminAction(member, 'cohost')}>
+              <XButton size="$2" disabled={busy} onPress={() => runAdminAction(member, 'cohost')}>
                 {coHostIds.has(member.user_id) ? 'Remove co-host' : 'Make co-host'}
-              </Button>
-              <Button size="$2" disabled={busy} onPress={() => runAdminAction(member, 'mute')}>Mute 60m</Button>
-              <Button size="$2" disabled={busy} onPress={() => runAdminAction(member, 'ban')}>Ban 24h</Button>
-              <Button size="$2" disabled={busy} onPress={() => runAdminAction(member, 'kick')}>Kick</Button>
-              <Button size="$2" disabled={busy} onPress={() => runAdminAction(member, 'strike')}>Strike</Button>
-              {!isSelf ? <Button size="$2" disabled={reportBusy} onPress={() => openReport({ userId: member.user_id, label: label + ' (member)' })}>Report</Button> : null}
+              </XButton>
+              <XButton size="$2" disabled={busy} onPress={() => runAdminAction(member, 'mute')}>Mute 60m</XButton>
+              <XButton size="$2" disabled={busy} onPress={() => runAdminAction(member, 'ban')}>Ban 24h</XButton>
+              <XButton size="$2" disabled={busy} onPress={() => runAdminAction(member, 'kick')}>Kick</XButton>
+              <XButton size="$2" disabled={busy} onPress={() => runAdminAction(member, 'strike')}>Strike</XButton>
+              {!isSelf ? <XButton size="$2" disabled={reportBusy} onPress={() => openReport({ userId: member.user_id, label: label + ' (member)' })}>Report</XButton> : null}
             </XStack> : null}
           </YStack>;
         })}
@@ -545,22 +546,22 @@ export default function RoomScreen() {
           <Text color="$colorPress" onPress={() => setInviteOpen(false)}>Hide</Text>
         </XStack>
         <Input value={inviteQuery} onChangeText={setInviteQuery} placeholder="Search by username or name" returnKeyType="search" onSubmitEditing={() => { void loadInviteCandidates(inviteQuery); }} />
-        <Button size="$2" disabled={inviteLoading || inviteQuery.trim().length < 2} onPress={() => { void loadInviteCandidates(inviteQuery); }}>
+        <XButton size="$2" disabled={inviteLoading || inviteQuery.trim().length < 2} onPress={() => { void loadInviteCandidates(inviteQuery); }}>
           {inviteLoading ? 'Searching…' : 'Search'}
-        </Button>
+        </XButton>
         {inviteCandidates.map(user => (
           <XStack key={user.user_id} gap="$2" style={{ alignItems: 'center', justifyContent: 'space-between' }}>
             <YStack flex={1}>
               <Text fontWeight="700">{user.display_name || user.username}</Text>
               <Text fontSize="$2" color="$colorPress">@{user.username}</Text>
             </YStack>
-            <Button
+            <XButton
               size="$2"
               disabled={inviteBusy === user.user_id}
               onPress={() => { void inviteUser(user.user_id); }}
             >
               {inviteBusy === user.user_id ? 'Sending…' : 'Invite'}
-            </Button>
+            </XButton>
           </XStack>
         ))}
         {!inviteCandidates.length ? <Text color="$colorPress">No matching people available to invite.</Text> : null}
