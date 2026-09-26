@@ -8,9 +8,10 @@ type Props = {
   onEditCancel?: () => void;
   onTyping?: () => void;
   onSendSticker?: (stickerId: string) => Promise<void>;
+  onPickMedia?: () => Promise<void>;
 };
 
-export function MessageComposer({ onSend, disabled, editValue, onEditCancel, onTyping, onSendSticker }: Props) {
+export function MessageComposer({ onSend, disabled, editValue, onEditCancel, onTyping, onSendSticker, onPickMedia }: Props) {
   const [value, setValue] = useState('');
 
   useEffect(() => {
@@ -37,6 +38,7 @@ export function MessageComposer({ onSend, disabled, editValue, onEditCancel, onT
 
   return (
     <XStack gap="$2" p="$3" borderTopWidth={1} borderColor="$borderColor" style={{ alignItems: "center", flexWrap: "wrap" }}>
+      {!editing && onPickMedia ? <Button size="$2" chromeless disabled={disabled} onPress={() => { void onPickMedia(); }}>+ Media</Button> : null}
       {!editing && onSendSticker ? (
         <XStack gap="$1">
           {['smile', 'laugh', 'heart', 'thumbs_up', 'fire'].map(stickerId => (
