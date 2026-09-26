@@ -60,7 +60,7 @@ export default function RestoreScreen() {
     } finally { setBusy(false); }
   }
 
-  if (!ready) return <YStack flex={1} p="$5" style={{ justifyContent: 'center', alignItems: 'center' }} bg="$background"><Spinner /><Text marginTop="$3">Restoring secure session…</Text></YStack>;
+  if (!ready) return <YStack flex={1} p="$5" style={{ justifyContent: 'center', alignItems: 'center' }} bg="$background"><Spinner /><Text mt="$3">Restoring secure session…</Text></YStack>;
 
   return (
     <YStack flex={1} p="$5" style={{ justifyContent: 'center' }} gap="$4" bg="$background">
