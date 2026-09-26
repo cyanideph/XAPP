@@ -42,7 +42,7 @@ export default function ContentDetail() {
         {item.body ? <Paragraph fontSize="$5">{item.body}</Paragraph> : null}
         <YStack gap="$2"><Button disabled={busy} onPress={() => void act(() => toggleContentReaction(item.id, 'like'))}>Like</Button><Button disabled={busy} chromeless onPress={() => void act(() => toggleContentSave(item.id))}>Save</Button></YStack>
         <YStack gap="$2"><Text fontSize="$6" fontWeight="800">Comments</Text><Input value={body} onChangeText={setBody} placeholder="Write a comment" /><Button disabled={busy || !body.trim()} onPress={() => void act(async () => { await addContentComment(item.id, body); setBody(''); setComments(await listContentComments(item.id, 50)); })}>Comment</Button></YStack>
-        {comments.map(c => <YStack key={c.id} p="$3" borderWidth={1} borderColor="$borderColor" gap="$2"><Text fontWeight="800">@{c.author?.username || 'user'}</Text><Text>{c.body}</Text><Button size="$2" onPress={() => void act(() => toggleContentCommentVote(c.id, 1))}>Like</Button><Button size="$2" chromeless onPress={() => void act(() => deleteContentComment(c.id), () => setComments(v => v.filter(x => x.id !== c.id)))}>Delete</Button></YStack>)}
+        {comments.map(c => <YStack key={c.id} p="$3" borderWidth={1} borderColor="$borderColor" gap="$2"><Text fontWeight="800">@{c.author?.username || 'user'}</Text><Text>{c.body}</Text><Button size="$2" onPress={() => void act(() => toggleContentCommentVote(c.id, 1))}>Like</Button><Button size="$2" chromeless onPress={() => void act(() => deleteContentComment(c.id).then(() => setComments(v => v.filter(x => x.id !== c.id))))}>Delete</Button></YStack>)}
       </> : null}
       <Button chromeless onPress={() => router.back()}>Back</Button>
     </YStack>
