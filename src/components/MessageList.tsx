@@ -1,6 +1,6 @@
 import { Image, Linking, ScrollView } from 'react-native';
 import { useEffect, useState } from 'react';
-import { Button, Paragraph, Text, XStack, YStack } from 'tamagui';
+import { Paragraph, Text, XStack, YStack } from 'tamagui';
 import type { ChatMessage, ChatProfile } from '../features/chat/types';
 import { createRoomMediaUrl } from '../features/chat/backend';
 
@@ -26,9 +26,9 @@ function RoomMediaPreview({ message }: { message: ChatMessage }) {
   if (mimeType.startsWith('image/')) {
     return <Image source={{ uri: url }} style={{ width: 240, height: 180, borderRadius: 12 }} resizeMode="cover" />;
   }
-  return <Button size="$2" chromeless onPress={() => { void Linking.openURL(url); }}>
+  return <XButton size="$2" chromeless onPress={() => { void Linking.openURL(url); }}>
     {mimeType.startsWith('video/') ? 'Open video' : `Open ${filename}`}
-  </Button>;
+  </XButton>;
 }
 
 type Props = {
@@ -50,7 +50,7 @@ type Props = {
 export function MessageList({ messages, currentUserId, hasMore, loadingOlder, onLoadOlder, onReply, onDelete, onReact, onEdit, onReport, profiles = {}, pinnedMessageId, reactionOptions = ['like', 'love', 'laugh', 'sad', 'angry'] }: Props) {
   return (
     <ScrollView contentContainerStyle={{ padding: 16, gap: 10 }}>
-      {hasMore ? <Button size="$3" onPress={onLoadOlder} disabled={loadingOlder}>{loadingOlder ? 'Loading…' : 'Load older messages'}</Button> : null}
+      {hasMore ? <XButton size="$3" onPress={onLoadOlder} disabled={loadingOlder}>{loadingOlder ? 'Loading…' : 'Load older messages'}</XButton> : null}
       <YStack gap="$3">
         {messages.map((message) => {
           const own = message.sender_id === currentUserId;
@@ -81,19 +81,19 @@ export function MessageList({ messages, currentUserId, hasMore, loadingOlder, on
                 : null}
               {message.edited_at ? <Text fontSize="$2" color={own ? '$background' : '$colorPress'}>edited</Text> : null}
               <XStack gap="$2" mt="$2" flexWrap="wrap">
-                {onReply ? <Button size="$2" chromeless onPress={() => onReply(message)}>Reply</Button> : null}
+                {onReply ? <XButton size="$2" chromeless onPress={() => onReply(message)}>Reply</XButton> : null}
                 {onReact ? (
                   <XStack gap="$1" flexWrap="wrap">
                     {reactionOptions.map(reaction => (
-                      <Button key={reaction} size="$2" chromeless onPress={() => onReact(message, reaction)}>
+                      <XButton key={reaction} size="$2" chromeless onPress={() => onReact(message, reaction)}>
                         {reaction === 'like' ? 'Like' : reaction === 'love' ? 'Love' : reaction === 'laugh' ? 'Haha' : reaction === 'sad' ? 'Sad' : 'Angry'}
-                      </Button>
+                      </XButton>
                     ))}
                   </XStack>
                 ) : null}
-                {onReport && !own ? <Button size="$2" chromeless onPress={() => onReport(message)}>Report</Button> : null}
-                {own && onEdit ? <Button size="$2" chromeless onPress={() => onEdit(message)}>Edit</Button> : null}
-                {own && onDelete ? <Button size="$2" chromeless onPress={() => onDelete(message)}>Delete</Button> : null}
+                {onReport && !own ? <XButton size="$2" chromeless onPress={() => onReport(message)}>Report</XButton> : null}
+                {own && onEdit ? <XButton size="$2" chromeless onPress={() => onEdit(message)}>Edit</XButton> : null}
+                {own && onDelete ? <XButton size="$2" chromeless onPress={() => onDelete(message)}>Delete</XButton> : null}
               </XStack>
             </YStack>
           );
