@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { router } from 'expo-router';
-import { Button, H1, Input, Paragraph, Text, YStack } from 'tamagui';
+import { H1, Input, Paragraph, Text, YStack } from 'tamagui';
+import { XButton } from '../../src/components/XButton';
 import { BentoCard } from '../../src/components/BentoCard';
 import { supabase } from '../../src/lib/supabase';
 
@@ -35,11 +36,11 @@ export default function SignInScreen() {
           <Input autoCapitalize="none" autoCorrect={false} keyboardType="email-address" placeholder="Email" value={email} onChangeText={setEmail} />
           <Input secureTextEntry placeholder="Password" value={password} onChangeText={setPassword} onSubmitEditing={() => { void submit(); }} />
           {error ? <Paragraph color="$red10">{error}</Paragraph> : null}
-          <Button onPress={() => { void submit(); }} disabled={busy || !email.trim() || !password}>{busy ? 'Signing in…' : 'Sign in'}</Button>
-          <Button chromeless onPress={() => router.push('/(auth)/forgot-password')}>Forgot password?</Button>
+          <XButton onPress={() => { void submit(); }} disabled={busy || !email.trim() || !password}>{busy ? 'Signing in…' : 'Sign in'}</XButton>
+          <XButton chromeless onPress={() => router.push('/(auth)/forgot-password')}>Forgot password?</XButton>
         </YStack>
       </BentoCard>
-      <Button chromeless onPress={() => router.push('/(auth)/sign-up')}>Create an account</Button>
+      <XButton chromeless onPress={() => router.push('/(auth)/sign-up')}>Create an account</XButton>
     </YStack>
   );
 }
