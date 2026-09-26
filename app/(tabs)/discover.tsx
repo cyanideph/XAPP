@@ -5,14 +5,15 @@ import { Button, Card, H1, Input, Paragraph, Spinner, Text, XStack, YStack } fro
 import { BentoCard } from '../../src/components/BentoCard';
 import {
   listContentCategories, listCategoryContent, listOnlineUsers, listPublicChats, listPublicRooms,
-  searchContent, type ContentCategory, type ContentItem,
+  searchContent, searchProfiles, searchRooms, searchPublicChats, type ContentCategory, type ContentItem, type ProfileSearchResult, type Room, type PublicChatSearchResult,
 } from '../../src/lib/backend';
-
-type Room = { id: string; name: string; description?: string | null; province_code?: string | null; kind?: string };
 
 export default function DiscoverScreen() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<ContentItem[]>([]);
+  const [peopleResults, setPeopleResults] = useState<ProfileSearchResult[]>([]);
+  const [roomResults, setRoomResults] = useState<Room[]>([]);
+  const [chatResults, setChatResults] = useState<PublicChatSearchResult[]>([]);
   const [categories, setCategories] = useState<ContentCategory[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
@@ -40,7 +41,14 @@ export default function DiscoverScreen() {
   async function runSearch() {
     if (query.trim().length < 2) return;
     setSearching(true); setError('');
-    try { setResults((await searchContent(query, 20, 0)).items); setSelectedCategory(null); }
+    try {
+      const q = query.trim();
+      const [content, people, roomMatches, chats] = await Promise.all([
+        searchContent(q, 20, 0), searchProfiles(q, 20), searchRooms(q, 20), searchPublicChats(q, 20),
+      ]);
+      setResults(content.items); setPeopleResults(people); setRoomResults(roomMatches); setChatResults(chats);
+      setSelectedCategory(null);
+    }
     catch (e) { setError(e instanceof Error ? e.message : 'Search failed.'); }
     finally { setSearching(false); }
   }
@@ -83,6 +91,18 @@ export default function DiscoverScreen() {
           <BentoCard title="Rooms" flex={1} value={String(counts.rooms)} description="public"/>
         </XStack>
         <BentoCard title="Public chats" value={String(counts.chats)} description="Active public conversations."/>
+        {(peopleResults.length || roomResults.length || chatResults.length) ? <YStack gap="$3">
+          <Text fontSize="$6" fontWeight="800">People, rooms & chats</Text>
+          {peopleResults.map(person => <Card key={person.id} p="$3" borderWidth={1} borderColor="$borderColor">
+            <YStack gap="$2"><Text fontWeight="800">@{person.username}</Text>{person.display_name ? <Text>{person.display_name}</Text> : null}<Button size="$3" onPress={() => router.push({pathname:'/me/view-profile',params:{id:person.id}})}>Open profile</Button></YStack>
+          </Card>)}
+          {roomResults.map(room => <Card key={room.id} p="$3" borderWidth={1} borderColor="$borderColor">
+            <YStack gap="$2"><Text fontWeight="800">{room.name}</Text>{room.province_code ? <Text>{room.province_code}</Text> : null}<Button size="$3" onPress={() => router.push({pathname:'/room/[id]',params:{id:room.id}})}>Open room</Button></YStack>
+          </Card>)}
+          {chatResults.map(chat => <Card key={chat.id} p="$3" borderWidth={1} borderColor="$borderColor">
+            <YStack gap="$2"><Text fontWeight="800">{String(chat.name ?? chat.title ?? 'Public chat')}</Text><Button size="$3" onPress={() => router.push({pathname:'/chats'} as never)}>Open chats</Button></YStack>
+          </Card>)}
+        </YStack> : null}
         {results.length ? <YStack gap="$3">
           <XStack style={{alignItems:'center',justifyContent:'space-between'}}>
             <Text fontSize="$6" fontWeight="800">{selectedCategory ? 'Topic posts' : 'Content results'}</Text>
