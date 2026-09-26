@@ -29,20 +29,9 @@ export function BentoCard({
 
   useEffect(() => {
     const animation = Animated.parallel([
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 260,
-        delay,
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateY, {
-        toValue: 0,
-        duration: 320,
-        delay,
-        useNativeDriver: true,
-      }),
+      Animated.timing(opacity, { toValue: 1, duration: 260, delay, useNativeDriver: true }),
+      Animated.timing(translateY, { toValue: 0, duration: 320, delay, useNativeDriver: true }),
     ]);
-
     animation.start();
     return () => animation.stop();
   }, [delay, opacity, translateY]);
@@ -60,11 +49,9 @@ export function BentoCard({
         hoverStyle={{ borderColor: '$borderColorHover', backgroundColor: '$backgroundHover' }}
         onPress={onPress}
       >
-        <YStack flex={1} justifyContent="space-between" gap="$3">
-          <XStack alignItems="center" justifyContent="space-between">
-            <Text fontSize="$3" fontWeight="700" color="$color">
-              {title}
-            </Text>
+        <YStack flex={1} gap="$3" style={{ justifyContent: 'space-between' }}>
+          <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text fontSize="$3" fontWeight="700" color="$color">{title}</Text>
             {icon}
           </XStack>
           {value ? <Text fontSize="$9" fontWeight="800" color="$color">{value}</Text> : null}
