@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
-import { Button, H1, Input, Paragraph, Spinner, Text, YStack } from 'tamagui';
+import { H1, Input, Paragraph, Spinner, Text, YStack } from 'tamagui';
+import { XButton } from '../../src/components/XButton';
 import { BentoCard } from '../../src/components/BentoCard';
 import { supabase } from '../../src/lib/supabase';
 
@@ -75,10 +76,10 @@ export default function RestoreScreen() {
           <Input secureTextEntry placeholder="Confirm new password" value={confirmPassword} onChangeText={setConfirmPassword} />
           {error ? <Paragraph color="$red10">{error}</Paragraph> : null}
           {message ? <Paragraph>{message}</Paragraph> : null}
-          <Button onPress={() => { void updatePassword(); }} disabled={busy || !password || !confirmPassword}>{busy ? 'Updating…' : 'Update password'}</Button>
+          <XButton onPress={() => { void updatePassword(); }} disabled={busy || !password || !confirmPassword}>{busy ? 'Updating…' : 'Update password'}</XButton>
         </YStack>
       </BentoCard>
-      <Button chromeless onPress={() => router.replace('/(auth)/sign-in')}>Back to sign in</Button>
+      <XButton chromeless onPress={() => router.replace('/(auth)/sign-in')}>Back to sign in</XButton>
     </YStack>
   );
 }
