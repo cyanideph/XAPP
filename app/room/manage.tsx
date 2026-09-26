@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocalSearchParams, router } from 'expo-router';
-import { H1, Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
+import { H1, Input, ListItem, Paragraph, Separator, Spinner, Text, XStack, YGroup, YStack } from 'tamagui';
 import { XButton } from '../../src/components/XButton';
 import { listRoomMembers, listRoomCoHosts, setRoomCoHost, moderateRoomMember, listRoomReports, updateRoomReport, type RoomMember, type RoomReport } from '../../src/features/chat/backend';
 import { acceptRoomCoHostRequest, declineRoomCoHostRequest, listRoomCoHostRequests, listBannedRoomMembers, listMutedRoomMembers, moderateReportedMessage, unbanRoomMember, warnRoomMember, type RoomManagementMember } from '../../src/features/chat/roomManagement';
@@ -53,12 +53,12 @@ export default function ManageRoomScreen() {
 
     <YStack gap="$2">
       <Text fontSize="$6" fontWeight="800">Co-host requests ({requests.filter(r => r.status === 'pending').length})</Text>
-      {requests.filter(r => r.status === 'pending').map(request => <XStack key={request.id} gap="$2" p="$2" borderWidth={1} borderColor="$borderColor" style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+      <YGroup borderWidth={1} borderColor="$borderColor" rounded="$4" overflow="hidden">{requests.filter(r => r.status === 'pending').map(request => <YGroup.Item key={request.id}><ListItem title={request.requester?.display_name || request.requester?.username || `User ${request.requester_id.slice(0, 8)}`} subTitle="Pending co-host request" iconAfter={<XStack gap="$2">
         <Text flex={1}>{request.requester?.display_name || request.requester?.username || `User ${request.requester_id.slice(0, 8)}`}</Text>
         <XButton size="$2" disabled={busy !== null} onPress={() => { void run('accept-' + request.id, () => acceptRoomCoHostRequest(request.id)); }}>Accept</XButton>
         <XButton size="$2" chromeless disabled={busy !== null} onPress={() => { void run('decline-' + request.id, () => declineRoomCoHostRequest(request.id)); }}>Decline</XButton>
       </XStack>)}
-      {!requests.some(r => r.status === 'pending') ? <Text color="$colorPress">No pending co-host requests.</Text> : null}
+      </YGroup>}{!requests.some(r => r.status === 'pending') ? <Text color="$colorPress">No pending co-host requests.</Text> : null}
     </YStack>
 
     <YStack gap="$2">
