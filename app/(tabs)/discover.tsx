@@ -55,7 +55,7 @@ export default function DiscoverScreen() {
             <BentoCard title="Public chats" value={String(counts.chats)} description="Active public conversations." />
 
             <YStack gap="$3">
-              <XStack alignItems="center" justifyContent="space-between">
+              <XStack ai="center" jc="space-between">
                 <Text fontSize="$6" fontWeight="800">Public rooms</Text>
                 <Text fontSize="$3" color="$colorPress">{rooms.length} loaded</Text>
               </XStack>
@@ -65,7 +65,7 @@ export default function DiscoverScreen() {
                     <Text fontSize="$5" fontWeight="800">{room.name}</Text>
                     {room.province_code ? <Text fontSize="$3" color="$colorPress">{room.province_code}</Text> : null}
                     {room.description ? <Paragraph color="$colorPress">{room.description}</Paragraph> : null}
-                    <Button alignSelf="flex-start" size="$3" onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })}>Open room</Button>
+                    <Button als="flex-start" size="$3" onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })}>Open room</Button>
                   </YStack>
                 </Card>
               ))}
