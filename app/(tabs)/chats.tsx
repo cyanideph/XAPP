@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { Button, H1, Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
+import { H1, Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
 import { BentoCard } from '../../src/components/BentoCard';
 import { XButton } from '../../src/components/XButton';
 import {
