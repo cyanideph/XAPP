@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocalSearchParams, router } from 'expo-router';
-import { Button, H1, Paragraph, Text, YStack } from 'tamagui';
+import { Button, H1, Paragraph, Text, XStack, YStack } from 'tamagui';
 import { cancelRoomCoHostRequest, requestRoomCoHost } from '../../src/features/chat/roomManagement';
 
 export default function RequestCoHostScreen(){
