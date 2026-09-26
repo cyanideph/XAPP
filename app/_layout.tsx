@@ -19,7 +19,7 @@ export default function RootLayout() {
     if (session && inAuth) router.replace('/(tabs)');
   }, [inAuth, loading, router, session]);
 
-  if (loading) return <TamaguiProvider config={tamaguiConfig} defaultTheme={colorScheme}><YStack flex={1} alignItems="center" justifyContent="center" bg="$background"><Spinner /></YStack></TamaguiProvider>;
+  if (loading) return <TamaguiProvider config={tamaguiConfig} defaultTheme={colorScheme}><YStack flex={1} style={{ alignItems: "center", justifyContent: "center" }} bg="$background"><Spinner /></YStack></TamaguiProvider>;
 
   return (
     <TamaguiProvider config={tamaguiConfig} defaultTheme={colorScheme}>
