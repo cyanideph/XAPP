@@ -3,24 +3,36 @@ import { RefreshControl, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { Button, H1, Paragraph, Spinner, Text, YStack } from 'tamagui';
 import { BentoCard } from '../../src/components/BentoCard';
-import { listPublicChats, listPublicRooms } from '../../src/lib/backend';
+import { listMyConversations, listPublicChats, listPublicRooms } from '../../src/lib/backend';
+import type { ConversationListItem } from '../../src/lib/backend';
 
 type Room = { id: string; name: string; description?: string | null };
+
+function conversationTitle(conversation: ConversationListItem) {
+  if (conversation.title) return conversation.title;
+  if (conversation.participant) {
+    return conversation.participant.display_name || conversation.participant.username;
+  }
+  return conversation.kind === 'direct' ? 'Direct conversation' : 'Conversation';
+}
 
 export default function ChatsScreen() {
   const [publicChats, setPublicChats] = useState(0);
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [conversations, setConversations] = useState<ConversationListItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   async function load() {
     setLoading(true);
     try {
-      const [chatRows, roomRows] = await Promise.all([
+      const [chatRows, roomRows, conversationRows] = await Promise.all([
         listPublicChats(50, 0),
         listPublicRooms(10, 0),
+        listMyConversations(20),
       ]);
       setPublicChats(Array.isArray(chatRows) ? chatRows.length : 0);
       setRooms(Array.isArray(roomRows) ? roomRows as Room[] : []);
+      setConversations(conversationRows);
     } finally {
       setLoading(false);
     }
@@ -42,16 +54,36 @@ export default function ChatsScreen() {
 
         {loading ? <Spinner /> : (
           <>
+            <YStack gap="$3">
+              <Text fontSize="$6" fontWeight="800">Your conversations</Text>
+              {conversations.length ? conversations.map(conversation => (
+                <BentoCard
+                  key={conversation.id}
+                  title={conversationTitle(conversation)}
+                  description={conversation.participant ? '@' + conversation.participant.username : 'Open conversation'}
+                  onPress={() => router.push({ pathname: '/conversation/[id]', params: { id: conversation.id } })}
+                />
+              )) : (
+                <BentoCard title="No direct conversations yet" description="Start a conversation from a profile when messaging is available." />
+              )}
+            </YStack>
+
             <BentoCard title="Public chat discovery" value={String(publicChats)} description="Public conversations available from the backend." />
+
             <YStack gap="$3">
               <Text fontSize="$6" fontWeight="800">Public rooms</Text>
               {rooms.length ? rooms.map(room => (
-                <BentoCard key={room.id} title={room.name} description={room.description ?? 'Open realtime room'} onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })} />
+                <BentoCard
+                  key={room.id}
+                  title={room.name}
+                  description={room.description ?? 'Open realtime room'}
+                  onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })}
+                />
               )) : (
                 <BentoCard title="No rooms available" description="Refresh to check again." />
               )}
             </YStack>
-            <BentoCard title="Direct messages" description="Conversation routing is ready; the next frontend pass can surface the user's conversation list without creating another backend." />
+
             <Button chromeless onPress={() => router.push('/(tabs)/discover')}>Discover more rooms</Button>
           </>
         )}
