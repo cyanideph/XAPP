@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Button, H1, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
+import { H1, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
 import { BentoCard } from '../../src/components/BentoCard';
+import { XButton } from '../../src/components/XButton';
 import { MessageComposer } from '../../src/components/MessageComposer';
 import { MessageList } from '../../src/components/MessageList';
 import { useSession } from '../../src/hooks/useSession';
@@ -56,7 +57,7 @@ export default function ConversationScreen() {
                 {messages.length ? `${messages.length} messages loaded` : 'Start the conversation.'}
               </Paragraph>
             </YStack>
-            <Button size="$2" chromeless onPress={() => router.back()}>Done</Button>
+            <XButton size="$2" chromeless onPress={() => router.back()}>Done</XButton>
           </XStack>
         </BentoCard>
         {error ? <Paragraph color="$red10">{error}</Paragraph> : null}
