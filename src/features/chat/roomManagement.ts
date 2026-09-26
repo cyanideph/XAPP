@@ -63,3 +63,16 @@ export async function listRoomCoHostRequests(roomId: string) {
 export async function moderateReportedMessage(messageId: string) {
   return rpc('moderate_room_message', { p_message_id: messageId, p_action: 'delete', p_reason: 'Removed after Room report review' });
 }
+
+export async function searchRoomInviteCandidates(query: string, limit = 50) {
+  if (!supabase) throw new Error('Supabase is not configured.');
+  const value = query.trim();
+  if (value.length < 2) return [] as Array<{ user_id: string; username: string; display_name: string | null }>;
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id,username,display_name')
+    .or(`username.ilike.%${value}%,display_name.ilike.%${value}%`)
+    .limit(limit);
+  if (error) throw error;
+  return (data ?? []).map(row => ({ user_id: row.id, username: row.username, display_name: row.display_name ?? null }));
+}
