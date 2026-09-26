@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, RefreshControl } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { H1, Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
+import { H1, Input, Menu, Paragraph, Spinner, Text, XStack, YGroup, YStack } from 'tamagui';
 import { XButton } from '../../src/components/XButton';
 import { addProfileComment, deleteProfileComment, getCurrentProfile, getProfileRelationshipState, getPublicProfile, listProfileComments, recordProfileVisit, toggleBlock, toggleFavorite, toggleFollow, toggleProfileCommentVote, type ProfileComment, type ProfileRelationshipState, type PublicProfile } from '../../src/lib/backend';
 
@@ -137,8 +137,7 @@ export default function PublicProfileScreen() {
             {currentUserId !== profile.id ? (
               <XStack gap="$2" flexWrap="wrap">
                 <XButton disabled={busy !== ''} onPress={() => void runAction('follow')}>{state.following ? 'Unfollow' : 'Follow'}</XButton>
-                <XButton disabled={busy !== ''} onPress={() => void runAction('favorite')}>{state.favorite ? 'Unfavorite' : 'Favorite'}</XButton>
-                <XButton disabled={busy !== ''} onPress={() => void runAction('block')}>{state.blocked ? 'Unblock' : 'Block'}</XButton>
+                <Menu><Menu.Trigger asChild action="press"><XButton size="$2" chromeless disabled={busy !== ''}>More</XButton></Menu.Trigger><Menu.Portal><Menu.Content><Menu.Item onSelect={() => { void runAction('favorite'); }}><Menu.ItemTitle>{state.favorite ? 'Unfavorite' : 'Favorite'}</Menu.ItemTitle></Menu.Item><Menu.Item destructive={!state.blocked} onSelect={() => { void runAction('block'); }}><Menu.ItemTitle>{state.blocked ? 'Unblock' : 'Block'}</Menu.ItemTitle></Menu.Item></Menu.Content></Menu.Portal></Menu>
               </XStack>
             ) : (
               <Text color="$colorPress">This is your profile.</Text>
@@ -155,22 +154,29 @@ export default function PublicProfileScreen() {
                     </XButton>
                   </YStack>
                 ) : null}
-                {comments.map(comment => {
-                  const vote = votes[comment.id];
-                  return (
-                    <YStack key={comment.id} gap="$2" p="$3" borderWidth={1} borderColor="$borderColor" rounded="$4">
-                      <Text fontWeight="800">@{comment.author?.username || 'user'}</Text>
-                      <Paragraph>{comment.body}</Paragraph>
-                      <XStack gap="$2" flexWrap="wrap">
-                        <XButton size="$2" disabled={busy === `vote:${comment.id}`} onPress={() => void voteComment(comment.id, 1)}>Up {vote ? vote.upvotes : ''}</XButton>
-                        <XButton size="$2" disabled={busy === `vote:${comment.id}`} onPress={() => void voteComment(comment.id, -1)}>Down {vote ? vote.downvotes : ''}</XButton>
-                        {currentUserId === comment.author_id ? (
-                          <XButton size="$2" chromeless disabled={busy === `delete:${comment.id}`} onPress={() => void removeComment(comment.id)}>Delete</XButton>
-                        ) : null}
-                      </XStack>
-                    </YStack>
-                  );
-                })}
+                <YGroup borderWidth={1} borderColor="$borderColor">
+                  {comments.map(comment => {
+                    const vote = votes[comment.id];
+                    return (
+                      <YGroup.Item key={comment.id}>
+                        <XStack p="$3" gap="$3" items="center">
+                          <YStack flex={1} gap="$1">
+                            <Text fontWeight="800">@{comment.author?.username || 'user'}</Text>
+                            <Paragraph>{comment.body}</Paragraph>
+                          </YStack>
+                          <Menu>
+                            <Menu.Trigger asChild action="press"><XButton size="$2" chromeless>More</XButton></Menu.Trigger>
+                            <Menu.Portal><Menu.Content>
+                              <Menu.Item onSelect={() => { void voteComment(comment.id, 1); }}><Menu.ItemTitle>Upvote ({vote ? vote.upvotes : 0})</Menu.ItemTitle></Menu.Item>
+                              <Menu.Item onSelect={() => { void voteComment(comment.id, -1); }}><Menu.ItemTitle>Downvote ({vote ? vote.downvotes : 0})</Menu.ItemTitle></Menu.Item>
+                              {currentUserId === comment.author_id ? <Menu.Item destructive onSelect={() => { void removeComment(comment.id); }}><Menu.ItemTitle>Delete</Menu.ItemTitle></Menu.Item> : null}
+                            </Menu.Content></Menu.Portal>
+                          </Menu>
+                        </XStack>
+                      </YGroup.Item>
+                    );
+                  })}
+                </YGroup>
                 {!comments.length ? <Text color="$colorPress">No comments yet.</Text> : null}
               </YStack>
             </YStack>
