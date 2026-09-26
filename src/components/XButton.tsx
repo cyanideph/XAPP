@@ -10,7 +10,7 @@ export function XButton({ loading = false, disabled, children, ...props }: XButt
     <Button
       {...props}
       disabled={disabled || loading}
-      borderRadius="$6"
+      rounded="$6"
       fontWeight="700"
       pressStyle={{ opacity: 0.88, scale: 0.985 }}
       hoverStyle={{ background: '$backgroundHover' }}
