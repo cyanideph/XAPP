@@ -1,63 +1,38 @@
-import { useEffect, useState } from 'react';
-import { ScrollView } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { RefreshControl, ScrollView } from 'react-native';
+import { router } from 'expo-router';
 import { Button, H1, Paragraph, Spinner, Text, YStack } from 'tamagui';
 import { BentoCard } from '../../src/components/BentoCard';
 import { getCurrentProfile, listFavorites, listNotifications } from '../../src/lib/backend';
 import { supabase } from '../../src/lib/supabase';
 
-type Profile = { username: string; display_name?: string | null };
-
 export default function MeScreen() {
-  const client = supabase;
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [favorites, setFavorites] = useState(0);
-  const [notifications, setNotifications] = useState(0);
+  const [profile, setProfile] = useState<any>(null);
+  const [favorites, setFavorites] = useState<any[]>([]);
+  const [unread, setUnread] = useState(0);
   const [loading, setLoading] = useState(true);
-
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [currentProfile, favoriteRows, notificationRows] = await Promise.all([
-        getCurrentProfile(),
-        listFavorites(50, 0),
-        listNotifications(50, 0),
-      ]);
-      setProfile(currentProfile as Profile | null);
-      setFavorites(Array.isArray(favoriteRows) ? favoriteRows.length : 0);
-      setNotifications(Array.isArray(notificationRows) ? notificationRows.length : 0);
-    } catch {
-      setProfile(null);
-      setFavorites(0);
-      setNotifications(0);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => { void load(); }, []);
-
-  return (
-    <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 64, paddingBottom: 32 }}>
-      <YStack gap="$5">
-        <YStack gap="$2">
-          <Text fontSize="$3" color="$colorPress" fontWeight="800" letterSpacing={1}>ME</Text>
-          <H1 fontSize="$10" fontWeight="900">Your profile.</H1>
-          <Paragraph color="$colorPress">
-            {profile ? `@${profile.username}${profile.display_name ? ` · ${profile.display_name}` : ''}` : 'Your public identity, activity and settings.'}
-          </Paragraph>
-        </YStack>
-
-        {loading ? <Spinner /> : (
-          <>
-            <BentoCard title="Profile" value={profile?.username ? `@${profile.username}` : 'Not available'} description="Your public identity and activity." />
-            <BentoCard title="Favorites" value={String(favorites)} description="People you have saved." />
-            <BentoCard title="Notifications" value={String(notifications)} description="Your latest notification records." />
-          </>
-        )}
-
-        <BentoCard title="Settings" description="Notification and chat preferences." />
-        {client ? <Button onPress={() => { void client.auth.signOut(); }}>Sign out</Button> : null}
-      </YStack>
-    </ScrollView>
-  );
+      const [p, f, n] = await Promise.all([getCurrentProfile(), listFavorites(50, 0), listNotifications(50)]);
+      setProfile(p); setFavorites(Array.isArray(f) ? f : []); setUnread(n.items.filter(x => !x.read_at).length);
+    } finally { setLoading(false); }
+  }, []);
+  useEffect(() => { void load(); }, [load]);
+  return <ScrollView refreshControl={<RefreshControl refreshing={loading} onRefresh={() => void load()} />} contentContainerStyle={{ padding: 20, paddingTop: 64, paddingBottom: 32 }}>
+    <YStack gap="$5">
+      <YStack gap="$2"><Text fontSize="$3" color="$colorPress" fontWeight="800">ME</Text><H1>Your profile.</H1><Paragraph color="$colorPress">{profile ? `@${profile.username}${profile.display_name ? ` · ${profile.display_name}` : ''}` : 'Manage your identity and community activity.'}</Paragraph></YStack>
+      {loading ? <Spinner /> : <>
+        <BentoCard title="Profile" value={profile ? `@${profile.username}` : 'Unavailable'} description={profile?.status_text || profile?.bio || 'Edit your public profile.'} onPress={() => router.push('/me/profile')} />
+        <BentoCard title="Notifications" value={String(unread)} description="Unread notifications" onPress={() => router.push('/me/notifications')} />
+        <BentoCard title="Favorites" value={String(favorites.length)} description="People you have saved" onPress={() => router.push('/me/list?kind=favorites')} />
+        <BentoCard title="Followers" description="People following you" onPress={() => router.push('/me/list?kind=followers')} />
+        <BentoCard title="Following" description="People you follow" onPress={() => router.push('/me/list?kind=following')} />
+        <BentoCard title="Blocked users" description="Manage blocked accounts" onPress={() => router.push('/me/list?kind=blocked')} />
+        <BentoCard title="Profile visitors" description="See recent visitors" onPress={() => router.push('/me/list?kind=visitors')} />
+      </>}
+      <Button onPress={() => router.push('/me/settings')}>Settings</Button>
+      {supabase ? <Button chromeless onPress={() => { void supabase.auth.signOut(); }}>Sign out</Button> : null}
+    </YStack>
+  </ScrollView>;
 }
