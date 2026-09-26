@@ -1,5 +1,5 @@
 import { createTamagui } from 'tamagui';
-import { createV5Theme, defaultConfig } from '@tamagui/config/v5';
+import { createV5Theme, defaultChildrenThemes, defaultConfig } from '@tamagui/config/v5';
 import { animations } from '@tamagui/config/v5-rn';
 
 // XAPP Emerald + Ink base palettes.
@@ -188,7 +188,10 @@ const infoDark = {
 const themes = createV5Theme({
   lightPalette,
   darkPalette,
+  // Keep Tamagui's built-in Radix color themes (red10, blue10, etc.)
+  // while layering XAPP's Emerald Ink and semantic status themes on top.
   childrenThemes: {
+    ...defaultChildrenThemes,
     emerald: {
       light: emeraldLight,
       dark: emeraldDark,
