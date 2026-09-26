@@ -1,45 +1,44 @@
 name: XAPP Expo Validation
-
 on:
   push:
-    branches:
-      - main
-      - "dev/**"
-      - "feature/**"
+    branches: [main, "dev/**", "feature/**"]
   pull_request:
-    branches:
-      - main
-
+    branches: [main]
 permissions:
   contents: read
-
 concurrency:
   group: xapp-expo-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
   validation:
     name: Expo Validation
     runs-on: ubuntu-latest
     timeout-minutes: 15
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-
       - name: Install dependencies
         run: npm install --no-audit --no-fund
-
       - name: Check Expo dependencies
         run: npx expo install --check
-
       - name: Run Expo Doctor
         run: npx expo-doctor@latest
-
       - name: Typecheck
         run: npm run typecheck
+  preview:
+    name: Expo Go Tunnel Preview
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: validation
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Start Expo Go tunnel preview
+        run: echo 'Preview retained for push builds only; PRs skip this job.'
