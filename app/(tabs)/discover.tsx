@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { H1, Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
+import { H1, Input, Paragraph, Separator, Spinner, Text, XStack, YStack } from 'tamagui';
 import { XButton } from '../../src/components/XButton';
 import { BentoCard } from '../../src/components/BentoCard';
 import {
@@ -28,10 +28,7 @@ export default function DiscoverScreen() {
     setError('');
     try {
       const [users, roomRows, chats, categoryRows] = await Promise.all([
-        listOnlineUsers(50, 0),
-        listPublicRooms(20, 0),
-        listPublicChats(50, 0),
-        listContentCategories(),
+        listOnlineUsers(50, 0), listPublicRooms(20, 0), listPublicChats(50, 0), listContentCategories(),
       ]);
       const nextRooms = Array.isArray(roomRows) ? roomRows as Room[] : [];
       setRooms(nextRooms);
@@ -43,52 +40,32 @@ export default function DiscoverScreen() {
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to load Discover.');
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   }
 
   useEffect(() => { void load(); }, []);
 
   async function runSearch() {
     if (query.trim().length < 2) return;
-    setSearching(true);
-    setError('');
+    setSearching(true); setError('');
     try {
       const q = query.trim();
       const [content, people, roomMatches, chats] = await Promise.all([
-        searchContent(q, 20, 0),
-        searchProfiles(q, 20),
-        searchRooms(q, 20),
-        searchPublicChats(q, 20),
+        searchContent(q, 20, 0), searchProfiles(q, 20), searchRooms(q, 20), searchPublicChats(q, 20),
       ]);
-      setResults(content.items);
-      setPeopleResults(people);
-      setRoomResults(roomMatches);
-      setChatResults(chats);
-      setSelectedCategory(null);
+      setResults(content.items); setPeopleResults(people); setRoomResults(roomMatches); setChatResults(chats); setSelectedCategory(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Search failed.');
-    } finally {
-      setSearching(false);
-    }
+    } finally { setSearching(false); }
   }
 
   async function selectCategory(categoryId: string | null) {
-    setSelectedCategory(categoryId);
-    setError('');
-    if (!categoryId) {
-      setResults([]);
-      return;
-    }
+    setSelectedCategory(categoryId); setError('');
+    if (!categoryId) { setResults([]); return; }
     setSearching(true);
-    try {
-      setResults((await listCategoryContent(categoryId, 20)).items);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to load category.');
-    } finally {
-      setSearching(false);
-    }
+    try { setResults((await listCategoryContent(categoryId, 20)).items); }
+    catch (e) { setError(e instanceof Error ? e.message : 'Unable to load category.'); }
+    finally { setSearching(false); }
   }
 
   return (
@@ -96,49 +73,41 @@ export default function DiscoverScreen() {
       refreshControl={<RefreshControl refreshing={loading} onRefresh={() => { void load(); }} />}
       contentContainerStyle={{ padding: 20, paddingTop: 64, paddingBottom: 40 }}
     >
-      <YStack gap="$5">
+      <YStack width="100%" maxW={960} self="center" gap="$6">
         <YStack gap="$2">
-          <Text fontSize="$3" color="$colorPress" fontWeight="800" letterSpacing={1}>DISCOVER</Text>
+          <Text fontSize="$3" color="$brandBackground" fontWeight="900" letterSpacing={1}>DISCOVER</Text>
           <H1 fontSize="$10" fontWeight="900">Find your people.</H1>
-          <Paragraph color="$colorPress">Explore rooms, conversations, people and community content.</Paragraph>
+          <Paragraph color="$colorPress" size="$4">Explore rooms, conversations, people and community content.</Paragraph>
         </YStack>
 
         <BentoCard title="Search X-App" description="Search people, rooms, public chats and posts from one place.">
-          <YStack gap="$2">
-            <Input
-              value={query}
-              onChangeText={setQuery}
-              placeholder="Search community"
-              onSubmitEditing={() => { void runSearch(); }}
-              returnKeyType="search"
-            />
+          <XStack gap="$2" items="center">
+            <Input flex={1} value={query} onChangeText={setQuery} placeholder="Search community" onSubmitEditing={() => { void runSearch(); }} returnKeyType="search" />
             <XButton disabled={query.trim().length < 2 || searching} onPress={() => { void runSearch(); }}>
               {searching ? 'Searching…' : 'Search'}
             </XButton>
-          </YStack>
+          </XStack>
         </BentoCard>
 
-        <XStack gap="$3">
-          <BentoCard title="People" flex={1} value={String(counts.users)} description="recently active" />
-          <BentoCard title="Rooms" flex={1} value={String(counts.rooms)} description="public spaces" />
+        <XStack gap="$3" flexWrap="wrap">
+          <BentoCard title="People" minW={180} flex={1} value={String(counts.users)} description="recently active" />
+          <BentoCard title="Rooms" minW={180} flex={1} value={String(counts.rooms)} description="public spaces" />
+          <BentoCard title="Public chats" minW={180} flex={1} value={String(counts.chats)} description="community conversations" />
         </XStack>
-        <BentoCard title="Public chats" value={String(counts.chats)} description="community conversations" />
 
         {categories.length ? (
           <YStack gap="$3">
             <XStack items="center" justify="space-between">
-              <Text fontSize="$6" fontWeight="800">Topics</Text>
+              <YStack gap="$1">
+                <Text fontSize="$6" fontWeight="800">Topics</Text>
+                <Text fontSize="$3" color="$colorPress">Browse community content by topic.</Text>
+              </YStack>
               <XButton size="$2" chromeless onPress={() => { void selectCategory(null); }}>Clear</XButton>
             </XStack>
             <XStack gap="$2" flexWrap="wrap">
               <XButton size="$3" chromeless={!selectedCategory} onPress={() => { void selectCategory(null); }}>All</XButton>
               {categories.map(category => (
-                <XButton
-                  key={category.id}
-                  size="$3"
-                  chromeless={selectedCategory !== category.id}
-                  onPress={() => { void selectCategory(category.id); }}
-                >
+                <XButton key={category.id} size="$3" chromeless={selectedCategory !== category.id} onPress={() => { void selectCategory(category.id); }}>
                   {category.name}
                 </XButton>
               ))}
@@ -151,39 +120,30 @@ export default function DiscoverScreen() {
           <XButton chromeless onPress={() => router.push('/room/invites')}>Invitations</XButton>
         </XStack>
 
+        <Separator borderColor="$borderColor" />
+
         {error ? <BentoCard title="Something needs attention" description={error} onPress={() => { void load(); }} /> : null}
 
-        {loading ? <Spinner /> : (
+        {loading ? <Spinner color="$brandBackground" /> : (
           <>
             {(peopleResults.length || roomResults.length || chatResults.length) ? (
               <YStack gap="$3">
-                <Text fontSize="$6" fontWeight="800">Search results</Text>
-
+                <XStack items="center" justify="space-between">
+                  <Text fontSize="$6" fontWeight="800">Search results</Text>
+                  <Text fontSize="$3" color="$colorPress">Matches</Text>
+                </XStack>
                 {peopleResults.map(person => (
-                  <BentoCard
-                    key={person.id}
-                    title={person.display_name || '@' + person.username}
-                    description={'@' + person.username}
-                    onPress={() => router.push({ pathname: '/me/view-profile', params: { id: person.id } })}
-                  />
+                  <BentoCard key={person.id} title={person.display_name || '@' + person.username} description={'@' + person.username}
+                    onPress={() => router.push({ pathname: '/me/view-profile', params: { id: person.id } })} />
                 ))}
-
                 {roomResults.map(room => (
-                  <BentoCard
-                    key={room.id}
-                    title={room.name}
+                  <BentoCard key={room.id} title={room.name}
                     description={room.province_code ? room.province_code + ' · ' + (room.description ?? 'Open community room') : (room.description ?? 'Open community room')}
-                    onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })}
-                  />
+                    onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })} />
                 ))}
-
                 {chatResults.map(chat => (
-                  <BentoCard
-                    key={chat.id}
-                    title={String(chat.name ?? chat.title ?? 'Public chat')}
-                    description="Public conversation"
-                    onPress={() => router.push('/(tabs)/chats')}
-                  />
+                  <BentoCard key={chat.id} title={String(chat.name ?? chat.title ?? 'Public chat')} description="Public conversation"
+                    onPress={() => router.push('/(tabs)/chats')} />
                 ))}
               </YStack>
             ) : null}
@@ -191,30 +151,29 @@ export default function DiscoverScreen() {
             {results.length ? (
               <YStack gap="$3">
                 <XStack items="center" justify="space-between">
-                  <Text fontSize="$6" fontWeight="800">{selectedCategory ? 'Topic posts' : 'Content results'}</Text>
-                  <Text fontSize="$3" color="$colorPress">{results.length} loaded</Text>
+                  <YStack gap="$1">
+                    <Text fontSize="$6" fontWeight="800">{selectedCategory ? 'Topic posts' : 'Content results'}</Text>
+                    <Text fontSize="$3" color="$colorPress">{results.length} loaded</Text>
+                  </YStack>
                 </XStack>
                 {results.map(item => (
-                  <BentoCard
-                    key={item.id}
-                    title={item.title || item.kind}
+                  <BentoCard key={item.id} title={item.title || item.kind}
                     description={'@' + (item.author?.username || 'user') + ' · ' + item.kind + (item.body ? ' · ' + item.body : '')}
-                    onPress={() => router.push({ pathname: '/content/[id]', params: { id: item.id } })}
-                  />
+                    onPress={() => router.push({ pathname: '/content/[id]', params: { id: item.id } })} />
                 ))}
               </YStack>
             ) : null}
 
             <YStack gap="$3">
               <XStack items="center" justify="space-between">
-                <Text fontSize="$6" fontWeight="800">Public rooms</Text>
-                <Text fontSize="$3" color="$colorPress">{rooms.length} loaded</Text>
+                <YStack gap="$1">
+                  <Text fontSize="$6" fontWeight="800">Public rooms</Text>
+                  <Text fontSize="$3" color="$colorPress">{rooms.length} loaded</Text>
+                </YStack>
               </XStack>
 
               {rooms.length ? rooms.map((room, index) => (
-                <BentoCard
-                  key={room.id}
-                  title={room.name}
+                <BentoCard key={room.id} title={room.name}
                   description={room.province_code ? room.province_code + ' · ' + (room.description ?? 'Open realtime room') : (room.description ?? 'Open realtime room')}
                   delay={index * 35}
                   onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })}
@@ -226,11 +185,7 @@ export default function DiscoverScreen() {
                   </XStack>
                 </BentoCard>
               )) : (
-                <BentoCard
-                  title="No public rooms yet"
-                  description="Create the first community room or refresh to check again."
-                  onPress={() => { void load(); }}
-                />
+                <BentoCard title="No public rooms yet" description="Create the first community room or refresh to check again." onPress={() => { void load(); }} />
               )}
             </YStack>
           </>
