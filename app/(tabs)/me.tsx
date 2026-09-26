@@ -90,7 +90,7 @@ export default function MeScreen() {
           <Text fontSize="$6" fontWeight="800">Settings</Text>
           <YGroup borderWidth={1} borderColor="$borderColor" rounded="$4" overflow="hidden">
             <YGroup.Item><ListItem title="App settings" subTitle="Preferences and account settings" iconAfter={<Text color="$colorPress">›</Text>} onPress={() => router.push('/me/settings')} /></YGroup.Item>
-            {supabase ? <><Separator /><YGroup.Item><ListItem title="Sign out" subTitle="End this session" color="$red10" onPress={() => { const client = supabase; if (client) void client.auth.signOut(); }} /></YGroup.Item></> : null}
+            {supabase ? <><Separator /><YGroup.Item><ListItem title="Sign out" subTitle="End this session" onPress={() => { const client = supabase; if (client) void client.auth.signOut(); }} /></YGroup.Item></> : null}
           </YGroup>
         </YStack>
       </YStack>
