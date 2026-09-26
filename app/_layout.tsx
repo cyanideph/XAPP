@@ -1,6 +1,7 @@
 import { Stack, usePathname, useRouter } from 'expo-router';
 import { useTheme } from 'tamagui';
 import { useEffect } from 'react';
+import { ImageBackground } from 'react-native';
 import { Spinner, YStack, TamaguiProvider } from 'tamagui';
 import { tamaguiConfig } from '../tamagui.config';
 import { useSession } from '../src/hooks/useSession';
@@ -16,7 +17,7 @@ function AppNavigation() {
         headerTintColor: theme.color.val,
         headerTitleStyle: { color: theme.color.val, fontWeight: '700' },
         headerShadowVisible: false,
-        contentStyle: { backgroundColor: theme.background.val },
+        contentStyle: { backgroundColor: 'transparent' },
       }}
     >
       <Stack.Screen name="(auth)" />
@@ -42,13 +43,31 @@ function AppShell() {
 
   return (
     <TamaguiProvider config={tamaguiConfig} defaultTheme={resolvedMode}>
-      {loading ? (
+      <ImageBackground
+        source={require('../assets/backgrounds/1790421299991.jpg')}
+        resizeMode="cover"
+        style={{ flex: 1 }}
+      >
+        <YStack
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            backgroundColor: resolvedMode === 'dark' ? '#0D1410' : '#F7F8F6',
+            opacity: resolvedMode === 'dark' ? 0.34 : 0.56,
+          }}
+        />
+        {loading ? (
         <YStack flex={1} bg="$background" items="center" justify="center">
           <Spinner color="$brandBackground" />
         </YStack>
-      ) : (
-        <AppNavigation />
-      )}
+        ) : (
+          <AppNavigation />
+        )}
+      </ImageBackground>
     </TamaguiProvider>
   );
 }
