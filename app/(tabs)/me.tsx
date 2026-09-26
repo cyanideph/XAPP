@@ -63,24 +63,24 @@ export default function MeScreen() {
             <YStack gap="$2">
               <Text fontSize="$6" fontWeight="800">Account</Text>
               <YGroup borderWidth={1} borderColor="$borderColor" rounded="$4" overflow="hidden">
-                <YGroup.Item><ListItem title="Profile" subTitle={profile ? `@${profile.username}` : 'Unavailable'} iconAfter="›" onPress={() => router.push('/me/profile')} /></YGroup.Item>
+                <YGroup.Item><ListItem title="Profile" subTitle={profile ? `@${profile.username}` : 'Unavailable'} iconAfter={<Text color="$colorPress">›</Text>} onPress={() => router.push('/me/profile')} /></YGroup.Item>
                 <Separator />
-                <YGroup.Item><ListItem title="Notifications" subTitle={unread ? `${unread} unread` : 'All caught up'} iconAfter="›" onPress={() => router.push('/me/notifications')} /></YGroup.Item>
+                <YGroup.Item><ListItem title="Notifications" subTitle={unread ? `${unread} unread` : 'All caught up'} iconAfter={<Text color="$colorPress">›</Text>} onPress={() => router.push('/me/notifications')} /></YGroup.Item>
                 <Separator />
-                <YGroup.Item><ListItem title="Favorites" subTitle={`${favorites.length} saved people`} iconAfter="›" onPress={() => router.push('/me/list?kind=favorites')} /></YGroup.Item>
+                <YGroup.Item><ListItem title="Favorites" subTitle={`${favorites.length} saved people`} iconAfter={<Text color="$colorPress">›</Text>} onPress={() => router.push('/me/list?kind=favorites')} /></YGroup.Item>
                 <Separator />
-                <YGroup.Item><ListItem title="Followers" subTitle="People following you" iconAfter="›" onPress={() => router.push('/me/list?kind=followers')} /></YGroup.Item>
+                <YGroup.Item><ListItem title="Followers" subTitle="People following you" iconAfter={<Text color="$colorPress">›</Text>} onPress={() => router.push('/me/list?kind=followers')} /></YGroup.Item>
                 <Separator />
-                <YGroup.Item><ListItem title="Following" subTitle="People you follow" iconAfter="›" onPress={() => router.push('/me/list?kind=following')} /></YGroup.Item>
+                <YGroup.Item><ListItem title="Following" subTitle="People you follow" iconAfter={<Text color="$colorPress">›</Text>} onPress={() => router.push('/me/list?kind=following')} /></YGroup.Item>
               </YGroup>
             </YStack>
 
             <YStack gap="$2">
               <Text fontSize="$6" fontWeight="800">Community</Text>
               <YGroup borderWidth={1} borderColor="$borderColor" rounded="$4" overflow="hidden">
-                <YGroup.Item><ListItem title="Blocked users" subTitle="Manage blocked accounts" iconAfter="›" onPress={() => router.push('/me/list?kind=blocked')} /></YGroup.Item>
+                <YGroup.Item><ListItem title="Blocked users" subTitle="Manage blocked accounts" iconAfter={<Text color="$colorPress">›</Text>} onPress={() => router.push('/me/list?kind=blocked')} /></YGroup.Item>
                 <Separator />
-                <YGroup.Item><ListItem title="Profile visitors" subTitle="See recent visitors" iconAfter="›" onPress={() => router.push('/me/list?kind=visitors')} /></YGroup.Item>
+                <YGroup.Item><ListItem title="Profile visitors" subTitle="See recent visitors" iconAfter={<Text color="$colorPress">›</Text>} onPress={() => router.push('/me/list?kind=visitors')} /></YGroup.Item>
               </YGroup>
             </YStack>
           </>
@@ -89,7 +89,7 @@ export default function MeScreen() {
         <YStack gap="$2">
           <Text fontSize="$6" fontWeight="800">Settings</Text>
           <YGroup borderWidth={1} borderColor="$borderColor" rounded="$4" overflow="hidden">
-            <YGroup.Item><ListItem title="App settings" subTitle="Preferences and account settings" iconAfter="›" onPress={() => router.push('/me/settings')} /></YGroup.Item>
+            <YGroup.Item><ListItem title="App settings" subTitle="Preferences and account settings" iconAfter={<Text color="$colorPress">›</Text>} onPress={() => router.push('/me/settings')} /></YGroup.Item>
             {supabase ? <><Separator /><YGroup.Item><ListItem title="Sign out" subTitle="End this session" color="$red10" onPress={() => { const client = supabase; if (client) void client.auth.signOut(); }} /></YGroup.Item></> : null}
           </YGroup>
         </YStack>
