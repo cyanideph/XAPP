@@ -3,7 +3,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { Alert } from 'react-native';
 import { Button, H1, Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
 import { MessageComposer } from '../../src/components/MessageComposer';
-import { listOnlineRoomMembers, listRoomMembers, listRoomCoHosts, setRoomCoHost, kickRoomMember, moderateRoomMember, strikeRoomMember, setRoomChatSettings, setRoomLock, setRoomMemberChatPreferences, setRoomPinnedMessage, createRoomReport, listRoomReports, updateRoomReport, type RoomMember, type RoomReport } from '../../src/features/chat/backend';
+import { listOnlineRoomMembers, listRoomMembers, listRoomCoHosts, setRoomCoHost, kickRoomMember, moderateRoomMember, strikeRoomMember, setRoomChatSettings, setRoomLock, setRoomMemberChatPreferences, setRoomPinnedMessage, setRoomMessageMentions, createRoomReport, listRoomReports, updateRoomReport, type RoomMember, type RoomReport } from '../../src/features/chat/backend';
 import { createRoomInvite, listOnlineUsers } from '../../src/lib/backend';
 import { MessageList } from '../../src/components/MessageList';
 import { useSession } from '../../src/hooks/useSession';
@@ -46,7 +46,7 @@ export default function RoomScreen() {
   }, [id]);
   useEffect(() => { void loadRoom(); }, [loadRoom]);
 
-  const { messages, loading, sending, error, hasMore, loadOlder, send, reply, edit, remove, react, profiles, onTyping } = useChatMessages({ scope: 'room', id });
+  const { messages, loading, sending, error, hasMore, loadOlder, send, sendSticker, reply, edit, remove, react, profiles, onTyping } = useChatMessages({ scope: 'room', id });
   useEffect(() => { let active = true; const refresh = async () => { try { const online = await listOnlineRoomMembers(id, 20, 0); if (active) setOnlineMembers(Array.isArray(online) ? online : []); } catch {} }; void refresh(); const timer = setInterval(refresh, 30000); return () => { active = false; clearInterval(timer); }; }, [id]);
   const loadMembers = useCallback(async () => {
     setMembersLoading(true);
@@ -281,17 +281,33 @@ export default function RoomScreen() {
   }, [id]);
 
   const submit = async (body: string) => {
-    if (replyTarget) { await reply(replyTarget.id, body); setReplyTarget(null); }
-    else if (editTarget) { await edit(editTarget.id, body); setEditTarget(null); }
-    else await send(body);
+    if (replyTarget) { await reply(replyTarget.id, body); setReplyTarget(null); return; }
+    if (editTarget) { await edit(editTarget.id, body); setEditTarget(null); return; }
+
+    const message = await send(body);
+    if (!message) return;
+
+    const usernames = [...body.matchAll(/@([a-zA-Z0-9_.-]{2,32})/g)].map(match => match[1].toLowerCase());
+    if (!usernames.length) return;
+
+    try {
+      const roomMembers = members.length ? members : await listRoomMembers(id, 100, 0);
+      if (!members.length) setMembers(roomMembers);
+      const mentionedIds = roomMembers
+        .filter(member => member.profile?.username && usernames.includes(member.profile.username.toLowerCase()))
+        .map(member => member.user_id);
+      if (mentionedIds.length) await setRoomMessageMentions(message.id, [...new Set(mentionedIds)]);
+    } catch (e) {
+      setRoomError(e instanceof Error ? e.message : 'Message sent, but mentions could not be saved.');
+    }
   };
   return <YStack flex={1} bg="$background">
     <YStack p="$4" borderBottomWidth={1} borderColor="$borderColor">
       <H1 fontSize="$7">{room?.name ?? 'Room'}</H1><Text fontSize="$2" color="$colorPress">{room?.province_code ? `${room.province_code} · ` : ''}{onlineMembers.filter(member => member.is_online).length} online</Text>{room?.description ? <Paragraph color="$colorPress">{room.description}</Paragraph> : null}{room?.announcement ? <Paragraph fontWeight="800">{room.announcement}</Paragraph> : null}{room?.view_only ? <Text color="$colorPress">View-only room</Text> : null}{room?.is_locked ? <Text color="$red10">Room locked</Text> : null}{roomError ? <Paragraph color="$red10">{roomError}</Paragraph> : null}{error ? <Paragraph color="$red10">{error}</Paragraph> : null}
     </YStack>
     {loading ? <YStack flex={1} style={{ alignItems: "center", justifyContent: "center" }}><Spinner /></YStack> :
-      <YStack flex={1}><MessageList messages={messages} currentUserId={session?.user.id} hasMore={hasMore} onLoadOlder={loadOlder} profiles={profiles} onReply={m => { setEditTarget(null); setReplyTarget(m); }} onEdit={m => { setReplyTarget(null); setEditTarget(m); }} onDelete={m => remove(m.id)} onReact={(m,r) => react(m.id,r)} onReport={m => openReport({ messageId: m.id, userId: m.sender_id, label: 'message' })} /></YStack>}
-    {replyTarget ? <YStack px="$3" pt="$2"><Text fontSize="$2" color="$colorPress">Replying to: {replyTarget.body.slice(0, 80)}</Text></YStack> : null}
+      <YStack flex={1}><MessageList messages={messages} currentUserId={session?.user.id} pinnedMessageId={room?.pinned_message_id ?? null} hasMore={hasMore} onLoadOlder={loadOlder} profiles={profiles} onReply={m => { setEditTarget(null); setReplyTarget(m); }} onEdit={m => { setReplyTarget(null); setEditTarget(m); }} onDelete={m => remove(m.id)} onReact={(m,r) => react(m.id,r)} onReport={m => openReport({ messageId: m.id, userId: m.sender_id, label: 'message' })} /></YStack>}
+    {replyTarget ? <YStack px="$3" pt="$2"><Text fontSize="$2" color="$colorPress">Replying to: {(replyTarget.body ?? '').slice(0, 80)}</Text></YStack> : null}
     {onlineMembers.length ? <XStack px="$3" pb="$2" gap="$2" flexWrap="wrap"><Text fontSize="$2" color="$colorPress">Online:</Text>{onlineMembers.filter(member => member.is_online).slice(0, 8).map(member => <Text key={member.user_id} fontSize="$2">{member.nickname || 'Member'}</Text>)}</XStack> : null}
     {reportTarget ? <YStack mx="$3" mb="$2" gap="$2" p="$3" borderWidth={1} borderColor="$borderColor">
       <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
@@ -459,6 +475,6 @@ export default function RoomScreen() {
         {!inviteCandidates.length ? <Text color="$colorPress">No online people available to invite.</Text> : null}
       </YStack> : null}
     </YStack>
-    <MessageComposer onSend={submit} disabled={sending || loading || room?.view_only || room?.is_locked} editValue={editTarget?.body ?? null} onEditCancel={() => setEditTarget(null)} onTyping={onTyping} />
+    <MessageComposer onSend={submit} onSendSticker={async stickerId => { await sendSticker(stickerId); }} disabled={sending || loading || room?.view_only || room?.is_locked} editValue={editTarget?.body ?? null} onEditCancel={() => setEditTarget(null)} onTyping={onTyping} />
   </YStack>;
 }

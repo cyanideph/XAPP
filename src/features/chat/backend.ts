@@ -139,8 +139,40 @@ export async function setRoomPinnedMessage(roomId: string, messageId: string | n
 export async function listRoomMessages(roomId: string, beforeCreatedAt: string | null = null, beforeId: string | null = null, limit = 50) {
   return rpc<MessagePage>('list_room_messages', { p_room_id: roomId, p_before_created_at: beforeCreatedAt, p_before_id: beforeId, p_limit: limit });
 }
-export async function sendRoomMessage(roomId: string, body: string) {
-  return rpc<ChatMessage>('send_room_message', { p_room_id: roomId, p_body: body, p_kind: 'text', p_reply_to_id: null, p_metadata: {} });
+export async function sendRoomMessage(
+  roomId: string,
+  body: string,
+  kind = 'text',
+  metadata: Record<string, unknown> = {},
+) {
+  return rpc<ChatMessage>('send_room_message', {
+    p_room_id: roomId,
+    p_body: body,
+    p_kind: kind,
+    p_reply_to_id: null,
+    p_metadata: metadata,
+  });
+}
+
+export async function sendRoomSticker(
+  roomId: string,
+  stickerId: string,
+  mediaId: string | null = null,
+  metadata: Record<string, unknown> = {},
+) {
+  return rpc<ChatMessage>('send_room_sticker', {
+    p_room_id: roomId,
+    p_sticker_id: stickerId,
+    p_media_id: mediaId,
+    p_metadata: metadata,
+  });
+}
+
+export async function setRoomMessageMentions(messageId: string, mentionedUserIds: string[]) {
+  return rpc('set_room_message_mentions', {
+    p_message_id: messageId,
+    p_mentioned_user_ids: mentionedUserIds,
+  });
 }
 export async function editRoomMessage(messageId: string, body: string) {
   return rpc<ChatMessage>('edit_room_message', { p_message_id: messageId, p_body: body });

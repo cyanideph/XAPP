@@ -9,7 +9,7 @@ export type ChatProfile = {
 
 export type ChatMessage = {
   id: string;
-  body: string;
+  body: string | null;
   sender_id: string;
   created_at: string;
   kind?: string;
