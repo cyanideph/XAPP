@@ -70,14 +70,17 @@ export default function RoomScreen() {
     setRoomError(null);
     try {
       const memberRows = await listRoomMembers(id, 100, 0);
-      const roomUserIds = new Set((Array.isArray(memberRows) ? memberRows : []).map(member => member.user_id));
-      const candidates = query.trim().length >= 2
-        ? await searchRoomInviteCandidates(query, 50)
-        : (await listOnlineUsers(50, 0))
-          .filter((user): user is { user_id: string; username: string; display_name: string | null } =>
-            typeof user?.user_id === 'string' && typeof user?.username === 'string' && !roomUserIds.has(user.user_id))
-          .map(user => ({ user_id: user.user_id, username: user.username, display_name: user.display_name ?? null }));
-      setMembers(Array.isArray(memberRows) ? memberRows : []);
+      const roomMembers = (Array.isArray(memberRows) ? memberRows : []) as RoomMember[];
+      const roomUserIds = new Set(roomMembers.map(member => member.user_id));
+      let candidates: Array<{ user_id: string; username: string; display_name: string | null }>;
+      if (query.trim().length >= 2) {
+        candidates = await searchRoomInviteCandidates(query, 50);
+      } else {
+        const onlineRows = await listOnlineUsers(50, 0);
+        const onlineUsers = (Array.isArray(onlineRows) ? onlineRows : []) as Array<{ user_id: string; username: string; display_name: string | null }>;
+        candidates = onlineUsers.filter(user => !roomUserIds.has(user.user_id));
+      }
+      setMembers(roomMembers);
       setInviteCandidates(candidates.filter(user => !roomUserIds.has(user.user_id)));
       setInviteOpen(true);
     } catch (e) {
