@@ -143,7 +143,9 @@ export default function PublicProfileScreen() {
             ) : (
               <Text color="$colorPress">This is your profile.</Text>
             )}
-            <BentoCard title="Comments" description={`${comments.length} comment${comments.length === 1 ? '' : 's'}`}>
+            <YStack gap="$3">
+<Text fontSize="$5" fontWeight="800">Comments</Text>
+<Paragraph color="$colorPress">{`${comments.length} comment${comments.length === 1 ? '' : 's'}`}</Paragraph>
               <YStack gap="$3">
                 {currentUserId ? (
                   <YStack gap="$2">
