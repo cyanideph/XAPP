@@ -109,10 +109,9 @@ export function XIcon({
   return (
     <Icon
       size={size}
-      color={color}
+      stroke={color}
       strokeWidth={strokeWidth}
       accessibilityLabel={accessibilityLabel ?? name}
-      accessibilityRole="image"
     />
   );
 }
