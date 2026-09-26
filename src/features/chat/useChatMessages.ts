@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { deleteConversationMessage, deleteRoomMessage, editConversationMessage, editRoomMessage, joinRoom, leaveRoom, listConversationMessages, listProfiles, listRoomMessages, markConversationRead, markRoomRead, replyToConversationMessage, replyToRoomMessage, sendConversationMessage, sendRoomMessage, sendRoomSticker, setRoomMessageMentions, toggleRoomReaction, touchRoomPresence } from './backend';
+import { deleteConversationMessage, deleteRoomMessage, editConversationMessage, editRoomMessage, joinRoom, leaveRoom, listConversationMessages, listProfiles, listRoomMessages, markConversationRead, markRoomRead, replyToConversationMessage, replyToRoomMessage, sendConversationMessage, sendRoomMessage, sendRoomSticker, toggleRoomReaction, touchRoomPresence } from './backend';
 import type { ChatMessage, ChatProfile } from './types';
 
 type Props = { scope: 'room' | 'conversation'; id: string };
@@ -218,7 +218,7 @@ export function useChatMessages({ scope, id }: Props) {
 
   return {
     messages, loading, sending, error, hasMore, typingUsers, profiles,
-    send, sendSticker, setRoomMessageMentions, reply, edit, remove, react, onTyping, loadOlder,
+    send, sendSticker, reply, edit, remove, react, onTyping, loadOlder,
     reload: () => load(),
   };
 }
