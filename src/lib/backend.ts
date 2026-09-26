@@ -282,3 +282,78 @@ export async function listFavorites(limit = 20, offset = 0) {
 export async function listNotifications(limit = 20, offset = 0) {
   return rpc('list_notifications', { p_limit: limit, p_offset: offset });
 }
+
+
+export type ContentItem = {
+  id: string;
+  author_id: string;
+  room_id: string | null;
+  kind: string;
+  title: string | null;
+  body: string | null;
+  metadata: Record<string, unknown>;
+  is_published: boolean;
+  is_featured: boolean;
+  is_hidden: boolean;
+  created_at: string;
+  updated_at: string;
+  author: { id: string; username: string; display_name: string | null; avatar_path: string | null } | null;
+};
+
+export type ContentCategory = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  kind: string;
+};
+
+export type FeaturedProfile = {
+  profile: { id: string; username: string; display_name: string | null; avatar_path: string | null; bio: string | null; status_text: string | null };
+  featured_until: string | null;
+  featured_at: string;
+  position: number;
+};
+
+export async function listContentFeed(limit = 20, beforeCreatedAt: string | null = null, beforeId: string | null = null) {
+  const page = await rpc<{ items: ContentItem[]; has_more: boolean }>('list_content_feed', {
+    p_room_id: null,
+    p_author_id: null,
+    p_before_created_at: beforeCreatedAt,
+    p_before_id: beforeId,
+    p_limit: limit,
+  });
+  const items = Array.isArray(page?.items) ? page.items : [];
+  if (!items.length || !supabase) return { items: [] as ContentItem[], has_more: Boolean(page?.has_more) };
+  const authorIds = [...new Set(items.map(item => item.author_id))];
+  const { data: profiles, error } = await supabase.from('profiles').select('id,username,display_name,avatar_path,bio,status_text').in('id', authorIds);
+  if (error) throw error;
+  const byId = new Map((profiles ?? []).map(profile => [profile.id, profile]));
+  return { items: items.map(item => ({ ...item, author: byId.get(item.author_id) ?? null })), has_more: Boolean(page?.has_more) };
+}
+
+export async function listContentCategories(kind: string | null = null) {
+  const data = await rpc<ContentCategory[]>('list_content_categories', { p_kind: kind });
+  return Array.isArray(data) ? data : [];
+}
+
+export async function listFeaturedProfiles(limit = 10, offset = 0) {
+  const data = await rpc<FeaturedProfile[]>('list_featured_profiles', { p_limit: limit, p_offset: offset });
+  return Array.isArray(data) ? data : [];
+}
+
+export async function createContent(kind: string, title: string | null, body: string, metadata: Record<string, unknown> = {}) {
+  return rpc<ContentItem>('create_content', { p_room_id: null, p_kind: kind, p_title: title, p_body: body, p_metadata: metadata });
+}
+
+export async function toggleContentReaction(contentId: string, reaction: string) {
+  return rpc<boolean>('toggle_content_reaction', { p_content_id: contentId, p_reaction: reaction });
+}
+
+export async function toggleContentSave(contentId: string) {
+  return rpc<boolean>('toggle_content_save', { p_content_id: contentId });
+}
+
+export async function checkIn() {
+  return rpc<{ checkin_date: string; streak: number; points: number; already_checked_in: boolean }>('check_in');
+}
