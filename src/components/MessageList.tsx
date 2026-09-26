@@ -58,7 +58,7 @@ export function MessageList({ messages, currentUserId, hasMore, loadingOlder, on
           return (
             <YStack
               key={message.id}
-              alignSelf={own ? 'flex-end' : 'flex-start'}
+              self={own ? 'flex-end' : 'flex-start'}
               maxWidth="88%"
               rounded="$lg"
               bg={own ? '$color' : '$backgroundHover'}
