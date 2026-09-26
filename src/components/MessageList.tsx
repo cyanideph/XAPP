@@ -16,7 +16,7 @@ type Props = {
   profiles?: Record<string, ChatProfile>;
 };
 
-export function MessageList({ messages, currentUserId, hasMore, loadingOlder, onLoadOlder, onReply, onDelete, onReact, onEdit, profiles = {} }: Props) {
+export function MessageList({ messages, currentUserId, hasMore, loadingOlder, onLoadOlder, onReply, onDelete, onReact, onEdit, onReport, profiles = {} }: Props) {
   return (
     <ScrollView contentContainerStyle={{ padding: 16, gap: 10 }}>
       {hasMore ? <Button size="$3" onPress={onLoadOlder} disabled={loadingOlder}>{loadingOlder ? 'Loading…' : 'Load older messages'}</Button> : null}
