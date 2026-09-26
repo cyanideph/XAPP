@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useColorScheme } from 'react-native';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
@@ -23,13 +23,13 @@ export function XAppThemeProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const setMode = (next: ThemeMode) => {
+  const setMode = useCallback((next: ThemeMode) => {
     setModeState(next);
     void AsyncStorage.setItem(STORAGE_KEY, next);
-  };
+  }, []);
 
   const resolvedMode = mode === 'system' ? systemScheme : mode;
-  const value = useMemo(() => ({ mode, resolvedMode, setMode }), [mode, resolvedMode]);
+  const value = useMemo(() => ({ mode, resolvedMode, setMode }), [mode, resolvedMode, setMode]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
