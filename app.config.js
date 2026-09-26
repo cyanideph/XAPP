@@ -1,7 +1,7 @@
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 
 const supabaseKey =
-  process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+  process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
   process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 module.exports = {
