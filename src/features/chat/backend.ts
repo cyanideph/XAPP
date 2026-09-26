@@ -177,12 +177,15 @@ export async function createRoomReport(
   messageId: string | null = null,
 ) {
   if (!supabase) throw new Error('Supabase is not configured.');
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError) throw userError;
+  if (!userData.user) throw new Error('You must be signed in.');
   const { data, error } = await supabase.from('reports').insert({
     room_id: roomId,
     reported_user_id: reportedUserId,
     message_id: messageId,
     reason: reason.trim(),
-    reporter_id: (await supabase.auth.getUser()).data.user?.id,
+    reporter_id: userData.user.id,
   }).select('*').single();
   if (error) throw error;
   return data as RoomReport;
