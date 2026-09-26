@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
-import { Button, H1, Input, Paragraph, Text, YStack } from 'tamagui';
+import { H1, Input, Paragraph, Text, YStack } from 'tamagui';
+import { XButton } from '../../src/components/XButton';
 import { BentoCard } from '../../src/components/BentoCard';
 import { supabase } from '../../src/lib/supabase';
 
@@ -54,10 +55,10 @@ export default function SignUpScreen() {
           <Input secureTextEntry placeholder="Confirm password" value={confirmPassword} onChangeText={setConfirmPassword} onSubmitEditing={() => { void submit(); }} />
           {error ? <Paragraph color="$red10">{error}</Paragraph> : null}
           {message ? <Paragraph>{message}</Paragraph> : null}
-          <Button onPress={() => { void submit(); }} disabled={busy}>{busy ? 'Creating…' : 'Create account'}</Button>
+          <XButton onPress={() => { void submit(); }} disabled={busy}>{busy ? 'Creating…' : 'Create account'}</XButton>
         </YStack>
       </BentoCard>
-      <Button chromeless onPress={() => router.replace('/(auth)/sign-in')}>Back to sign in</Button>
+      <XButton chromeless onPress={() => router.replace('/(auth)/sign-in')}>Back to sign in</XButton>
     </YStack>
   );
 }
