@@ -3,6 +3,7 @@ import { RefreshControl, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { H1, Input, ListItem, Menu, Paragraph, Separator, Spinner, Text, YGroup, XStack, YStack } from 'tamagui';
 import { XButton } from '../../src/components/XButton';
+import { XIcon } from '../../src/components/XIcon';
 import {
   listContentCategories, listCategoryContent, listOnlineUsers, listPublicChats, listPublicRooms,
   searchContent, searchProfiles, searchRooms, searchPublicChats, type ContentCategory, type ContentItem, type ProfileSearchResult, type Room, type PublicChatSearchResult,
@@ -83,7 +84,7 @@ export default function DiscoverScreen() {
           <Text fontSize="$3" color="$colorPress">Search people, rooms, public chats and posts.</Text>
           <XStack gap="$2" items="center">
             <Input flex={1} value={query} onChangeText={setQuery} placeholder="Search community" onSubmitEditing={() => { void runSearch(); }} returnKeyType="search" />
-            <XButton disabled={query.trim().length < 2 || searching} onPress={() => { void runSearch(); }}>{searching ? 'Searching…' : 'Search'}</XButton>
+            <XButton icon={<XIcon name="search" size={18} color="#FFFFFF" />} disabled={query.trim().length < 2 || searching} onPress={() => { void runSearch(); }}>{searching ? 'Searching…' : 'Search'}</XButton>
           </XStack>
         </YStack>
 
@@ -123,7 +124,7 @@ export default function DiscoverScreen() {
         ) : null}
 
         <XStack gap="$2" flexWrap="wrap">
-          <XButton onPress={() => router.push('/room/create')}>Create room</XButton>
+          <XButton icon={<XIcon name="plus" size={18} color="#FFFFFF" />} onPress={() => router.push('/room/create')}>Create room</XButton>
           <XButton chromeless onPress={() => router.push('/room/invites')}>Invitations</XButton>
         </XStack>
 
@@ -140,7 +141,7 @@ export default function DiscoverScreen() {
                   <Text fontSize="$3" color="$colorPress">Matches</Text>
                 </XStack>
                 {peopleResults.map(person => (
-                  <ListItem key={person.id} title={person.display_name || '@' + person.username} subTitle={'@' + person.username} iconAfter={<Text color="$colorPress">›</Text>} onPress={() => router.push({ pathname: '/me/view-profile', params: { id: person.id } })} />
+                  <ListItem key={person.id} title={person.display_name || '@' + person.username} subTitle={'@' + person.username} iconAfter={<XIcon name="chevronRight" size={20} color="#8B85FF" />} onPress={() => router.push({ pathname: '/me/view-profile', params: { id: person.id } })} />
                 ))}
                 {roomResults.map(room => (
                   <ListItem key={room.id} title={room.name} subTitle={room.province_code ? room.province_code + ' · ' + (room.description ?? 'Open community room') : (room.description ?? 'Open community room')} iconAfter={<Text color="$colorPress">›</Text>} onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })} />
