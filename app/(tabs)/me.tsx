@@ -15,7 +15,7 @@ export default function MeScreen() {
     setLoading(true);
     try {
       const [p, f, n] = await Promise.all([getCurrentProfile(), listFavorites(50, 0), listNotifications(50)]);
-      setProfile(p); setFavorites(Array.isArray(f) ? f : []); setUnread(n.items.filter(x => !x.read_at).length);
+      setProfile(p); setFavorites(Array.isArray(f) ? f : []); setUnread(n.items.filter((x) => !x.read_at).length);
     } finally { setLoading(false); }
   }, []);
   useEffect(() => { void load(); }, [load]);
@@ -32,7 +32,7 @@ export default function MeScreen() {
         <BentoCard title="Profile visitors" description="See recent visitors" onPress={() => router.push('/me/list?kind=visitors')} />
       </>}
       <Button onPress={() => router.push('/me/settings')}>Settings</Button>
-      {supabase ? <Button chromeless onPress={() => { void supabase.auth.signOut(); }}>Sign out</Button> : null}
+      {supabase ? <Button chromeless onPress={() => { const client = supabase; void client.auth.signOut(); }}>Sign out</Button> : null}
     </YStack>
   </ScrollView>;
 }
