@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { Button, H1, Input, Paragraph, Spinner, Text, YStack } from 'tamagui';
+import { H1, Input, Paragraph, Spinner, Text, YStack } from 'tamagui';
 import { XButton } from '../../src/components/XButton';
 import { BentoCard } from '../../src/components/BentoCard';
 import { getNotificationPreferences, setNotificationPreferences, NotificationPreferences } from '../../src/lib/backend';
@@ -32,7 +32,7 @@ export default function Settings() {
   useEffect(() => {
     void getNotificationPreferences()
       .then(({ user_id: _userId, ...rest }) => setPreferences(rest))
-      .catch((error) => setStatus(error instanceof Error ? error.message : 'Unable to load settings.'));
+      .catch(error => setStatus(error instanceof Error ? error.message : 'Unable to load settings.'));
     void supabase?.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ''));
   }, []);
 
@@ -73,8 +73,8 @@ export default function Settings() {
 
   if (!preferences) {
     return (
-      <YStack flex={1} style={{ justifyContent: 'center', alignItems: 'center' }}>
-        <Spinner />
+      <YStack flex={1} bg="$background" items="center" justify="center">
+        <Spinner color="$brandBackground" />
       </YStack>
     );
   }
@@ -99,18 +99,22 @@ export default function Settings() {
         <BentoCard title="Notifications" description="Choose which community events notify you.">
           <YStack gap="$2">
             {keys.map(([key, label]) => (
-              <Button key={key} onPress={() => setPreferences({ ...preferences, [key]: !preferences[key] })}>
+              <XButton
+                key={key}
+                variant="outlined"
+                onPress={() => setPreferences({ ...preferences, [key]: !preferences[key] })}
+              >
                 {label}: {preferences[key] ? 'ON' : 'OFF'}
-              </Button>
+              </XButton>
             ))}
-            <XButton onPress={() => void setNotificationPreferences(preferences).then(() => setStatus('Settings saved.')).catch((error) => setStatus(error instanceof Error ? error.message : 'Unable to save settings.'))}>
+            <XButton onPress={() => void setNotificationPreferences(preferences).then(() => setStatus('Settings saved.')).catch(error => setStatus(error instanceof Error ? error.message : 'Unable to save settings.'))}>
               Save settings
             </XButton>
           </YStack>
         </BentoCard>
 
         {status ? <Text color="$colorPress">{status}</Text> : null}
-        <Button chromeless onPress={() => router.back()}>Back</Button>
+        <XButton chromeless onPress={() => router.back()}>Back</XButton>
       </YStack>
     </ScrollView>
   );
