@@ -15,9 +15,11 @@ export function useSession() {
     }
 
     let mounted = true;
+    const client = supabase;
 
     const restore = async () => {
-      const { data, error: sessionError } = await supabase.auth.getSession();
+      if (!client) return;
+      const { data, error: sessionError } = await client.auth.getSession();
       if (!mounted) return;
       setSession(data.session);
       setError(sessionError?.message ?? null);
@@ -26,7 +28,7 @@ export function useSession() {
 
     void restore();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, next) => {
+    const { data: listener } = client.auth.onAuthStateChange((_event, next) => {
       if (!mounted) return;
       setSession(next);
       setError(null);
