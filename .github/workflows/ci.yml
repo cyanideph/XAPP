@@ -40,5 +40,48 @@ jobs:
           node-version: 20
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: Install tunnel and QR helpers
+        run: npm install --no-save --no-audit --no-fund @expo/ngrok qrcode-terminal
       - name: Start Expo Go tunnel preview
-        run: echo 'Preview retained for push builds only; PRs skip this job.'
+        env:
+          CI: "false"
+        run: |
+          set -euo pipefail
+          rm -f expo-preview.log
+          npx expo start --tunnel --go > expo-preview.log 2>&1 &
+          EXPO_PID=$!
+          trap 'kill $EXPO_PID 2>/dev/null || true' EXIT
+
+          EXPO_URL=""
+          for i in {1..90}; do
+            if [ -f expo-preview.log ]; then
+              EXPO_URL=$(grep -oE 'exp://[^[:space:]]+' expo-preview.log | head -n 1 | sed 's/[]\r\n,)]*$//' || true)
+            fi
+            if [ -n "$EXPO_URL" ]; then break; fi
+            if ! kill -0 "$EXPO_PID" 2>/dev/null; then
+              cat expo-preview.log
+              echo "Expo process exited before a tunnel URL was produced."
+              exit 1
+            fi
+            sleep 2
+          done
+
+          cat expo-preview.log
+
+          if [ -z "$EXPO_URL" ]; then
+            echo "ERROR: Expo tunnel started but no Expo Go URL was found."
+            exit 1
+          fi
+
+          echo ""
+          echo "=============================================="
+          echo "XAPP EXPO GO TUNNEL"
+          echo "Scan the QR code below with Expo Go:"
+          echo "=============================================="
+          node -e "require('qrcode-terminal').generate(process.argv[1], {small: true})" "$EXPO_URL"
+          echo ""
+          echo "Expo Go URL: $EXPO_URL"
+          echo "=============================================="
+          echo ""
+          echo "Keeping the Expo tunnel alive for mobile testing..."
+          sleep 540
