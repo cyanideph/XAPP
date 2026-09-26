@@ -354,6 +354,31 @@ export type FeaturedProfile = {
   position: number;
 };
 
+export async function getContent(contentId: string) {
+  if (!supabase) throw new Error('Supabase is not configured.');
+  const { data, error } = await supabase
+    .from('contents')
+    .select('id,author_id,room_id,kind,title,body,metadata,is_published,is_featured,is_hidden,created_at,updated_at')
+    .eq('id', contentId)
+    .eq('is_published', true)
+    .eq('is_hidden', false)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles').select('id,username,display_name,avatar_path').eq('id', data.author_id).maybeSingle();
+  if (profileError) throw profileError;
+  return { ...data, author: profile ?? null } as ContentItem;
+}
+
+export type PollOption = { id: string; content_id: string; label: string; position: number };
+export async function listPollOptions(contentId: string) {
+  if (!supabase) throw new Error('Supabase is not configured.');
+  const { data, error } = await supabase.from('poll_options').select('id,content_id,label,position').eq('content_id', contentId).order('position', { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as PollOption[];
+}
+
 export async function listContentFeed(limit = 20, beforeCreatedAt: string | null = null, beforeId: string | null = null) {
   const page = await rpc<{ items: ContentItem[]; has_more: boolean }>('list_content_feed', {
     p_room_id: null,
