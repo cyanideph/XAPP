@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
-import { H1, Input, Paragraph, Spinner, Text, YStack } from 'tamagui';
+import { H1, Input, Paragraph, Separator, Spinner, Text, XStack, YStack } from 'tamagui';
 import { XButton } from '../../src/components/XButton';
 import { BentoCard } from '../../src/components/BentoCard';
 import { supabase } from '../../src/lib/supabase';
@@ -61,25 +61,50 @@ export default function RestoreScreen() {
     } finally { setBusy(false); }
   }
 
-  if (!ready) return <YStack flex={1} p="$5" style={{ justifyContent: 'center', alignItems: 'center' }} bg="$background"><Spinner /><Text mt="$3">Restoring secure session…</Text></YStack>;
+  if (!ready) {
+    return (
+      <YStack flex={1} bg="$background" p="$5" items="center" justify="center">
+        <YStack items="center" gap="$3">
+          <XStack bg="$brandSoft" px="$3" py="$2" rounded="$10">
+            <Text color="$brandBackground" fontSize="$2" fontWeight="900" letterSpacing={1}>X-APP</Text>
+          </XStack>
+          <Spinner color="$brandBackground" />
+          <Text color="$colorPress">Restoring secure session…</Text>
+        </YStack>
+      </YStack>
+    );
+  }
 
   return (
-    <YStack flex={1} p="$5" style={{ justifyContent: 'center' }} gap="$4" bg="$background">
-      <YStack gap="$2">
-        <Text fontSize="$3" fontWeight="900" color="$colorPress" letterSpacing={1}>X-APP</Text>
-        <H1 fontWeight="900">Choose a new password.</H1>
-        <Paragraph color="$colorPress">Set a new password for your account.</Paragraph>
-      </YStack>
-      <BentoCard title="Secure recovery" description="Choose a new password to finish account recovery.">
+    <YStack flex={1} bg="$background" p="$5" items="center" justify="center">
+      <YStack width="100%" maxW={520} gap="$5">
         <YStack gap="$3">
-          <Input secureTextEntry placeholder="New password" value={password} onChangeText={setPassword} />
-          <Input secureTextEntry placeholder="Confirm new password" value={confirmPassword} onChangeText={setConfirmPassword} />
-          {error ? <Paragraph color="$red10">{error}</Paragraph> : null}
-          {message ? <Paragraph>{message}</Paragraph> : null}
-          <XButton onPress={() => { void updatePassword(); }} disabled={busy || !password || !confirmPassword}>{busy ? 'Updating…' : 'Update password'}</XButton>
+          <XStack bg="$brandSoft" px="$3" py="$2" rounded="$10" self="flex-start">
+            <Text color="$brandBackground" fontSize="$2" fontWeight="900" letterSpacing={1}>X-APP</Text>
+          </XStack>
+          <YStack gap="$2">
+            <H1 fontSize="$10" fontWeight="900">Choose a new password.</H1>
+            <Paragraph color="$colorPress" size="$4">Set a new password for your account.</Paragraph>
+          </YStack>
         </YStack>
-      </BentoCard>
-      <XButton chromeless onPress={() => router.replace('/(auth)/sign-in')}>Back to sign in</XButton>
+
+        <BentoCard title="Secure recovery" description="Choose a new password to finish account recovery.">
+          <YStack gap="$3">
+            <Input secureTextEntry placeholder="New password" value={password} onChangeText={setPassword} />
+            <Input secureTextEntry placeholder="Confirm new password" value={confirmPassword} onChangeText={setConfirmPassword} onSubmitEditing={() => { void updatePassword(); }} />
+            {error ? <Paragraph color="$error">{error}</Paragraph> : null}
+            {message ? <Paragraph color="$success">{message}</Paragraph> : null}
+            <XButton onPress={() => { void updatePassword(); }} disabled={busy || !password || !confirmPassword}>
+              {busy ? 'Updating…' : 'Update password'}
+            </XButton>
+          </YStack>
+        </BentoCard>
+
+        <YStack gap="$3" items="center">
+          <Separator width="100%" borderColor="$borderColor" />
+          <XButton chromeless onPress={() => router.replace('/(auth)/sign-in')}>Back to sign in</XButton>
+        </YStack>
+      </YStack>
     </YStack>
   );
 }
