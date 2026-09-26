@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocalSearchParams, router } from 'expo-router';
-import { H1, Input, ListItem, Paragraph, Separator, Spinner, Text, XStack, YGroup, YStack } from 'tamagui';
+import { H1, Input, ListItem, Menu, Paragraph, Spinner, Text, XStack, YGroup, YStack } from 'tamagui';
 import { XButton } from '../../src/components/XButton';
 import { listRoomMembers, listRoomCoHosts, setRoomCoHost, moderateRoomMember, listRoomReports, updateRoomReport, type RoomMember, type RoomReport } from '../../src/features/chat/backend';
 import { acceptRoomCoHostRequest, declineRoomCoHostRequest, listRoomCoHostRequests, listBannedRoomMembers, listMutedRoomMembers, moderateReportedMessage, unbanRoomMember, warnRoomMember, type RoomManagementMember } from '../../src/features/chat/roomManagement';
@@ -44,7 +44,7 @@ export default function ManageRoomScreen() {
   });
 
   return <YStack flex={1} p="$4" pt="$7" gap="$4" bg="$background">
-    <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+    <XStack items="center" justify="space-between">
       <YStack><Text fontSize="$3" color="$colorPress" fontWeight="800">ROOM ADMIN</Text><H1 fontSize="$8">Moderation</H1></YStack>
       <XButton chromeless onPress={() => router.back()}>Done</XButton>
     </XStack>
@@ -87,7 +87,7 @@ export default function ManageRoomScreen() {
 
     <YStack gap="$2">
       <Text fontSize="$6" fontWeight="800">Banned members ({banned.length})</Text>
-      {banned.map(member => <XStack key={member.user_id} gap="$2" style={{ alignItems: 'center', justifyContent: 'space-between' }}><Text flex={1}>{member.nickname || member.user_id}</Text><XButton size="$2" disabled={busy !== null} onPress={() => { void run('unban-' + member.user_id, () => unbanRoomMember(id, member.user_id)); }}>Unban</XButton></XStack>)}
+      {banned.map(member => <XStack key={member.user_id} gap="$2" items="center" justify="space-between"><Text flex={1}>{member.nickname || member.user_id}</Text><XButton size="$2" disabled={busy !== null} onPress={() => { void run('unban-' + member.user_id, () => unbanRoomMember(id, member.user_id)); }}>Unban</XButton></XStack>)}
       {!banned.length ? <Text color="$colorPress">No banned members.</Text> : null}
     </YStack>
 
@@ -103,4 +103,94 @@ export default function ManageRoomScreen() {
     </YStack>
     {busy ? <XStack gap="$2" style={{ alignItems: 'center' }}><Spinner size="small" /><Text>Applying Room action…</Text></XStack> : null}
   </YStack>;
-}
+}    <YStack gap="$2">
+      <Text fontSize="$6" fontWeight="800">Reports ({reports.filter(r => r.status === 'open' || r.status === 'reviewing').length})</Text>
+      {reports.length ? (
+        <YGroup borderWidth={1} borderColor="$borderColor" rounded="$4" overflow="hidden">
+          {reports.map(report => (
+            <YGroup.Item key={report.id}>
+              <ListItem
+                title={report.reason}
+                subTitle={`${report.status.toUpperCase()}${report.message_id ? ` · Message ${report.message_id.slice(0, 8)}` : ''}`}
+                iconAfter={
+                  <Menu>
+                    <Menu.Trigger asChild action="press">
+                      <XButton size="$2" chromeless disabled={busy !== null}>Actions</XButton>
+                    </Menu.Trigger>
+                    <Menu.Portal zIndex={100}>
+                      <Menu.Content>
+                        {report.message_id && report.status !== 'resolved' && report.status !== 'dismissed' ? (
+                          <Menu.Item key="remove" destructive disabled={busy !== null} onSelect={() => { void run('delete-report-' + report.id, async () => { await moderateReportedMessage(report.message_id!); await updateRoomReport(report.id, 'resolved', 'Message removed after report review'); }); }}>
+                            <Menu.ItemTitle>Remove message</Menu.ItemTitle>
+                          </Menu.Item>
+                        ) : null}
+                        {report.status !== 'resolved' && report.status !== 'dismissed' ? (
+                          <Menu.Item key="resolve" disabled={busy !== null} onSelect={() => { void run('resolve-' + report.id, () => updateRoomReport(report.id, 'resolved', 'Reviewed by Room staff')); }}>
+                            <Menu.ItemTitle>Resolve</Menu.ItemTitle>
+                          </Menu.Item>
+                        ) : null}
+                        {report.status !== 'resolved' && report.status !== 'dismissed' ? (
+                          <Menu.Item key="dismiss" disabled={busy !== null} onSelect={() => { void run('dismiss-' + report.id, () => updateRoomReport(report.id, 'dismissed', 'Dismissed by Room staff')); }}>
+                            <Menu.ItemTitle>Dismiss</Menu.ItemTitle>
+                          </Menu.Item>
+                        ) : null}
+                      </Menu.Content>
+                    </Menu.Portal>
+                  </Menu>
+                }
+              />
+            </YGroup.Item>
+          ))}
+        </YGroup>
+      ) : <Text color="$colorPress">No reports.</Text>}
+    </YStack>    <YStack gap="$2">
+      <Text fontSize="$6" fontWeight="800">Banned members ({banned.length})</Text>
+      {banned.length ? <YGroup borderWidth={1} borderColor="$borderColor" rounded="$4" overflow="hidden">
+        {banned.map(member => <YGroup.Item key={member.user_id}><ListItem title={member.nickname || member.user_id} subTitle="Banned member" iconAfter={<XButton size="$2" chromeless disabled={busy !== null} onPress={() => { void run('unban-' + member.user_id, () => unbanRoomMember(id, member.user_id)); }}>Unban</XButton>} /></YGroup.Item>)}
+      </YGroup> : <Text color="$colorPress">No banned members.</Text>}
+    </YStack>    <YStack gap="$2">
+      <Text fontSize="$6" fontWeight="800">Muted members ({muted.length})</Text>
+      {muted.length ? <YGroup borderWidth={1} borderColor="$borderColor" rounded="$4" overflow="hidden">
+        {muted.map(member => <YGroup.Item key={member.user_id}><ListItem title={member.nickname || member.user_id} subTitle="Muted member" iconAfter={<XButton size="$2" chromeless disabled={busy !== null} onPress={() => { void run('unmute-' + member.user_id, () => moderateRoomMember(id, member.user_id, 'mute', 0, 'Unmuted by Room staff')); }}>Unmute</XButton>} /></YGroup.Item>)}
+      </YGroup> : <Text color="$colorPress">No muted members.</Text>}
+    </YStack>    <YStack gap="$2">
+      <Text fontSize="$6" fontWeight="800">Members ({visibleMembers.length})</Text>
+      <YGroup borderWidth={1} borderColor="$borderColor" rounded="$4" overflow="hidden">
+        {visibleMembers.map(member => {
+          const label = member.nickname || member.profile?.display_name || member.profile?.username || member.user_id;
+          const coHost = coHosts.has(member.user_id);
+          const memberBusy = busy !== null;
+          return <YGroup.Item key={member.user_id}>
+            <ListItem
+              title={label}
+              subTitle={`@${member.profile?.username || 'unknown'} · ${member.role}${coHost ? ' · co-host' : ''}`}
+              iconAfter={
+                member.role === 'owner' ? undefined : (
+                  <Menu>
+                    <Menu.Trigger asChild action="press">
+                      <XButton size="$2" chromeless disabled={memberBusy}>Actions</XButton>
+                    </Menu.Trigger>
+                    <Menu.Portal zIndex={100}>
+                      <Menu.Content>
+                        <Menu.Item key="cohost" disabled={memberBusy} onSelect={() => { void run('cohost-' + member.user_id, async () => { await setRoomCoHost(id, member.user_id, !coHost); }); }}>
+                          <Menu.ItemTitle>{coHost ? 'Remove co-host' : 'Make co-host'}</Menu.ItemTitle>
+                        </Menu.Item>
+                        <Menu.Item key="warn" disabled={memberBusy} onSelect={() => { void run('warn-' + member.user_id, () => warnRoomMember(id, member.user_id)); }}>
+                          <Menu.ItemTitle>Warn</Menu.ItemTitle>
+                        </Menu.Item>
+                        <Menu.Item key="mute" disabled={memberBusy} onSelect={() => { void run('mute-' + member.user_id, () => moderateRoomMember(id, member.user_id, 'mute', 60, 'Room moderation')); }}>
+                          <Menu.ItemTitle>Mute 60m</Menu.ItemTitle>
+                        </Menu.Item>
+                        <Menu.Item key="ban" destructive disabled={memberBusy} onSelect={() => { void run('ban-' + member.user_id, () => moderateRoomMember(id, member.user_id, 'ban', 1440, 'Room moderation')); }}>
+                          <Menu.ItemTitle>Ban 24h</Menu.ItemTitle>
+                        </Menu.Item>
+                      </Menu.Content>
+                    </Menu.Portal>
+                  </Menu>
+                )
+              }
+            />
+          </YGroup.Item>;
+        })}
+      </YGroup>
+    </YStack>
