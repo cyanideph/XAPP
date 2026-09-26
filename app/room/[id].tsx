@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { H1, Paragraph, Spinner, Text, YStack } from 'tamagui';
 import { MessageComposer } from '../../src/components/MessageComposer';
@@ -32,7 +32,7 @@ export default function RoomScreen() {
   };
   return <YStack flex={1} bg="$background">
     <YStack p="$4" borderBottomWidth={1} borderColor="$borderColor">
-      <H1 fontSize="$7">Room</H1><Text fontSize="$2" color="$colorPress">{onlineMembers.length} recently active</Text>{error ? <Paragraph color="$red10">{error}</Paragraph> : null}
+      <H1 fontSize="$7">{room?.name ?? 'Room'}</H1><Text fontSize="$2" color="$colorPress">{room?.province_code ? `${room.province_code} · ` : ''}{onlineMembers.filter(member => member.is_online).length} online</Text>{room?.description ? <Paragraph color="$colorPress">{room.description}</Paragraph> : null}{room?.announcement ? <Paragraph fontWeight="800">{room.announcement}</Paragraph> : null}{room?.view_only ? <Text color="$colorPress">View-only room</Text> : null}{room?.is_locked ? <Text color="$red10">Room locked</Text> : null}{roomError ? <Paragraph color="$red10">{roomError}</Paragraph> : null}{error ? <Paragraph color="$red10">{error}</Paragraph> : null}
     </YStack>
     {loading ? <YStack flex={1} style={{ alignItems: "center", justifyContent: "center" }}><Spinner /></YStack> :
       <YStack flex={1}><MessageList messages={messages} currentUserId={session?.user.id} hasMore={hasMore} onLoadOlder={loadOlder} profiles={profiles} onReply={m => { setEditTarget(null); setReplyTarget(m); }} onEdit={m => { setReplyTarget(null); setEditTarget(m); }} onDelete={m => remove(m.id)} onReact={(m,r) => react(m.id,r)} /></YStack>}
