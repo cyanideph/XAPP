@@ -32,7 +32,7 @@ jobs:
     name: Expo Go Tunnel Preview
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 15
     needs: validation
     steps:
       - uses: actions/checkout@v4
@@ -89,4 +89,4 @@ jobs:
           echo "Keep this GitHub Actions run open while testing."
           echo "=============================================="
 
-          sleep 180
+          sleep 600
