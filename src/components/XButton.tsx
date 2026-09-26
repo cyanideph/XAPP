@@ -13,7 +13,7 @@ export function XButton({ loading = false, disabled, children, ...props }: XButt
       borderRadius="$6"
       fontWeight="700"
       pressStyle={{ opacity: 0.88, scale: 0.985 }}
-      hoverStyle={{ backgroundColor: '$backgroundHover' }}
+      hoverStyle={{ background: '$backgroundHover' }}
       focusStyle={{ borderColor: '$borderColorFocus' }}
     >
       {loading ? 'Loading…' : children}
