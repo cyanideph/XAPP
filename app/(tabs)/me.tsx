@@ -43,7 +43,7 @@ export default function MeScreen() {
           <Text fontSize="$3" color="$colorPress">The interface follows the same soft visual system in every screen.</Text>
           <YStack gap="$2">
             {modes.map(option => (
-              <Button
+              <XButton
                 key={option}
                 size="$3"
                 theme={mode === option ? 'accent' : undefined}
