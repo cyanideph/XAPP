@@ -8,6 +8,7 @@ type BentoCardProps = {
   icon?: ReactNode;
   children?: ReactNode;
   flex?: number;
+  minW?: number;
   onPress?: () => void;
   delay?: number;
 };
@@ -19,12 +20,14 @@ export function BentoCard({
   icon,
   children,
   flex = 1,
+  minW,
   onPress,
   delay = 0,
 }: BentoCardProps) {
   return (
     <Card
       flex={flex}
+      minW={minW}
       bg="$background"
       borderWidth={1}
       borderColor="$borderColor"
