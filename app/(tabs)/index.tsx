@@ -110,7 +110,7 @@ export default function HomeScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { void load(true); }} />}
       contentContainerStyle={{ padding: 20, paddingTop: 64, paddingBottom: 40 }}
     >
-      <YStack width="100%" maxW={960} self="center" gap="$6">
+      <YStack w="100%" maxW={960} self="center" gap="$6">
         <YStack gap="$2">
           <Text fontSize="$3" color="$colorPress" fontWeight="800" letterSpacing={1}>X-APP</Text>
           <H1 fontSize="$10" fontWeight="900">Your space.</H1>
@@ -123,15 +123,15 @@ export default function HomeScreen() {
           <BentoCard
             title="Check in"
             flex={1}
-            minWidth={220}
+            minW={220}
             description={checkin ? (checkin.already_checked_in ? `Already checked in · ${checkin.streak} day streak · +${checkin.points} points` : `Checked in · ${checkin.streak} day streak · +${checkin.points} points`) : 'Keep your community streak going.'}
           >
             <XButton onPress={() => { void doCheckIn(); }} disabled={checkingIn || Boolean(checkin?.already_checked_in)}>
               {checkingIn ? 'Checking in…' : checkin?.already_checked_in ? 'Done today' : 'Check in'}
             </XButton>
           </BentoCard>
-          <BentoCard title="People" flex={1} minWidth={140} value={loading ? '—' : String(onlineUsers.length)} description="recently active" />
-          <BentoCard title="Rooms" flex={1} minWidth={140} value={loading ? '—' : String(rooms.length)} description="public spaces" />
+          <BentoCard title="People" flex={1} minW={140} value={loading ? '—' : String(onlineUsers.length)} description="recently active" />
+          <BentoCard title="Rooms" flex={1} minW={140} value={loading ? '—' : String(rooms.length)} description="public spaces" />
         </XStack>
 
         <BentoCard title="Share something" description="Post a short update to the community.">
@@ -197,7 +197,7 @@ export default function HomeScreen() {
                   <BentoCard
                     key={item.profile.id}
                     flex={1}
-                    minWidth={220}
+                    minW={220}
                     title={item.profile.display_name || item.profile.username}
                     description={item.profile.status_text || item.profile.bio || `@${item.profile.username}`}
                   />
