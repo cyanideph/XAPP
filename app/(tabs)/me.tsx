@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { Button, H1, Paragraph, Spinner, Text, YStack } from 'tamagui';
+import { H1, Paragraph, Spinner, Text, YStack } from 'tamagui';
+import { XButton } from '../../src/components/XButton';
 import { BentoCard } from '../../src/components/BentoCard';
 import { getCurrentProfile, listFavorites, listNotifications } from '../../src/lib/backend';
 import { supabase } from '../../src/lib/supabase';
@@ -49,7 +50,7 @@ export default function MeScreen() {
                 onPress={() => setMode(option)}
               >
                 {option === mode ? `✓ ${option}` : option}
-              </Button>
+              </XButton>
             ))}
           </YStack>
         </YStack>
@@ -65,8 +66,8 @@ export default function MeScreen() {
         <BentoCard title="Profile visitors" description="See recent visitors" onPress={() => router.push('/me/list?kind=visitors')} />
       </>}
 
-      <Button onPress={() => router.push('/me/settings')}>Settings</Button>
-      {supabase ? <Button chromeless onPress={() => { const client = supabase; if (!client) return; void client.auth.signOut(); }}>Sign out</Button> : null}
+      <XButton onPress={() => router.push('/me/settings')}>Settings</XButton>
+      {supabase ? <XButton chromeless onPress={() => { const client = supabase; if (!client) return; void client.auth.signOut(); }}>Sign out</XButton> : null}
     </YStack>
   </ScrollView>;
 }
