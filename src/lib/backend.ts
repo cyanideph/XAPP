@@ -7,6 +7,22 @@ export async function rpc<T = unknown>(name: string, args: Record<string, unknow
   return data as T;
 }
 
+export async function getCurrentProfile() {
+  if (!supabase) throw new Error('Supabase is not configured.');
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError) throw userError;
+  if (!userData.user) return null;
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id,username,display_name,avatar_path')
+    .eq('id', userData.user.id)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+}
+
 export async function listPublicRooms(limit = 20, offset = 0) {
   return rpc('list_public_rooms', { p_limit: limit, p_offset: offset });
 }
