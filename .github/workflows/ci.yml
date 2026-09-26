@@ -14,6 +14,10 @@ jobs:
     name: Expo Validation
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL || secrets.SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY || secrets.SUPABASE_PUBLISHABLE_KEY }}
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -27,6 +31,11 @@ jobs:
         run: npx expo-doctor@latest
       - name: Typecheck
         run: npm run typecheck
+      - name: Verify Supabase configuration
+        run: |
+          test -n "$EXPO_PUBLIC_SUPABASE_URL" || { echo "Missing Supabase URL GitHub Actions secret."; exit 1; }
+          test -n "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY$EXPO_PUBLIC_SUPABASE_ANON_KEY" || { echo "Missing Supabase publishable/anon GitHub Actions secret."; exit 1; }
+          echo "Supabase client environment is configured."
 
   preview:
     name: Expo Go Tunnel Preview
@@ -34,6 +43,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: validation
+    env:
+      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL || secrets.SUPABASE_URL }}
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY || secrets.SUPABASE_PUBLISHABLE_KEY }}
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -62,8 +75,7 @@ jobs:
               exit 1
             fi
 
-            DEEP_LINK=$(curl -fsS --max-time 5 "http://127.0.0.1:8081/_expo/open?platform=android&runtime=expo" 2>/dev/null \
-              | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const x=JSON.parse(s);process.stdout.write(x.url||x.deepLink||"")}catch{}})' || true)
+            DEEP_LINK=$(curl -fsS --max-time 5 "http://127.0.0.1:8081/_expo/open?platform=android&runtime=expo" 2>/dev/null               | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const x=JSON.parse(s);process.stdout.write(x.url||x.deepLink||"")}catch{}})' || true)
 
             if [[ "$DEEP_LINK" == exp://*.exp.direct* ]]; then
               break
