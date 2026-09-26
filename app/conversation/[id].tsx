@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { H1, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
 import { XButton } from '../../src/components/XButton';
+import { XIcon } from '../../src/components/XIcon';
 import { MessageComposer } from '../../src/components/MessageComposer';
 import { MessageList } from '../../src/components/MessageList';
 import { useSession } from '../../src/hooks/useSession';
@@ -58,7 +59,7 @@ export default function ConversationScreen() {
                 {messages.length ? `${messages.length} messages loaded` : 'Start the conversation.'}
               </Paragraph>
             </YStack>
-            <XButton size="$2" chromeless onPress={() => router.back()}>Done</XButton>
+            <XButton size="$2" chromeless icon={<XIcon name="chevronLeft" size={18} color="#8B85FF" />} onPress={() => router.back()}>Done</XButton>
           </XStack>
         </YStack>
         {error ? <Paragraph color="$red10">{error}</Paragraph> : null}
