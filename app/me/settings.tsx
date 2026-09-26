@@ -77,7 +77,7 @@ export default function Settings() {
                   <Text flex={1}>{label}</Text>
                   <Switch size="$3" checked={Boolean(preferences[key])}
                     onCheckedChange={checked => setPreferences({ ...preferences, [key]: checked })}>
-                    <Switch.Thumb animation="quick" />
+                    <Switch.Thumb />
                   </Switch>
                 </XStack>
               </YGroup.Item>
