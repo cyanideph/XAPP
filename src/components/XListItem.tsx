@@ -1,12 +1,12 @@
-import type { ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { Avatar, ListItem } from 'tamagui';
 
 type Props = {
   title: ReactNode;
   subTitle?: ReactNode;
   avatarUrl?: string | null;
-  icon?: ReactNode;
-  iconAfter?: ReactNode;
+  icon?: ReactElement | null;
+  iconAfter?: ReactElement | null;
   onPress?: () => void;
   disabled?: boolean;
 };
