@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, ScrollView } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Button, Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
+import { Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
+import { XButton } from '../../src/components/XButton';
 import { BentoCard } from '../../src/components/BentoCard';
 import {
   addContentComment,
@@ -57,26 +58,20 @@ export default function ContentDetail() {
     }
   }, [id]);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  useEffect(() => { void load(); }, [load]);
 
   const act = async (fn: () => Promise<unknown>) => {
     setBusy(true);
     setError('');
-    try {
-      await fn();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Action failed.');
-    } finally {
-      setBusy(false);
-    }
+    try { await fn(); }
+    catch (e) { setError(e instanceof Error ? e.message : 'Action failed.'); }
+    finally { setBusy(false); }
   };
 
   if (loading) {
     return (
-      <YStack flex={1} bg="$background" style={{ justifyContent: 'center', alignItems: 'center' }}>
-        <Spinner />
+      <YStack flex={1} bg="$background" items="center" justify="center">
+        <Spinner color="$brandBackground" />
       </YStack>
     );
   }
@@ -85,7 +80,7 @@ export default function ContentDetail() {
     return (
       <YStack flex={1} p="$4" gap="$4" bg="$background">
         <Paragraph>{error || 'Content not found.'}</Paragraph>
-        <Button onPress={() => router.back()}>Back</Button>
+        <XButton onPress={() => router.back()}>Back</XButton>
       </YStack>
     );
   }
@@ -95,10 +90,7 @@ export default function ContentDetail() {
   return (
     <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 64, paddingBottom: 32 }}>
       <YStack gap="$4">
-        <Button chromeless onPress={() => router.back()}>
-          Back
-        </Button>
-
+        <XButton chromeless onPress={() => router.back()}>Back</XButton>
         {error ? <Paragraph color="$red10">{error}</Paragraph> : null}
 
         {editing ? (
@@ -107,46 +99,28 @@ export default function ContentDetail() {
               <Input value={editTitle} onChangeText={setEditTitle} placeholder="Title" />
               <Input value={editBody} onChangeText={setEditBody} multiline placeholder="Post text" />
               <XStack gap="$2">
-                <Button
+                <XButton
                   disabled={busy || !editBody.trim()}
-                  onPress={() =>
-                    void act(async () => {
-                      const updated = await editContent(
-                        item.id,
-                        editTitle.trim() || null,
-                        editBody.trim(),
-                        item.metadata,
-                      );
-                      setItem(updated);
-                      setEditing(false);
-                    })
-                  }
+                  onPress={() => void act(async () => {
+                    const updated = await editContent(item.id, editTitle.trim() || null, editBody.trim(), item.metadata);
+                    setItem(updated);
+                    setEditing(false);
+                  })}
                 >
                   Save
-                </Button>
-                <Button chromeless onPress={() => setEditing(false)}>
-                  Cancel
-                </Button>
+                </XButton>
+                <XButton chromeless onPress={() => setEditing(false)}>Cancel</XButton>
               </XStack>
             </YStack>
           </BentoCard>
         ) : (
-          <BentoCard
-            title={item.title || 'Community post'}
-            description={`@${item.author?.username || 'user'} · ${item.kind}`}
-          >
+          <BentoCard title={item.title || 'Community post'} description={`@${item.author?.username || 'user'} · ${item.kind}`}>
             <YStack gap="$3">
               {item.body ? <Paragraph fontSize="$5">{item.body}</Paragraph> : null}
               <XStack gap="$2" flexWrap="wrap">
-                <Button disabled={busy} onPress={() => void act(() => toggleContentReaction(item.id, 'like'))}>
-                  Like
-                </Button>
-                <Button disabled={busy} chromeless onPress={() => void act(() => toggleContentSave(item.id))}>
-                  Save
-                </Button>
-                <Button disabled={busy} chromeless onPress={() => void act(() => repostContent(item.id))}>
-                  Repost
-                </Button>
+                <XButton disabled={busy} onPress={() => void act(() => toggleContentReaction(item.id, 'like'))}>Like</XButton>
+                <XButton disabled={busy} chromeless onPress={() => void act(() => toggleContentSave(item.id))}>Save</XButton>
+                <XButton disabled={busy} chromeless onPress={() => void act(() => repostContent(item.id))}>Repost</XButton>
               </XStack>
             </YStack>
           </BentoCard>
@@ -156,13 +130,9 @@ export default function ContentDetail() {
           <BentoCard title="Poll" description="Choose an option.">
             <YStack gap="$2">
               {pollOptions.map(option => (
-                <Button
-                  key={option.id}
-                  disabled={busy}
-                  onPress={() => void act(() => voteContentPoll(item.id, option.id))}
-                >
+                <XButton key={option.id} disabled={busy} onPress={() => void act(() => voteContentPoll(item.id, option.id))}>
                   {option.label}
-                </Button>
+                </XButton>
               ))}
             </YStack>
           </BentoCard>
@@ -170,62 +140,39 @@ export default function ContentDetail() {
 
         <BentoCard title="Comments" description="Join the conversation.">
           <YStack gap="$2">
-            <Input
-              value={body}
-              onChangeText={setBody}
-              placeholder={replyTo ? 'Write a reply' : 'Write a comment'}
-            />
+            <Input value={body} onChangeText={setBody} placeholder={replyTo ? 'Write a reply' : 'Write a comment'} />
             <XStack gap="$2">
-              <Button
+              <XButton
                 disabled={busy || !body.trim()}
-                onPress={() =>
-                  void act(async () => {
-                    await addContentComment(item.id, body.trim(), replyTo);
-                    setBody('');
-                    setReplyTo(null);
-                    setComments(await listContentComments(item.id, 50));
-                  })
-                }
+                onPress={() => void act(async () => {
+                  await addContentComment(item.id, body.trim(), replyTo);
+                  setBody('');
+                  setReplyTo(null);
+                  setComments(await listContentComments(item.id, 50));
+                })}
               >
                 {replyTo ? 'Reply' : 'Comment'}
-              </Button>
-              {replyTo ? (
-                <Button chromeless onPress={() => setReplyTo(null)}>
-                  Cancel reply
-                </Button>
-              ) : null}
+              </XButton>
+              {replyTo ? <XButton chromeless onPress={() => setReplyTo(null)}>Cancel reply</XButton> : null}
             </XStack>
 
             {comments.map(comment => (
-              <YStack
-                key={comment.id}
-                gap="$2"
-                p="$3"
-                borderWidth={1}
-                borderColor="$borderColor"
-                rounded="$4"
-              >
+              <YStack key={comment.id} gap="$2" p="$3" borderWidth={1} borderColor="$borderColor" rounded="$4">
                 <Text fontWeight="800">@{comment.author?.username || 'user'}</Text>
                 <Text>{comment.body}</Text>
                 <XStack gap="$2">
-                  <Button size="$2" onPress={() => void act(() => toggleContentCommentVote(comment.id, 1))}>
-                    Like
-                  </Button>
-                  <Button size="$2" chromeless onPress={() => setReplyTo(comment.id)}>
-                    Reply
-                  </Button>
-                  <Button
+                  <XButton size="$2" onPress={() => void act(() => toggleContentCommentVote(comment.id, 1))}>Like</XButton>
+                  <XButton size="$2" chromeless onPress={() => setReplyTo(comment.id)}>Reply</XButton>
+                  <XButton
                     size="$2"
                     chromeless
-                    onPress={() =>
-                      void act(async () => {
-                        await deleteContentComment(comment.id);
-                        setComments(values => values.filter(value => value.id !== comment.id));
-                      })
-                    }
+                    onPress={() => void act(async () => {
+                      await deleteContentComment(comment.id);
+                      setComments(values => values.filter(value => value.id !== comment.id));
+                    })}
                   >
                     Delete
-                  </Button>
+                  </XButton>
                 </XStack>
               </YStack>
             ))}
@@ -234,29 +181,24 @@ export default function ContentDetail() {
 
         {isOwner ? (
           <XStack gap="$2">
-            <Button disabled={busy} onPress={() => setEditing(true)}>
-              Edit
-            </Button>
-            <Button
+            <XButton disabled={busy} onPress={() => setEditing(true)}>Edit</XButton>
+            <XButton
               disabled={busy}
               chromeless
-              onPress={() =>
-                Alert.alert('Delete post', 'Delete this post?', [
-                  { text: 'Cancel' },
-                  {
-                    text: 'Delete',
-                    style: 'destructive',
-                    onPress: () =>
-                      void act(async () => {
-                        await deleteContent(item.id);
-                        router.back();
-                      }),
-                  },
-                ])
-              }
+              onPress={() => Alert.alert('Delete post', 'Delete this post?', [
+                { text: 'Cancel' },
+                {
+                  text: 'Delete',
+                  style: 'destructive',
+                  onPress: () => void act(async () => {
+                    await deleteContent(item.id);
+                    router.back();
+                  }),
+                },
+              ])}
             >
               Delete
-            </Button>
+            </XButton>
           </XStack>
         ) : null}
       </YStack>
