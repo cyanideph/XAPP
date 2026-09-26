@@ -32,7 +32,7 @@ export default function MeScreen() {
         <BentoCard title="Profile visitors" description="See recent visitors" onPress={() => router.push('/me/list?kind=visitors')} />
       </>}
       <Button onPress={() => router.push('/me/settings')}>Settings</Button>
-      {supabase ? <Button chromeless onPress={() => { const client = supabase; void client.auth.signOut(); }}>Sign out</Button> : null}
+      {supabase ? <Button chromeless onPress={() => { const client = supabase; if (!client) return; void client.auth.signOut(); }}>Sign out</Button> : null}
     </YStack>
   </ScrollView>;
 }
