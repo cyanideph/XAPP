@@ -55,7 +55,7 @@ jobs:
           trap 'kill "$EXPO_PID" 2>/dev/null || true' EXIT
 
           DEEP_LINK=""
-          for i in {1..90}; do
+          for i in {1..150}; do
             if ! kill -0 "$EXPO_PID" 2>/dev/null; then
               cat expo-preview.log
               echo "ERROR: Expo exited before the tunnel became ready."
@@ -65,8 +65,12 @@ jobs:
             DEEP_LINK=$(curl -fsS --max-time 5 "http://127.0.0.1:8081/_expo/open?platform=android&runtime=expo" 2>/dev/null \
               | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const x=JSON.parse(s);process.stdout.write(x.url||x.deepLink||"")}catch{}})' || true)
 
-            if [[ "$DEEP_LINK" == exp://* ]]; then
+            if [[ "$DEEP_LINK" == exp://*.exp.direct* ]]; then
               break
+            fi
+            echo "Waiting for public Expo tunnel... attempt $i/150"
+            if [[ -n "$DEEP_LINK" ]]; then
+              echo "Current URL is not a tunnel URL: $DEEP_LINK"
             fi
             sleep 2
           done
@@ -74,7 +78,7 @@ jobs:
           cat expo-preview.log
 
           if [[ "$DEEP_LINK" != exp://* ]]; then
-            echo "ERROR: Expo server started but no Expo Go deep link was returned."
+            echo "ERROR: No public exp.direct tunnel URL became available."
             tail -n 100 expo-preview.log
             exit 1
           fi
@@ -86,6 +90,7 @@ jobs:
           echo "QR CODE:"
           node -e "require('qrcode-terminal').generate(process.argv[1], {small: true})" "$DEEP_LINK"
           echo "=============================================="
+          echo "This QR uses the public Expo tunnel."
           echo "Keep this GitHub Actions run open while testing."
           echo "=============================================="
 
