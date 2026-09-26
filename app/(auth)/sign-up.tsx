@@ -6,31 +6,42 @@ import { supabase } from '../../src/lib/supabase';
 export default function SignUpScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [username, setUsername] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
   async function submit() {
-    if (!supabase || !email.trim() || !password || !username.trim()) return;
-    setBusy(true); setMessage('');
-    const { data, error } = await supabase.auth.signUp({
-      email: email.trim(),
-      password,
-      options: { data: { username: username.trim() } },
-    });
-    setMessage(error ? error.message : 'Account created. Check your email if confirmation is required.');
-    if (!error && data.session) router.replace('/(tabs)');
-    setBusy(false);
+    const emailValue = email.trim().toLowerCase();
+    const usernameValue = username.trim();
+    if (!supabase || !emailValue || !password || !usernameValue || busy) return;
+    if (password !== confirmPassword) { setError('Passwords do not match.'); return; }
+    setBusy(true); setMessage(''); setError('');
+    try {
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: emailValue,
+        password,
+        options: { data: { username: usernameValue } },
+      });
+      if (signUpError) { setError(signUpError.message); return; }
+      if (data.session) router.replace('/(tabs)');
+      else setMessage('Account created. Check your email if confirmation is required, then sign in.');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to create account.');
+    } finally { setBusy(false); }
   }
 
-  return <YStack flex={1} p="$5" style={{ justifyContent: "center" }} gap="$4" bg="$background">
-    <YStack gap="$2"><Text fontSize="$3" fontWeight="800" color="$colorPress">X-APP</Text><H1 fontSize="$10">Create account.</H1><Paragraph color="$colorPress">Your username is sent as signup metadata; backend profile creation remains authoritative.</Paragraph></YStack>
+  return <YStack flex={1} p="$5" style={{ justifyContent: 'center' }} gap="$4" bg="$background">
+    <YStack gap="$2"><Text fontSize="$3" fontWeight="800" color="$colorPress">X-APP</Text><H1 fontSize="$10">Create account.</H1><Paragraph color="$colorPress">Choose your username, email and password.</Paragraph></YStack>
     <YStack gap="$3">
-      <Input autoCapitalize="none" placeholder="Username" value={username} onChangeText={setUsername} />
-      <Input autoCapitalize="none" keyboardType="email-address" placeholder="Email" value={email} onChangeText={setEmail} />
-      <Input secureTextEntry placeholder="Password" value={password} onChangeText={setPassword} onSubmitEditing={submit} />
+      <Input autoCapitalize="none" autoCorrect={false} placeholder="Username" value={username} onChangeText={setUsername} />
+      <Input autoCapitalize="none" autoCorrect={false} keyboardType="email-address" placeholder="Email" value={email} onChangeText={setEmail} />
+      <Input secureTextEntry placeholder="Password" value={password} onChangeText={setPassword} />
+      <Input secureTextEntry placeholder="Confirm password" value={confirmPassword} onChangeText={setConfirmPassword} onSubmitEditing={() => { void submit(); }} />
+      {error ? <Paragraph color="$red10">{error}</Paragraph> : null}
       {message ? <Paragraph>{message}</Paragraph> : null}
-      <Button onPress={submit} disabled={busy || !email.trim() || !password || !username.trim()}>{busy ? 'Creating…' : 'Create account'}</Button>
+      <Button onPress={() => { void submit(); }} disabled={busy || !email.trim() || !password || !confirmPassword || !username.trim()}>{busy ? 'Creating…' : 'Create account'}</Button>
       <Button chromeless onPress={() => router.replace('/(auth)/sign-in')}>Back to sign in</Button>
     </YStack>
   </YStack>;
