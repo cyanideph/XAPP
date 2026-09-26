@@ -3,7 +3,6 @@ import { ScrollView, RefreshControl } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { H1, Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
 import { XButton } from '../../src/components/XButton';
-import { BentoCard } from '../../src/components/BentoCard';
 import { addProfileComment, deleteProfileComment, getCurrentProfile, getProfileRelationshipState, getPublicProfile, listProfileComments, recordProfileVisit, toggleBlock, toggleFavorite, toggleFollow, toggleProfileCommentVote, type ProfileComment, type ProfileRelationshipState, type PublicProfile } from '../../src/lib/backend';
 
 type VoteState = { upvotes: number; downvotes: number; user_vote: number | null };
@@ -125,16 +124,16 @@ export default function PublicProfileScreen() {
         <XButton chromeless onPress={() => router.back()}>Back</XButton>
         {error ? <Paragraph color="$red10">{error}</Paragraph> : null}
         {!profile ? (
-          <BentoCard title="Profile unavailable" description="This profile could not be loaded." />
+          <YStack gap="$2"><Text fontSize="$5" fontWeight="800">Profile unavailable</Text><Paragraph color="$colorPress">This profile could not be loaded.</Paragraph></YStack>
         ) : (
           <>
-            <BentoCard title="PROFILE" description={profile.status_text || 'X-App community profile'}>
+            <YStack gap="$3"><Text fontSize="$5" fontWeight="800">PROFILE</Text><Paragraph color="$colorPress">{profile.status_text || 'X-App community profile'}</Paragraph>
               <YStack gap="$2">
                 <H1>{profile.display_name || `@${profile.username}`}</H1>
                 <Text color="$colorPress">@{profile.username}</Text>
                 {profile.bio ? <Paragraph>{profile.bio}</Paragraph> : null}
               </YStack>
-            </BentoCard>
+            </YStack>
             {currentUserId !== profile.id ? (
               <XStack gap="$2" flexWrap="wrap">
                 <XButton disabled={busy !== ''} onPress={() => void runAction('follow')}>{state.following ? 'Unfollow' : 'Follow'}</XButton>
@@ -172,7 +171,7 @@ export default function PublicProfileScreen() {
                 })}
                 {!comments.length ? <Text color="$colorPress">No comments yet.</Text> : null}
               </YStack>
-            </BentoCard>
+            </YStack>
           </>
         )}
       </YStack>
