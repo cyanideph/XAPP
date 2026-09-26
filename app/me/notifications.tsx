@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { H1, ListItem, Separator, Spinner, YGroup, YStack } from 'tamagui';
+import { H1, ListItem, Separator, Spinner, Text, YGroup, YStack } from 'tamagui';
 import { XButton } from '../../src/components/XButton';
 import { listNotifications, markAllNotificationsRead, markNotificationRead } from '../../src/lib/backend';
 
