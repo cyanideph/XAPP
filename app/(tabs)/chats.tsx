@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { H1, Input, Paragraph, Separator, Spinner, Text, XStack, YStack } from 'tamagui';
-import { BentoCard } from '../../src/components/BentoCard';
+import { H1, Input, ListItem, Paragraph, Separator, Spinner, Text, XStack, YGroup, YStack } from 'tamagui';
 import { XButton } from '../../src/components/XButton';
 import {
   listMyConversations, searchPublicRooms, listPendingConversationInvites, listPublicChats,
@@ -105,7 +104,7 @@ export default function ChatsScreen() {
           <Paragraph color="$colorPress" size="$4">Rooms and private conversations, in one place.</Paragraph>
         </YStack>
 
-        {error ? <BentoCard title="Unable to load Chats" description={error} onPress={() => { void load(); }} /> : null}
+        {error ? <ListItem title="Unable to load Chats" subTitle={error} onPress={() => { void load(); }} /> : null}
 
         {loading ? <Spinner color="$brandBackground" /> : (
           <>
@@ -116,13 +115,14 @@ export default function ChatsScreen() {
                   <Text fontSize="$3" color="$colorPress">{invites.length} pending</Text>
                 </YStack>
                 {invites.map(invite => (
-                  <BentoCard key={invite.invite_id} title={inviteTitle(invite)}
-                    description={invite.inviter ? `@${invite.inviter.username} invited you` : 'You have a pending conversation invitation.'}>
-                    <XStack gap="$2" flexWrap="wrap">
-                      <XButton size="$3" disabled={inviteBusy === invite.invite_id} onPress={() => { void respondToInvite(invite, true); }}>Accept</XButton>
-                      <XButton size="$3" chromeless disabled={inviteBusy === invite.invite_id} onPress={() => { void respondToInvite(invite, false); }}>Decline</XButton>
-                    </XStack>
-                  </BentoCard>
+                  <ListItem key={invite.invite_id}
+  title={inviteTitle(invite)}
+  subTitle={invite.inviter ? `@${invite.inviter.username} invited you` : 'You have a pending conversation invitation.'}
+  iconAfter={<XStack gap="$2">
+    <XButton size="$2" disabled={inviteBusy === invite.invite_id} onPress={() => { void respondToInvite(invite, true); }}>Accept</XButton>
+    <XButton size="$2" chromeless disabled={inviteBusy === invite.invite_id} onPress={() => { void respondToInvite(invite, false); }}>Decline</XButton>
+  </XStack>}
+/>
                 ))}
                 <Separator borderColor="$borderColor" />
               </YStack>
@@ -135,16 +135,18 @@ export default function ChatsScreen() {
                   <Text fontSize="$3" color="$colorPress">{conversations.length} shown</Text>
                 </YStack>
               </XStack>
-              {conversations.length ? conversations.map(conversation => {
+              {conversations.length ? <YGroup borderWidth={1} borderColor="$borderColor" rounded="$4" overflow="hidden">{conversations.map(conversation => {
                 const unread = Boolean(conversation.last_read_at && new Date(conversation.updated_at).getTime() > new Date(conversation.last_read_at).getTime());
                 return (
-                  <BentoCard key={conversation.id}
-                    title={unread ? `● ${conversationTitle(conversation)}` : conversationTitle(conversation)}
-                    description={conversation.participant ? `@${conversation.participant.username} · ${formatUpdatedAt(conversation.updated_at)}` : `Open conversation · ${formatUpdatedAt(conversation.updated_at)}`}
-                    onPress={() => router.push({ pathname: '/conversation/[id]', params: { id: conversation.id } })} />
+                  <ListItem key={conversation.id}
+  title={unread ? `● ${conversationTitle(conversation)}` : conversationTitle(conversation)}
+  subTitle={conversation.participant ? `@${conversation.participant.username} · ${formatUpdatedAt(conversation.updated_at)}` : `Open conversation · ${formatUpdatedAt(conversation.updated_at)}`}
+  iconAfter={<Text color="$colorPress">›</Text>}
+  onPress={() => router.push({ pathname: '/conversation/[id]', params: { id: conversation.id } })}
+/>
                 );
-              }) : (
-                <BentoCard title="No conversations yet" description="Open a profile or accept an invitation to start chatting." />
+              })}</YGroup> : (
+                <ListItem title="No conversations yet" subTitle="Open a profile or accept an invitation to start chatting." />
               )}
             </YStack>
 
@@ -162,13 +164,15 @@ export default function ChatsScreen() {
                 </XStack>
               </YStack>
 
-              {publicChats.length ? publicChats.map(room => (
-                <BentoCard key={room.id} title={room.name}
-                  description={room.province_code ? `${room.province_code} · ${room.description ?? 'Open realtime room'}` : (room.description ?? 'Open realtime room')}
-                  value={`${room.member_count ?? 0} members · ${room.online_count ?? 0} online`}
-                  onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })} />
-              )) : (
-                <BentoCard title="No public rooms available" description="Refresh to check the community again." />
+              {publicChats.length ? <YGroup borderWidth={1} borderColor="$borderColor" rounded="$4" overflow="hidden">{publicChats.map(room => (
+                <ListItem key={room.id}
+  title={room.name}
+  subTitle={room.province_code ? `${room.province_code} · ${room.description ?? 'Open realtime room'}` : (room.description ?? 'Open realtime room')}
+  iconAfter={<Text color="$colorPress">{room.member_count ?? 0} · {room.online_count ?? 0}</Text>}
+  onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })}
+/>
+              ))}</YGroup> : (
+                <ListItem title="No public rooms available" subTitle="Refresh to check the community again." />
               )}
             </YStack>
 
