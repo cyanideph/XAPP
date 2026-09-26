@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { H1, Input, ListItem, Paragraph, Separator, Spinner, Text, YGroup, XStack, YStack } from 'tamagui';
+import { H1, Input, ListItem, Menu, Paragraph, Separator, Spinner, Text, YGroup, XStack, YStack } from 'tamagui';
 import { XButton } from '../../src/components/XButton';
 import {
   listContentCategories, listCategoryContent, listOnlineUsers, listPublicChats, listPublicRooms,
@@ -104,13 +104,20 @@ export default function DiscoverScreen() {
               </YStack>
               <XButton size="$2" chromeless onPress={() => { void selectCategory(null); }}>Clear</XButton>
             </XStack>
-            <XStack gap="$2" flexWrap="wrap">
-              <XButton size="$3" chromeless={!selectedCategory} onPress={() => { void selectCategory(null); }}>All</XButton>
-              {categories.map(category => (
-                <XButton key={category.id} size="$3" chromeless={selectedCategory !== category.id} onPress={() => { void selectCategory(category.id); }}>
-                  {category.name}
-                </XButton>
-              ))}
+            <XStack gap="$2" items="center">
+              <XButton size="$3" chromeless={!selectedCategory} onPress={() => { void selectCategory(null); }}>All topics</XButton>
+              <Menu>
+                <Menu.Trigger asChild action="press">
+                  <XButton size="$3" chromeless>Choose topic</XButton>
+                </Menu.Trigger>
+                <Menu.Portal><Menu.Content>
+                  {categories.map(category => (
+                    <Menu.Item key={category.id} onSelect={() => { void selectCategory(category.id); }}>
+                      <Menu.ItemTitle>{category.name}</Menu.ItemTitle>
+                    </Menu.Item>
+                  ))}
+                </Menu.Content></Menu.Portal>
+              </Menu>
             </XStack>
           </YStack>
         ) : null}
@@ -170,11 +177,20 @@ export default function DiscoverScreen() {
                 <ListItem key={room.id}
                   title={room.name}
                   subTitle={room.province_code ? room.province_code + ' · ' + (room.description ?? 'Open realtime room') : (room.description ?? 'Open realtime room')}
-                  iconAfter={<XStack gap="$2">
-                    <XButton size="$2" onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })}>Open</XButton>
-                    <XButton size="$2" chromeless onPress={() => router.push({ pathname: '/room/manage', params: { id: room.id } })}>Manage</XButton>
-                    <XButton size="$2" chromeless onPress={() => router.push({ pathname: '/room/request-cohost', params: { id: room.id } })}>Co-host</XButton>
-                  </XStack>}
+                  iconAfter={
+                    <XStack gap="$2" items="center">
+                      <XButton size="$2" onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })}>Open</XButton>
+                      <Menu>
+                        <Menu.Trigger asChild action="press">
+                          <XButton size="$2" chromeless>More</XButton>
+                        </Menu.Trigger>
+                        <Menu.Portal><Menu.Content>
+                          <Menu.Item onSelect={() => router.push({ pathname: '/room/manage', params: { id: room.id } })}><Menu.ItemTitle>Manage room</Menu.ItemTitle></Menu.Item>
+                          <Menu.Item onSelect={() => router.push({ pathname: '/room/request-cohost', params: { id: room.id } })}><Menu.ItemTitle>Request co-host</Menu.ItemTitle></Menu.Item>
+                        </Menu.Content></Menu.Portal>
+                      </Menu>
+                    </XStack>
+                  } />
                 />
               )) : (
                 <ListItem title="No public rooms yet" subTitle="Create the first community room or refresh to check again." onPress={() => { void load(); }} />
