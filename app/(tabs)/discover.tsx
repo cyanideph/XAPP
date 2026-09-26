@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { H1, Input, Paragraph, Separator, Spinner, Text, XStack, YStack } from 'tamagui';
+import { H1, Input, ListItem, Paragraph, Separator, Spinner, Text, YGroup, XStack, YStack } from 'tamagui';
 import { XButton } from '../../src/components/XButton';
-import { BentoCard } from '../../src/components/BentoCard';
 import {
   listContentCategories, listCategoryContent, listOnlineUsers, listPublicChats, listPublicRooms,
   searchContent, searchProfiles, searchRooms, searchPublicChats, type ContentCategory, type ContentItem, type ProfileSearchResult, type Room, type PublicChatSearchResult,
@@ -80,20 +79,21 @@ export default function DiscoverScreen() {
           <Paragraph color="$colorPress" size="$4">Explore rooms, conversations, people and community content.</Paragraph>
         </YStack>
 
-        <BentoCard title="Search X-App" description="Search people, rooms, public chats and posts from one place.">
+        <YStack gap="$2">
+          <Text fontSize="$3" color="$colorPress">Search people, rooms, public chats and posts.</Text>
           <XStack gap="$2" items="center">
             <Input flex={1} value={query} onChangeText={setQuery} placeholder="Search community" onSubmitEditing={() => { void runSearch(); }} returnKeyType="search" />
-            <XButton disabled={query.trim().length < 2 || searching} onPress={() => { void runSearch(); }}>
-              {searching ? 'Searching…' : 'Search'}
-            </XButton>
+            <XButton disabled={query.trim().length < 2 || searching} onPress={() => { void runSearch(); }}>{searching ? 'Searching…' : 'Search'}</XButton>
           </XStack>
-        </BentoCard>
+        </YStack>
 
-        <XStack gap="$3" flexWrap="wrap">
-          <BentoCard title="People" minW={180} flex={1} value={String(counts.users)} description="recently active" />
-          <BentoCard title="Rooms" minW={180} flex={1} value={String(counts.rooms)} description="public spaces" />
-          <BentoCard title="Public chats" minW={180} flex={1} value={String(counts.chats)} description="community conversations" />
-        </XStack>
+        <YGroup>
+          <YGroup.Item><ListItem title="People" subTitle="recently active" iconAfter={<Text color="$brandBackground">{counts.users}</Text>} /></YGroup.Item>
+          <Separator />
+          <YGroup.Item><ListItem title="Rooms" subTitle="public spaces" iconAfter={<Text color="$brandBackground">{counts.rooms}</Text>} /></YGroup.Item>
+          <Separator />
+          <YGroup.Item><ListItem title="Public chats" subTitle="community conversations" iconAfter={<Text color="$brandBackground">{counts.chats}</Text>} /></YGroup.Item>
+        </YGroup>
 
         {categories.length ? (
           <YStack gap="$3">
@@ -122,7 +122,7 @@ export default function DiscoverScreen() {
 
         <Separator borderColor="$borderColor" />
 
-        {error ? <BentoCard title="Something needs attention" description={error} onPress={() => { void load(); }} /> : null}
+        {error ? <ListItem title="Something needs attention" subTitle={error} onPress={() => { void load(); }} /> : null}
 
         {loading ? <Spinner color="$brandBackground" /> : (
           <>
@@ -133,17 +133,13 @@ export default function DiscoverScreen() {
                   <Text fontSize="$3" color="$colorPress">Matches</Text>
                 </XStack>
                 {peopleResults.map(person => (
-                  <BentoCard key={person.id} title={person.display_name || '@' + person.username} description={'@' + person.username}
-                    onPress={() => router.push({ pathname: '/me/view-profile', params: { id: person.id } })} />
+                  <ListItem key={person.id} title={person.display_name || '@' + person.username} subTitle={'@' + person.username} iconAfter={<Text color="$colorPress">›</Text>} onPress={() => router.push({ pathname: '/me/view-profile', params: { id: person.id } })} />
                 ))}
                 {roomResults.map(room => (
-                  <BentoCard key={room.id} title={room.name}
-                    description={room.province_code ? room.province_code + ' · ' + (room.description ?? 'Open community room') : (room.description ?? 'Open community room')}
-                    onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })} />
+                  <ListItem key={room.id} title={room.name} subTitle={room.province_code ? room.province_code + ' · ' + (room.description ?? 'Open community room') : (room.description ?? 'Open community room')} iconAfter={<Text color="$colorPress">›</Text>} onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })} />
                 ))}
                 {chatResults.map(chat => (
-                  <BentoCard key={chat.id} title={String(chat.name ?? chat.title ?? 'Public chat')} description="Public conversation"
-                    onPress={() => router.push('/(tabs)/chats')} />
+                  <ListItem key={chat.id} title={String(chat.name ?? chat.title ?? 'Public chat')} subTitle="Public conversation" iconAfter={<Text color="$colorPress">›</Text>} onPress={() => router.push('/(tabs)/chats')} />
                 ))}
               </YStack>
             ) : null}
@@ -157,9 +153,7 @@ export default function DiscoverScreen() {
                   </YStack>
                 </XStack>
                 {results.map(item => (
-                  <BentoCard key={item.id} title={item.title || item.kind}
-                    description={'@' + (item.author?.username || 'user') + ' · ' + item.kind + (item.body ? ' · ' + item.body : '')}
-                    onPress={() => router.push({ pathname: '/content/[id]', params: { id: item.id } })} />
+                  <ListItem key={item.id} title={item.title || item.kind} subTitle={'@' + (item.author?.username || 'user') + ' · ' + item.kind + (item.body ? ' · ' + item.body : '')} iconAfter={<Text color="$colorPress">›</Text>} onPress={() => router.push({ pathname: '/content/[id]', params: { id: item.id } })} />
                 ))}
               </YStack>
             ) : null}
@@ -173,19 +167,17 @@ export default function DiscoverScreen() {
               </XStack>
 
               {rooms.length ? rooms.map((room, index) => (
-                <BentoCard key={room.id} title={room.name}
-                  description={room.province_code ? room.province_code + ' · ' + (room.description ?? 'Open realtime room') : (room.description ?? 'Open realtime room')}
-                  delay={index * 35}
-                  onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })}
-                >
-                  <XStack gap="$2" flexWrap="wrap">
+                <ListItem key={room.id}
+                  title={room.name}
+                  subTitle={room.province_code ? room.province_code + ' · ' + (room.description ?? 'Open realtime room') : (room.description ?? 'Open realtime room')}
+                  iconAfter={<XStack gap="$2">
                     <XButton size="$2" onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })}>Open</XButton>
                     <XButton size="$2" chromeless onPress={() => router.push({ pathname: '/room/manage', params: { id: room.id } })}>Manage</XButton>
                     <XButton size="$2" chromeless onPress={() => router.push({ pathname: '/room/request-cohost', params: { id: room.id } })}>Co-host</XButton>
-                  </XStack>
-                </BentoCard>
+                  </XStack>}
+                />
               )) : (
-                <BentoCard title="No public rooms yet" description="Create the first community room or refresh to check again." onPress={() => { void load(); }} />
+                <ListItem title="No public rooms yet" subTitle="Create the first community room or refresh to check again." onPress={() => { void load(); }} />
               )}
             </YStack>
           </>
