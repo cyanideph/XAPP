@@ -1,6 +1,6 @@
 import { useCallback, useState, useEffect } from 'react';
 import { useLocalSearchParams } from 'expo-router';
-import { H1, Paragraph, Spinner, Text, YStack } from 'tamagui';
+import { H1, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
 import { MessageComposer } from '../../src/components/MessageComposer';
 import { listOnlineRoomMembers } from '../../src/features/chat/backend';
 import { MessageList } from '../../src/components/MessageList';
