@@ -1,9 +1,10 @@
 import { useCallback, useState, useEffect } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { Alert } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { Button, H1, Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
 import { MessageComposer } from '../../src/components/MessageComposer';
-import { listOnlineRoomMembers, listRoomMembers, listRoomCoHosts, setRoomCoHost, kickRoomMember, moderateRoomMember, strikeRoomMember, setRoomChatSettings, setRoomLock, setRoomMemberChatPreferences, setRoomPinnedMessage, setRoomMessageMentions, createRoomReport, listRoomReports, updateRoomReport, type RoomMember, type RoomReport } from '../../src/features/chat/backend';
+import { listOnlineRoomMembers, listRoomMembers, listRoomCoHosts, setRoomCoHost, kickRoomMember, moderateRoomMember, strikeRoomMember, setRoomChatSettings, setRoomLock, setRoomMemberChatPreferences, setRoomPinnedMessage, setRoomMessageMentions, createRoomReport, listRoomReports, updateRoomReport, uploadRoomMedia, attachRoomMediaToMessage, deleteRoomMedia, type RoomMember, type RoomReport } from '../../src/features/chat/backend';
 import { createRoomInvite, listOnlineUsers } from '../../src/lib/backend';
 import { MessageList } from '../../src/components/MessageList';
 import { useSession } from '../../src/hooks/useSession';
@@ -39,6 +40,7 @@ export default function RoomScreen() {
   const [reportTarget, setReportTarget] = useState<{ messageId?: string; userId?: string; label: string } | null>(null);
   const [reportReason, setReportReason] = useState('');
   const [reportBusy, setReportBusy] = useState(false);
+  const [mediaBusy, setMediaBusy] = useState(false);
   const [roomError, setRoomError] = useState<string | null>(null);
   const loadRoom = useCallback(async () => {
     try { setRoomError(null); setRoom(await getRoom(id)); }
@@ -46,7 +48,7 @@ export default function RoomScreen() {
   }, [id]);
   useEffect(() => { void loadRoom(); }, [loadRoom]);
 
-  const { messages, loading, sending, error, hasMore, loadOlder, send, sendSticker, reply, edit, remove, react, profiles, onTyping } = useChatMessages({ scope: 'room', id });
+  const { messages, loading, sending, error, hasMore, loadOlder, send, sendMedia, sendSticker, reply, edit, remove, react, profiles, onTyping } = useChatMessages({ scope: 'room', id });
   useEffect(() => { let active = true; const refresh = async () => { try { const online = await listOnlineRoomMembers(id, 20, 0); if (active) setOnlineMembers(Array.isArray(online) ? online : []); } catch {} }; void refresh(); const timer = setInterval(refresh, 30000); return () => { active = false; clearInterval(timer); }; }, [id]);
   const loadMembers = useCallback(async () => {
     setMembersLoading(true);
@@ -280,6 +282,65 @@ export default function RoomScreen() {
     }
   }, [id]);
 
+  const pickMedia = useCallback(async () => {
+    if (mediaBusy || sending || room?.view_only || room?.is_locked) return;
+    setMediaBusy(true);
+    setRoomError(null);
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) throw new Error('Media library permission is required.');
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images', 'videos'],
+        allowsEditing: false,
+        allowsMultipleSelection: false,
+        quality: 1,
+      });
+      if (result.canceled || !result.assets?.length) return;
+
+      const asset = result.assets[0];
+      const media = await uploadRoomMedia(id, {
+        uri: asset.uri,
+        mimeType: asset.mimeType,
+        fileName: asset.fileName,
+        fileSize: asset.fileSize,
+        width: asset.width,
+        height: asset.height,
+        duration: asset.duration,
+        type: asset.type,
+      });
+
+      let message: ChatMessage | null = null;
+      try {
+        message = await sendMedia(media.caption ?? '', {
+          media_id: media.id,
+          bucket: media.bucket,
+          path: media.path,
+          mime_type: media.mime_type,
+          filename: media.filename,
+          width: media.width,
+          height: media.height,
+          duration_ms: media.duration_ms,
+          size_bytes: media.size_bytes,
+        });
+      } catch (sendError) {
+        await deleteRoomMedia(media).catch(() => undefined);
+        throw sendError;
+      }
+
+      if (message) {
+        try {
+          await attachRoomMediaToMessage(media.id, message.id);
+        } catch {
+          setRoomError('Media sent, but its attachment record could not be linked.');
+        }
+      }
+    } catch (e) {
+      setRoomError(e instanceof Error ? e.message : 'Unable to upload media.');
+    } finally {
+      setMediaBusy(false);
+    }
+  }, [id, mediaBusy, room?.is_locked, room?.view_only, sendMedia, sending]);
+
   const submit = async (body: string) => {
     if (replyTarget) { await reply(replyTarget.id, body); setReplyTarget(null); return; }
     if (editTarget) { await edit(editTarget.id, body); setEditTarget(null); return; }
@@ -475,6 +536,6 @@ export default function RoomScreen() {
         {!inviteCandidates.length ? <Text color="$colorPress">No online people available to invite.</Text> : null}
       </YStack> : null}
     </YStack>
-    <MessageComposer onSend={submit} onSendSticker={async stickerId => { await sendSticker(stickerId); }} disabled={sending || loading || room?.view_only || room?.is_locked} editValue={editTarget?.body ?? null} onEditCancel={() => setEditTarget(null)} onTyping={onTyping} />
+    <MessageComposer onSend={submit} onSendSticker={async stickerId => { await sendSticker(stickerId); }} onPickMedia={pickMedia} disabled={sending || loading || mediaBusy || room?.view_only || room?.is_locked} editValue={editTarget?.body ?? null} onEditCancel={() => setEditTarget(null)} onTyping={onTyping} />
   </YStack>;
 }
