@@ -21,8 +21,8 @@ function AppShell() {
   return (
     <TamaguiProvider config={tamaguiConfig} defaultTheme={resolvedMode}>
       {loading ? (
-        <YStack flex={1} bg="$background" style={{ alignItems: 'center', justifyContent: 'center' }}>
-          <Spinner />
+        <YStack flex={1} bg="$background" items="center" justify="center">
+          <Spinner color="$brandBackground" />
         </YStack>
       ) : (
         <Stack screenOptions={{ headerShown: false }}>
