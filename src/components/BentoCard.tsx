@@ -28,7 +28,7 @@ export function BentoCard({
       bg="$background"
       borderWidth={1}
       borderColor="$borderColor"
-      borderRadius="$6"
+      rounded="$6"
       p="$4"
       minHeight={132}
       transition={['quick', { delay }]}
@@ -36,7 +36,7 @@ export function BentoCard({
       pressStyle={{ opacity: 0.92, scale: 0.985 }}
       hoverStyle={{
         borderColor: '$borderColorHover',
-        backgroundColor: '$backgroundHover',
+        bg: '$backgroundHover',
       }}
       onPress={onPress}
     >
