@@ -27,7 +27,7 @@ export function XListItem({ title, subTitle, avatarUrl, icon, iconAfter, onPress
       iconAfter={iconAfter ?? (onPress ? <ListItem.Text color="$colorPress">›</ListItem.Text> : undefined)}
       onPress={onPress}
       disabled={disabled}
-      pressStyle={{ backgroundColor: '$backgroundPress', opacity: 0.9 }}
+      pressStyle={{ background: '$backgroundPress', opacity: 0.9 }}
     />
   );
 }
