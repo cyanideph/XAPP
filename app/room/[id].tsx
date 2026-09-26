@@ -381,8 +381,8 @@ export default function RoomScreen() {
         </XStack>
         {room?.description ? <Paragraph color="$colorPress">{room.description}</Paragraph> : null}
         <XStack gap="$2" flexWrap="wrap">
-          {room?.announcement ? <Text bg="$backgroundHover" color="$colorPress" px="$2" py="{room.announcement}" rounded="$4" fontSize="$2">{room.announcement}</Text> : null}
-          {room?.view_only ? <Text bg="$backgroundHover" color="$colorPress" px="$2" py="View-only" rounded="$4" fontSize="$2">View-only</Text> : null}
+          {room?.announcement ? <Text bg="$backgroundHover" color="$colorPress" px="$2" py="$1" rounded="$4" fontSize="$2">{room.announcement}</Text> : null}
+          {room?.view_only ? <Text bg="$backgroundHover" color="$colorPress" px="$2" py="$1" rounded="$4" fontSize="$2">View-only</Text> : null}
           {room?.is_locked ? <Text bg="$red3" color="$red10" px="$2" py="$1" rounded="$4" fontSize="$2">Locked</Text> : null}
         </XStack>
         {roomError ? <Paragraph color="$red10">{roomError}</Paragraph> : null}
