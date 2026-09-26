@@ -56,6 +56,18 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Install tunnel and QR helpers
         run: npm install --no-save --no-audit --no-fund @expo/ngrok qrcode-terminal
+      - name: Prepare Expo client environment
+        run: |
+          set -euo pipefail
+          test -n "$EXPO_PUBLIC_SUPABASE_URL" || { echo "Missing Supabase URL."; exit 1; }
+          test -n "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY$EXPO_PUBLIC_SUPABASE_ANON_KEY" || { echo "Missing Supabase client key."; exit 1; }
+          printf '%s\\n' \
+            "EXPO_PUBLIC_SUPABASE_URL=$EXPO_PUBLIC_SUPABASE_URL" \
+            "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" \
+            "EXPO_PUBLIC_SUPABASE_ANON_KEY=$EXPO_PUBLIC_SUPABASE_ANON_KEY" \
+            > .env.local
+          echo "Expo .env.local prepared for the tunnel bundle."
+
       - name: Start Expo Go tunnel preview
         env:
           CI: "false"
