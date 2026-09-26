@@ -3,6 +3,7 @@ import { ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { Accordion, H1, Input, Paragraph, Separator, Spinner, Switch, Text, XStack, YGroup, YStack } from 'tamagui';
 import { XButton } from '../../src/components/XButton';
+import { XIcon } from '../../src/components/XIcon';
 import { getNotificationPreferences, setNotificationPreferences, NotificationPreferences } from '../../src/lib/backend';
 import { supabase } from '../../src/lib/supabase';
 
@@ -66,7 +67,7 @@ export default function Settings() {
                     <Text fontSize="$5" fontWeight="800">Account security</Text>
                     <Paragraph color="$colorPress">Manage your password and email identity.</Paragraph>
                   </YStack>
-                  <Text color="$colorPress">⌄</Text>
+                  <XIcon name="chevronRight" size={20} color="#8B85FF" />
                 </XStack>
               </Accordion.Trigger>
             </Accordion.Header>
@@ -75,10 +76,10 @@ export default function Settings() {
                 <Input secureTextEntry placeholder="Current password" value={currentPassword} onChangeText={setCurrentPassword} />
                 <Input secureTextEntry placeholder="New password" value={newPassword} onChangeText={setNewPassword} />
                 <Input secureTextEntry placeholder="Confirm new password" value={confirmPassword} onChangeText={setConfirmPassword} />
-                <XButton disabled={busy} onPress={() => void changePassword()}>Change password</XButton>
+                <XButton icon={<XIcon name="lock" size={18} color="#FFFFFF" />} disabled={busy} onPress={() => void changePassword()}>Change password</XButton>
                 <Separator />
                 <Input keyboardType="email-address" autoCapitalize="none" placeholder="Email address" value={email} onChangeText={setEmail} />
-                <XButton disabled={busy} onPress={() => void changeEmail()}>Change email</XButton>
+                <XButton icon={<XIcon name="mail" size={18} color="#FFFFFF" />} disabled={busy} onPress={() => void changeEmail()}>Change email</XButton>
               </YStack>
             </Accordion.Content>
           </Accordion.Item>
@@ -113,7 +114,7 @@ export default function Settings() {
                     </YGroup.Item>
                   ))}
                 </YGroup>
-                <XButton onPress={() => void setNotificationPreferences(preferences)
+                <XButton icon={<XIcon name="check" size={18} color="#FFFFFF" />} onPress={() => void setNotificationPreferences(preferences)
                   .then(() => setStatus('Settings saved.'))
                   .catch(error => setStatus(error instanceof Error ? error.message : 'Unable to save settings.'))}>Save settings</XButton>
               </YStack>
@@ -122,7 +123,7 @@ export default function Settings() {
         </Accordion>
 
         {status ? <Text color="$colorPress">{status}</Text> : null}
-        <XButton chromeless onPress={() => router.back()}>Back</XButton>
+        <XButton chromeless icon={<XIcon name="chevronLeft" size={18} color="#8B85FF" />} onPress={() => router.back()}>Back</XButton>
       </YStack>
     </ScrollView>
   );
