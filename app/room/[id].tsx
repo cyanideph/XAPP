@@ -366,8 +366,30 @@ export default function RoomScreen() {
     }
   };
   return <YStack flex={1} bg="$background">
-    <YStack p="$4" borderBottomWidth={1} borderColor="$borderColor">
-      <H1 fontSize="$7">{room?.name ?? 'Room'}</H1><Text fontSize="$2" color="$colorPress">{room?.province_code ? `${room.province_code} · ` : ''}{onlineMembers.filter(member => member.is_online).length} online</Text>{room?.description ? <Paragraph color="$colorPress">{room.description}</Paragraph> : null}{room?.announcement ? <Paragraph fontWeight="800">{room.announcement}</Paragraph> : null}{room?.view_only ? <Text color="$colorPress">View-only room</Text> : null}{room?.is_locked ? <Text color="$red10">Room locked</Text> : null}{roomError ? <Paragraph color="$red10">{roomError}</Paragraph> : null}{error ? <Paragraph color="$red10">{error}</Paragraph> : null}
+    <YStack px="$4" pt="$3" pb="$2" gap="$3">
+      <YStack p="$4" gap="$2" bg="$background" borderWidth={1} borderColor="$borderColor" borderRadius="$6">
+        <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+          <YStack flex={1} gap="$1">
+            <Text fontSize="$2" color="$colorPress" fontWeight="800" letterSpacing={1}>ROOM</Text>
+            <H1 fontSize="$7" fontWeight="900">{room?.name ?? 'Room'}</H1>
+            <Text fontSize="$2" color="$colorPress">
+              {room?.province_code ? `${room.province_code} · ` : ''}{onlineMembers.filter(member => member.is_online).length} online
+            </Text>
+          </YStack>
+          <YStack px="$3" py="$2" borderRadius="$10" bg="$backgroundHover" style={{ alignItems: 'center' }}>
+            <Text fontSize="$2" fontWeight="800">{onlineMembers.filter(member => member.is_online).length}</Text>
+            <Text fontSize="$1" color="$colorPress">ONLINE</Text>
+          </YStack>
+        </XStack>
+        {room?.description ? <Paragraph color="$colorPress">{room.description}</Paragraph> : null}
+        <XStack gap="$2" flexWrap="wrap">
+          {room?.announcement ? <YStack px="$3" py="$2" borderRadius="$4" bg="$backgroundHover"><Text fontSize="$2" fontWeight="700">{room.announcement}</Text></YStack> : null}
+          {room?.view_only ? <YStack px="$3" py="$2" borderRadius="$4" bg="$backgroundHover"><Text fontSize="$2" color="$colorPress">View-only</Text></YStack> : null}
+          {room?.is_locked ? <YStack px="$3" py="$2" borderRadius="$4" bg="$backgroundHover"><Text fontSize="$2" color="$red10" fontWeight="700">Locked</Text></YStack> : null}
+        </XStack>
+        {roomError ? <Paragraph color="$red10">{roomError}</Paragraph> : null}
+        {error ? <Paragraph color="$red10">{error}</Paragraph> : null}
+      </YStack>
     </YStack>
     {loading ? <YStack flex={1} style={{ alignItems: "center", justifyContent: "center" }}><Spinner /></YStack> :
       <YStack flex={1}><MessageList messages={messages} currentUserId={session?.user.id} pinnedMessageId={room?.pinned_message_id ?? null} hasMore={hasMore} onLoadOlder={loadOlder} profiles={profiles} onReply={m => { setEditTarget(null); setReplyTarget(m); }} onEdit={m => { setReplyTarget(null); setEditTarget(m); }} onDelete={m => remove(m.id)} onReact={(m,r) => react(m.id,r)} onReport={m => openReport({ messageId: m.id, userId: m.sender_id, label: 'message' })} /></YStack>}
