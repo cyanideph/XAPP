@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { H1, Input, Paragraph, Separator, Spinner, Text, XStack, YStack } from 'tamagui';
+import { H1, Input, ListItem, Paragraph, Separator, Spinner, Text, YGroup, XStack, YStack } from 'tamagui';
 import { XButton } from '../../src/components/XButton';
-import { BentoCard } from '../../src/components/BentoCard';
 import {
   checkIn,
   createContent,
@@ -117,33 +116,21 @@ export default function HomeScreen() {
           <Paragraph color="$colorPress">People, rooms, conversations and community posts at a glance.</Paragraph>
         </YStack>
 
-        {error ? <BentoCard title="Something needs attention" description={error} onPress={() => { void load(); }} /> : null}
+        {error ? <ListItem title="Something needs attention" subTitle={error} onPress={() => { void load(); }} /> : null}
 
-        <XStack gap="$3" flexWrap="wrap">
-          <BentoCard
-            title="Check in"
-            flex={1}
-            minW={220}
-            description={checkin ? (checkin.already_checked_in ? `Already checked in · ${checkin.streak} day streak · +${checkin.points} points` : `Checked in · ${checkin.streak} day streak · +${checkin.points} points`) : 'Keep your community streak going.'}
-          >
-            <XButton onPress={() => { void doCheckIn(); }} disabled={checkingIn || Boolean(checkin?.already_checked_in)}>
-              {checkingIn ? 'Checking in…' : checkin?.already_checked_in ? 'Done today' : 'Check in'}
-            </XButton>
-          </BentoCard>
-          <BentoCard title="People" flex={1} minW={140} value={loading ? '—' : String(onlineUsers.length)} description="recently active" />
-          <BentoCard title="Rooms" flex={1} minW={140} value={loading ? '—' : String(rooms.length)} description="public spaces" />
-        </XStack>
+        <YGroup borderWidth={1} borderColor="$borderColor" rounded="$4" overflow="hidden">
+          <YGroup.Item><ListItem title="Check in" subTitle={checkin ? (checkin.already_checked_in ? `Already checked in · ${checkin.streak} day streak · +${checkin.points} points` : `Checked in · ${checkin.streak} day streak · +${checkin.points} points`) : 'Keep your community streak going.'} iconAfter={<XButton size="$2" disabled={checkingIn || Boolean(checkin?.already_checked_in)} onPress={() => { void doCheckIn(); }}>{checkingIn ? 'Checking…' : checkin?.already_checked_in ? 'Done' : 'Check in'}</XButton>} /></YGroup.Item>
+          <Separator />
+          <YGroup.Item><ListItem title="People" subTitle="recently active" iconAfter={<Text color="$brandBackground">{loading ? '—' : onlineUsers.length}</Text>} /></YGroup.Item>
+          <Separator />
+          <YGroup.Item><ListItem title="Rooms" subTitle="public spaces" iconAfter={<Text color="$brandBackground">{loading ? '—' : rooms.length}</Text>} /></YGroup.Item>
+        </YGroup>
 
-        <BentoCard title="Share something" description="Post a short update to the community.">
-          <YStack gap="$3">
-            <Input value={postBody} onChangeText={setPostBody} placeholder="What’s happening?" multiline minH={96} />
-            <XStack justify="flex-end">
-              <XButton onPress={() => { void publish(); }} disabled={posting || !postBody.trim()}>
-                {posting ? 'Posting…' : 'Post'}
-              </XButton>
-            </XStack>
-          </YStack>
-        </BentoCard>
+        <YStack gap="$3">
+          <YStack gap="$1"><Text fontSize="$6" fontWeight="800">Share something</Text><Text fontSize="$3" color="$colorPress">Post a short update to the community.</Text></YStack>
+          <Input value={postBody} onChangeText={setPostBody} placeholder="What’s happening?" multiline minH={96} />
+          <XStack justify="flex-end"><XButton onPress={() => { void publish(); }} disabled={posting || !postBody.trim()}>{posting ? 'Posting…' : 'Post'}</XButton></XStack>
+        </YStack>
 
         {!loading && categories.length ? (
           <YStack gap="$3">
@@ -170,18 +157,8 @@ export default function HomeScreen() {
             <XButton size="$2" chromeless onPress={() => router.push('/(tabs)/discover')}>Discover</XButton>
           </XStack>
           {loading ? <Spinner /> : feed.length ? feed.map(item => (
-            <BentoCard
-              key={item.id}
-              title={item.author?.display_name || item.author?.username || 'Community member'}
-              description={item.body || item.title || 'Community post'}
-              value={item.kind}
-            >
-              <XStack gap="$2" flexWrap="wrap">
-                <XButton size="$2" onPress={() => { void react(item.id); }}>Like</XButton>
-                <XButton size="$2" chromeless onPress={() => { void save(item.id); }}>Save</XButton>
-              </XStack>
-            </BentoCard>
-          )) : <BentoCard title="No community posts yet" description="Be the first to share something." />}
+            <ListItem key={item.id} title={item.author?.display_name || item.author?.username || 'Community member'} subTitle={(item.body || item.title || 'Community post') + ' · ' + item.kind} iconAfter={<XStack gap="$2"><XButton size="$2" onPress={() => { void react(item.id); }}>Like</XButton><XButton size="$2" chromeless onPress={() => { void save(item.id); }}>Save</XButton></XStack>} onPress={() => router.push({ pathname: '/content/[id]', params: { id: item.id } })} />
+          )) : <ListItem title="No community posts yet" subTitle="Be the first to share something." />}
         </YStack>
 
         {!loading && featured.length ? (
@@ -192,17 +169,11 @@ export default function HomeScreen() {
                 <Text fontSize="$6" fontWeight="800">Featured people</Text>
                 <XButton size="$2" chromeless onPress={() => router.push('/(tabs)/discover')}>Discover</XButton>
               </XStack>
-              <XStack gap="$3" flexWrap="wrap">
+              <YGroup borderWidth="1" borderColor="$borderColor" rounded="$4" overflow="hidden">
                 {featured.map(item => (
-                  <BentoCard
-                    key={item.profile.id}
-                    flex={1}
-                    minW={220}
-                    title={item.profile.display_name || item.profile.username}
-                    description={item.profile.status_text || item.profile.bio || `@${item.profile.username}`}
-                  />
+                  <ListItem key={item.profile.id} title={item.profile.display_name || item.profile.username} subTitle={item.profile.status_text || item.profile.bio || `@${item.profile.username}`} iconAfter={<Text color="$colorPress">›</Text>} onPress={() => router.push({ pathname: '/me/view-profile', params: { id: item.profile.id } })} />
                 ))}
-              </XStack>
+              </YGroup>
             </YStack>
           </>
         ) : null}
@@ -218,12 +189,8 @@ export default function HomeScreen() {
             <XButton size="$2" chromeless onPress={() => router.push('/(tabs)/discover')}>See all</XButton>
           </XStack>
           {loading ? <Spinner /> : onlineUsers.length ? onlineUsers.map(user => (
-            <BentoCard
-              key={user.user_id}
-              title={user.display_name || user.username}
-              description={user.status_text ? `@${user.username} · ${user.status_text}` : `@${user.username}`}
-            />
-          )) : <BentoCard title="No one else is recently active" description="Refresh to check the community again." />}
+            <ListItem key={user.user_id} title={user.display_name || user.username} subTitle={user.status_text ? `@${user.username} · ${user.status_text}` : `@${user.username}`} />
+          )) : <ListItem title="No one else is recently active" subTitle="Refresh to check the community again." />}
         </YStack>
 
         <Separator />
@@ -237,14 +204,8 @@ export default function HomeScreen() {
             <XButton size="$2" chromeless onPress={() => router.push('/(tabs)/discover')}>See all</XButton>
           </XStack>
           {loading ? <Spinner /> : rooms.length ? rooms.map((room, index) => (
-            <BentoCard
-              key={room.id}
-              title={room.name}
-              description={room.province_code ? `${room.province_code} · ${room.description ?? 'Open realtime room'}` : (room.description ?? 'Open realtime room')}
-              delay={index * 35}
-              onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })}
-            />
-          )) : <BentoCard title="No public rooms yet" description="Refresh to check the community again." />}
+            <ListItem key={room.id} title={room.name} subTitle={room.province_code ? `${room.province_code} · ${room.description ?? 'Open realtime room'}` : (room.description ?? 'Open realtime room')} iconAfter={<Text color="$colorPress">›</Text>} onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })} />
+          )) : <ListItem title="No public rooms yet" subTitle="Refresh to check the community again." />}
         </YStack>
 
         <Separator />
@@ -258,14 +219,8 @@ export default function HomeScreen() {
             <XButton size="$2" chromeless onPress={() => router.push('/(tabs)/chats')}>Open chats</XButton>
           </XStack>
           {loading ? <Spinner /> : chats.length ? chats.map(chat => (
-            <BentoCard
-              key={chat.id}
-              title={chat.name}
-              description={chat.province_code ? `${chat.province_code} · ${chat.description ?? 'Public conversation'}` : (chat.description ?? 'Public conversation')}
-              value={`${chat.member_count ?? 0} members · ${chat.online_count ?? 0} online`}
-              onPress={() => router.push({ pathname: '/room/[id]', params: { id: chat.id } })}
-            />
-          )) : <BentoCard title="No public chats yet" description="Discover more community spaces." />}
+            <ListItem key={chat.id} title={chat.name} subTitle={chat.province_code ? `${chat.province_code} · ${chat.description ?? 'Public conversation'}` : (chat.description ?? 'Public conversation')} iconAfter={<Text color="$colorPress">{chat.member_count ?? 0} · {chat.online_count ?? 0}</Text>} onPress={() => router.push({ pathname: '/room/[id]', params: { id: chat.id } })} />
+          )) : <ListItem title="No public chats yet" subTitle="Discover more community spaces." />}
         </YStack>
       </YStack>
     </ScrollView>
