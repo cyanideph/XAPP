@@ -68,6 +68,19 @@ jobs:
             > .env.local
           echo "Expo .env.local prepared for the tunnel bundle."
 
+      - name: Verify Expo bundle receives Supabase URL
+        run: |
+          set -euo pipefail
+          EXPECTED_HOST=$(node -e 'const u=new URL(process.env.EXPO_PUBLIC_SUPABASE_URL); process.stdout.write(u.host)')
+          rm -rf dist
+          npx expo export --platform web
+          if ! grep -R --binary-files=without-match -F "$EXPECTED_HOST" dist >/dev/null 2>&1; then
+            echo "ERROR: Expo export does not contain the configured Supabase host."
+            exit 1
+          fi
+          echo "PASS: Expo bundle contains the configured Supabase host."
+          echo "Secret values were not printed."
+
       - name: Start Expo Go tunnel preview
         env:
           CI: "false"
