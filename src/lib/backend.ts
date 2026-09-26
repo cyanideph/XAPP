@@ -23,6 +23,109 @@ export async function getCurrentProfile() {
   return data;
 }
 
+export async function hasContentAdminAccess() {
+  if (!supabase) throw new Error('Supabase is not configured.');
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError) throw userError;
+  const userId = userData.user?.id;
+  if (!userId) return false;
+  const { data, error } = await supabase.from('room_members').select('role').eq('user_id', userId).in('role', ['owner', 'admin']).limit(1);
+  if (error) throw error;
+  return Boolean(data?.length);
+}
+
+export type PublicProfile = {
+  id: string;
+  username: string;
+  display_name: string | null;
+  avatar_path: string | null;
+  bio: string | null;
+  status_text: string | null;
+  is_active: boolean;
+};
+
+export type ProfileRelationshipState = {
+  following: boolean;
+  blocked: boolean;
+  favorite: boolean;
+};
+
+export type ProfileComment = {
+  id: string;
+  profile_id: string;
+  author_id: string;
+  parent_id: string | null;
+  body: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+  author?: { id: string; username: string; display_name: string | null; avatar_path: string | null } | null;
+};
+
+export async function getPublicProfile(userId: string) {
+  if (!supabase) throw new Error('Supabase is not configured.');
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id,username,display_name,avatar_path,bio,status_text,is_active')
+    .eq('id', userId)
+    .eq('is_active', true)
+    .maybeSingle();
+  if (error) throw error;
+  return data as PublicProfile | null;
+}
+
+export async function getProfileRelationshipState(userId: string): Promise<ProfileRelationshipState> {
+  if (!supabase) throw new Error('Supabase is not configured.');
+  const { data: authData, error: authError } = await supabase.auth.getUser();
+  if (authError) throw authError;
+  const currentId = authData.user?.id;
+  if (!currentId || currentId === userId) return { following: false, blocked: false, favorite: false };
+
+  const [{ data: relationships, error: relationshipError }, { data: favorite, error: favoriteError }] = await Promise.all([
+    supabase.from('relationships').select('kind').eq('user_id', currentId).eq('target_user_id', userId),
+    supabase.from('user_favorites').select('target_user_id').eq('user_id', currentId).eq('target_user_id', userId).maybeSingle(),
+  ]);
+  if (relationshipError) throw relationshipError;
+  if (favoriteError) throw favoriteError;
+  const kinds = new Set((relationships ?? []).map(row => row.kind));
+  return { following: kinds.has('follow'), blocked: kinds.has('block'), favorite: Boolean(favorite) };
+}
+
+export async function recordProfileVisit(profileId: string) {
+  return rpc('record_profile_visit', { p_profile_id: profileId });
+}
+
+export async function listProfileComments(profileId: string, limit = 50, beforeCreatedAt: string | null = null, beforeId: string | null = null) {
+  const page = await rpc<{ items?: ProfileComment[]; has_more?: boolean }>('list_profile_comments', {
+    p_profile_id: profileId,
+    p_before_created_at: beforeCreatedAt,
+    p_before_id: beforeId,
+    p_limit: limit,
+  });
+  const items = Array.isArray(page?.items) ? page.items : [];
+  if (!items.length || !supabase) return { items, has_more: Boolean(page?.has_more) };
+  const authorIds = [...new Set(items.map(item => item.author_id))];
+  const { data: profiles, error } = await supabase.from('profiles').select('id,username,display_name,avatar_path').in('id', authorIds);
+  if (error) throw error;
+  const byId = new Map((profiles ?? []).map(profile => [profile.id, profile]));
+  return { items: items.map(item => ({ ...item, author: byId.get(item.author_id) ?? null })), has_more: Boolean(page?.has_more) };
+}
+
+export async function addProfileComment(profileId: string, body: string, parentId: string | null = null) {
+  return rpc<ProfileComment>('add_profile_comment', { p_profile_id: profileId, p_body: body.trim(), p_parent_id: parentId });
+}
+
+export async function deleteProfileComment(commentId: string) {
+  return rpc<boolean>('delete_profile_comment', { p_comment_id: commentId });
+}
+
+export async function toggleProfileCommentVote(commentId: string, value: number) {
+  return rpc<{ upvotes: number; downvotes: number; user_vote: number | null }>('toggle_profile_comment_vote', {
+    p_comment_id: commentId,
+    p_value: value,
+  });
+}
+
 export async function listPublicRooms(limit = 20, offset = 0) {
   return rpc('list_public_rooms', { p_limit: limit, p_offset: offset });
 }
@@ -458,8 +561,14 @@ export async function searchPublicChats(query: string, limit = 20) {
 }
 
 export async function searchContent(query: string, limit = 30, offset = 0) {
-  const page = await rpc<{ items?: ContentItem[]; has_more?: boolean }>('search_content', { p_query: query.trim(), p_room_id: null, p_limit: limit, p_offset: offset });
-  return { items: Array.isArray(page?.items) ? page.items : [], has_more: Boolean(page?.has_more) };
+  const data = await rpc<ContentItem[]>('search_content', {
+    p_query: query.trim(),
+    p_room_id: null,
+    p_limit: limit,
+    p_offset: offset,
+  });
+  const items = Array.isArray(data) ? data : [];
+  return { items, has_more: items.length >= limit };
 }
 export async function listCategoryContent(categoryId: string, limit = 50, beforeCreatedAt: string | null = null, beforeId: string | null = null) {
   const page = await rpc<{ items: ContentItem[]; has_more: boolean }>('list_category_content', { p_category_id: categoryId, p_limit: limit, p_before_created_at: beforeCreatedAt, p_before_id: beforeId });
