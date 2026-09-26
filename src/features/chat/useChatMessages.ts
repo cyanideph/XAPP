@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { deleteConversationMessage, deleteRoomMessage, editConversationMessage, editRoomMessage, joinRoom, listConversationMessages, listProfiles, listRoomMessages, markConversationRead, markRoomRead, replyToConversationMessage, replyToRoomMessage, sendConversationMessage, sendRoomMessage, toggleRoomReaction, touchRoomPresence } from './backend';
+import { deleteConversationMessage, deleteRoomMessage, editConversationMessage, editRoomMessage, joinRoom, leaveRoom, listConversationMessages, listProfiles, listRoomMessages, markConversationRead, markRoomRead, replyToConversationMessage, replyToRoomMessage, sendConversationMessage, sendRoomMessage, toggleRoomReaction, touchRoomPresence } from './backend';
 import type { ChatMessage, ChatProfile } from './types';
 
 type Props = { scope: 'room' | 'conversation'; id: string };
@@ -18,6 +18,7 @@ export function useChatMessages({ scope, id }: Props) {
   const [profiles, setProfiles] = useState<Record<string, ChatProfile>>({});
   const channelRef = useRef<ReturnType<NonNullable<typeof supabase>['channel']> | null>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const presenceTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const selfIdRef = useRef<string | null>(null);
   const loadRequestRef = useRef(0);
 
@@ -55,6 +56,20 @@ export function useChatMessages({ scope, id }: Props) {
   }, [id, scope]);
 
   useEffect(() => { load().catch(() => undefined); }, [load]);
+
+  useEffect(() => {
+    if (scope !== 'room' || !supabase) return;
+    let active = true;
+    const heartbeat = () => { if (active) void touchRoomPresence(id).catch(() => undefined); };
+    heartbeat();
+    presenceTimerRef.current = setInterval(heartbeat, 30000);
+    return () => {
+      active = false;
+      if (presenceTimerRef.current) clearInterval(presenceTimerRef.current);
+      presenceTimerRef.current = null;
+      void leaveRoom(id).catch(() => undefined);
+    };
+  }, [id, scope]);
 
   useEffect(() => {
     if (!supabase) return;

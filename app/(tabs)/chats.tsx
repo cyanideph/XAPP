@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { Button, H1, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
+import { Button, H1, Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
 import { BentoCard } from '../../src/components/BentoCard';
 import {
   listMyConversations,
+  searchPublicRooms,
   listPendingConversationInvites,
   listPublicChats,
   markNotificationRead,
@@ -55,6 +56,8 @@ export default function ChatsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [inviteBusy, setInviteBusy] = useState<string | null>(null);
+  const [roomQuery, setRoomQuery] = useState('');
+  const [roomSearching, setRoomSearching] = useState(false);
 
   const load = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -79,6 +82,19 @@ export default function ChatsScreen() {
   }, []);
 
   useEffect(() => { void load(); }, [load]);
+
+  const searchRooms = useCallback(async () => {
+    const query = roomQuery.trim();
+    if (!query) { await load(true); return; }
+    setRoomSearching(true);
+    setError(null);
+    try {
+      const rows = await searchPublicRooms(query, 20);
+      setPublicChats(Array.isArray(rows) ? rows as PublicChat[] : []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to search rooms.');
+    } finally { setRoomSearching(false); }
+  }, [load, roomQuery]);
 
   const respondToInvite = useCallback(async (invite: ConversationInvite, accept: boolean) => {
     if (inviteBusy) return;
@@ -179,6 +195,10 @@ export default function ChatsScreen() {
             </YStack>
 
             <YStack gap="$3">
+              <YStack gap="$2">
+                <Input value={roomQuery} onChangeText={setRoomQuery} placeholder="Search public rooms" returnKeyType="search" onSubmitEditing={() => { void searchRooms(); }} />
+                <Button size="$3" disabled={roomSearching} onPress={() => { void searchRooms(); }}>{roomSearching ? 'Searching…' : 'Search rooms'}</Button>
+              </YStack>
               <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
                 <Text fontSize="$6" fontWeight="800">Public rooms</Text>
                 <Text fontSize="$3" color="$colorPress">{publicChats.length} shown</Text>
