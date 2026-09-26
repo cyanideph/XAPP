@@ -1,20 +1,22 @@
 import { Tabs } from 'expo-router';
+import { useTheme } from 'tamagui';
 import { useXAppTheme } from '../../src/theme/theme';
 
 export default function TabLayout() {
   const { resolvedMode } = useXAppTheme();
+  const theme = useTheme();
   const isDark = resolvedMode === 'dark';
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: isDark ? '#F4F5F1' : '#171916',
-        tabBarInactiveTintColor: isDark ? '#858981' : '#7C7E76',
+        tabBarActiveTintColor: theme.brandBackground?.val ?? theme.color.val,
+        tabBarInactiveTintColor: theme.colorPress?.val ?? theme.color.val,
         tabBarStyle: {
-          backgroundColor: isDark ? '#171A15' : '#FFFFFF',
+          backgroundColor: theme.background.val,
           borderTopWidth: 1,
-          borderTopColor: isDark ? '#292C26' : '#E8E8E4',
+          borderTopColor: theme.borderColor.val,
           height: 72,
           paddingTop: 8,
           paddingBottom: 10,
@@ -22,6 +24,9 @@ export default function TabLayout() {
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '600',
+        },
+        tabBarIconStyle: {
+          opacity: isDark ? 0.96 : 1,
         },
       }}
     >
