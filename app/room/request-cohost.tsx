@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocalSearchParams, router } from 'expo-router';
-import { H1, Paragraph, Text, XStack, YStack } from 'tamagui';
+import { H1, ListItem, Paragraph, Text, XStack, YStack } from 'tamagui';
 import { XButton } from '../../src/components/XButton';
 import { cancelRoomCoHostRequest, requestRoomCoHost } from '../../src/features/chat/roomManagement';
 
@@ -44,11 +44,11 @@ export default function RequestCoHostScreen() {
     <YStack flex={1} p="$5" pt="$8" gap="$4" bg="$background">
       <Text fontSize="$3" color="$colorPress" fontWeight="800">ROOMS</Text>
       <H1 fontSize="$8">Request co-host</H1>
-      <Paragraph color="$colorPress">Send a request to the Room owner or current staff. Authorization is enforced by the backend.</Paragraph>
+      <ListItem title="Request access" subTitle="Send a request to the Room owner or current staff. Authorization is enforced by the backend." />
       {error ? <Paragraph color="$red10">{error}</Paragraph> : null}
       {done ? (
         <>
-          <Text fontWeight="800">Request submitted.</Text>
+          <ListItem title="Request submitted" subTitle="Your co-host request is pending review." />
           <XStack gap="$2">
             <XButton disabled={busy || !requestId} onPress={() => void cancel()}>Cancel request</XButton>
             <XButton onPress={() => router.back()}>Done</XButton>
