@@ -196,6 +196,10 @@ export default function ChatsScreen() {
             </YStack>
 
             <YStack gap="$3">
+              <YStack gap="$2">
+                <Input value={roomQuery} onChangeText={setRoomQuery} placeholder="Search public rooms" returnKeyType="search" onSubmitEditing={() => { void searchRooms(); }} />
+                <Button size="$3" disabled={roomSearching} onPress={() => { void searchRooms(); }}>{roomSearching ? 'Searching…' : 'Search rooms'}</Button>
+              </YStack>
               <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
                 <Text fontSize="$6" fontWeight="800">Public rooms</Text>
                 <Text fontSize="$3" color="$colorPress">{publicChats.length} shown</Text>
@@ -224,9 +228,4 @@ export default function ChatsScreen() {
       </YStack>
     </ScrollView>
   );
-}<YStack gap="$2">
-                <Input value={roomQuery} onChangeText={setRoomQuery} placeholder="Search public rooms" returnKeyType="search" onSubmitEditing={() => { void searchRooms(); }} />
-                <Button size="$3" disabled={roomSearching} onPress={() => { void searchRooms(); }}>{roomSearching ? 'Searching…' : 'Search rooms'}</Button>
-              </YStack>
-
-              
+}
