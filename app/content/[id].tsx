@@ -3,6 +3,7 @@ import { Alert, ScrollView } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Input, Menu, Paragraph, Spinner, Text, XStack, YGroup, YStack } from 'tamagui';
 import { XButton } from '../../src/components/XButton';
+import { XIcon } from '../../src/components/XIcon';
 import { XListItem } from '../../src/components/XListItem';
 import {
   addContentComment,
@@ -90,7 +91,7 @@ export default function ContentDetail() {
   return (
     <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 64, paddingBottom: 32 }}>
       <YStack gap="$4">
-        <XButton chromeless onPress={() => router.back()}>Back</XButton>
+        <XButton chromeless icon={<XIcon name="chevronLeft" size={18} color="#8B85FF" />} onPress={() => router.back()}>Back</XButton>
         {error ? <Paragraph color="$red10">{error}</Paragraph> : null}
 
         {editing ? (
@@ -122,10 +123,10 @@ export default function ContentDetail() {
             <YStack gap="$3">
               {item.body ? <Paragraph fontSize="$5">{item.body}</Paragraph> : null}
               <XStack gap="$2" items="center">
-                <XButton disabled={busy} onPress={() => void act(() => toggleContentReaction(item.id, 'like'))}>Like</XButton>
+                <XButton icon={<XIcon name="circleDot" size={18} color="#FFFFFF" />} disabled={busy} onPress={() => void act(() => toggleContentReaction(item.id, 'like'))}>Like</XButton>
                 <Menu native={false}>
                   <Menu.Trigger asChild action="press">
-                    <XButton size="$2" chromeless disabled={busy}>More</XButton>
+                    <XButton size="$2" chromeless icon={<XIcon name="moreHorizontal" size={18} color="#8B85FF" />} disabled={busy}>More</XButton>
                   </Menu.Trigger>
                   <Menu.Portal>
                     <Menu.Content>
@@ -148,7 +149,7 @@ export default function ContentDetail() {
                 <YGroup.Item key={option.id}>
                   <XListItem
                     title={option.label}
-                    iconAfter={<Text color="$colorPress">›</Text>}
+                    iconAfter={<XIcon name="chevronRight" size={20} color="#8B85FF" />}
                     onPress={() => { void act(() => voteContentPoll(item.id, option.id)); }}
                     disabled={busy}
                   />
