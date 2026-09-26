@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Input, Menu, XStack } from 'tamagui';
 import { XButton } from './XButton';
+import { XIcon } from './XIcon';
 
 
 type Props = {
@@ -40,11 +41,11 @@ export function MessageComposer({ onSend, disabled, editValue, onEditCancel, onT
 
   return (
     <XStack gap="$2" p="$3" borderTopWidth={1} borderColor="$borderColor" style={{ alignItems: "center", flexWrap: "wrap" }}>
-      {!editing && onPickMedia ? <XButton size="$2" chromeless disabled={disabled} onPress={() => { void onPickMedia(); }}>+ Media</XButton> : null}
+      {!editing && onPickMedia ? <XButton size="$2" chromeless icon={<XIcon name="paperclip" size={18} color="#8B85FF" />} disabled={disabled} onPress={() => { void onPickMedia(); }}>Media</XButton> : null}
       {!editing && onSendSticker ? (
         <Menu native={false}>
           <Menu.Trigger asChild action="press">
-            <XButton size="$2" chromeless disabled={disabled}>Stickers</XButton>
+            <XButton size="$2" chromeless icon={<XIcon name="smile" size={18} color="#8B85FF" />} disabled={disabled}>Stickers</XButton>
           </Menu.Trigger>
           <Menu.Portal>
             <Menu.Content>
@@ -66,8 +67,8 @@ export function MessageComposer({ onSend, disabled, editValue, onEditCancel, onT
         returnKeyType="send"
         disabled={disabled}
       />
-      {editing ? <XButton size="$3" chromeless onPress={cancelEdit} disabled={disabled}>Cancel</XButton> : null}
-      <XButton onPress={submit} disabled={disabled || !value.trim()}>{editing ? 'Save' : 'Send'}</XButton>
+      {editing ? <XButton size="$3" chromeless icon={<XIcon name="close" size={18} color="#8B85FF" />} onPress={cancelEdit} disabled={disabled}>Cancel</XButton> : null}
+      <XButton icon={<XIcon name={editing ? "check" : "send"} size={18} color="#FFFFFF" />} onPress={submit} disabled={disabled || !value.trim()}>{editing ? 'Save' : 'Send'}</XButton>
     </XStack>
   );
 }
