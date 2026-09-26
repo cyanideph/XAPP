@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { Button, H1, Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
+import { H1, Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
+import { XButton } from '../../src/components/XButton';
 import { BentoCard } from '../../src/components/BentoCard';
 import {
   listContentCategories, listCategoryContent, listOnlineUsers, listPublicChats, listPublicRooms,
@@ -111,9 +112,9 @@ export default function DiscoverScreen() {
               onSubmitEditing={() => { void runSearch(); }}
               returnKeyType="search"
             />
-            <Button disabled={query.trim().length < 2 || searching} onPress={() => { void runSearch(); }}>
+            <XButton disabled={query.trim().length < 2 || searching} onPress={() => { void runSearch(); }}>
               {searching ? 'Searching…' : 'Search'}
-            </Button>
+            </XButton>
           </YStack>
         </BentoCard>
 
@@ -127,27 +128,27 @@ export default function DiscoverScreen() {
           <YStack gap="$3">
             <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
               <Text fontSize="$6" fontWeight="800">Topics</Text>
-              <Button size="$2" chromeless onPress={() => { void selectCategory(null); }}>Clear</Button>
+              <XButton size="$2" chromeless onPress={() => { void selectCategory(null); }}>Clear</XButton>
             </XStack>
             <XStack gap="$2" flexWrap="wrap">
-              <Button size="$3" chromeless={!selectedCategory} onPress={() => { void selectCategory(null); }}>All</Button>
+              <XButton size="$3" chromeless={!selectedCategory} onPress={() => { void selectCategory(null); }}>All</XButton>
               {categories.map(category => (
-                <Button
+                <XButton
                   key={category.id}
                   size="$3"
                   chromeless={selectedCategory !== category.id}
                   onPress={() => { void selectCategory(category.id); }}
                 >
                   {category.name}
-                </Button>
+                </XButton>
               ))}
             </XStack>
           </YStack>
         ) : null}
 
         <XStack gap="$2" flexWrap="wrap">
-          <Button onPress={() => router.push('/room/create')}>Create room</Button>
-          <Button chromeless onPress={() => router.push('/room/invites')}>Invitations</Button>
+          <XButton onPress={() => router.push('/room/create')}>Create room</XButton>
+          <XButton chromeless onPress={() => router.push('/room/invites')}>Invitations</XButton>
         </XStack>
 
         {error ? <BentoCard title="Something needs attention" description={error} onPress={() => { void load(); }} /> : null}
@@ -219,9 +220,9 @@ export default function DiscoverScreen() {
                   onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })}
                 >
                   <XStack gap="$2" flexWrap="wrap">
-                    <Button size="$2" onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })}>Open</Button>
-                    <Button size="$2" chromeless onPress={() => router.push({ pathname: '/room/manage', params: { id: room.id } })}>Manage</Button>
-                    <Button size="$2" chromeless onPress={() => router.push({ pathname: '/room/request-cohost', params: { id: room.id } })}>Co-host</Button>
+                    <XButton size="$2" onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })}>Open</XButton>
+                    <XButton size="$2" chromeless onPress={() => router.push({ pathname: '/room/manage', params: { id: room.id } })}>Manage</XButton>
+                    <XButton size="$2" chromeless onPress={() => router.push({ pathname: '/room/request-cohost', params: { id: room.id } })}>Co-host</XButton>
                   </XStack>
                 </BentoCard>
               )) : (
