@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { Button, H1, Input, Paragraph, Spinner, Text, YStack } from 'tamagui';
+import { BentoCard } from '../../src/components/BentoCard';
 import { getNotificationPreferences, setNotificationPreferences, NotificationPreferences } from '../../src/lib/backend';
 import { supabase } from '../../src/lib/supabase';
 
@@ -14,10 +15,11 @@ export default function Settings(){
  async function changeEmail(){setS('');if(!supabase||!email.trim()){return}setBusy(true);try{const {error}=await supabase.auth.updateUser({email:email.trim()});if(error)throw error;setS('Email change requested. Check the confirmation email(s).');}catch(e){setS(e instanceof Error?e.message:'Unable to update email.')}finally{setBusy(false)}}
  if(!p)return <YStack flex={1} style={{justifyContent:'center',alignItems:'center'}}><Spinner/></YStack>;
  return <ScrollView contentContainerStyle={{padding:20,paddingTop:64,paddingBottom:40}}><YStack gap="$4"><H1>Settings.</H1>
-  <YStack gap="$2"><Text fontSize="$6"fontWeight="800">Account security</Text><Paragraph>Manage your password and email identity.</Paragraph>
+  <BentoCard title="Account security" description="Manage your password and email identity."><YStack gap="$2"><Paragraph>Manage your password and email identity.</Paragraph>
    <Input secureTextEntry placeholder="Current password" value={current} onChangeText={setCurrent}/><Input secureTextEntry placeholder="New password" value={next} onChangeText={setNext}/><Input secureTextEntry placeholder="Confirm new password" value={confirm} onChangeText={setConfirm}/><Button disabled={busy} onPress={()=>void changePassword()}>Change password</Button>
    <Input keyboardType="email-address" autoCapitalize="none" placeholder="Email address" value={email} onChangeText={setEmail}/><Button disabled={busy} onPress={()=>void changeEmail()}>Change email</Button>
-  </YStack>
-  <YStack gap="$2"><Text fontSize="$6"fontWeight="800">Notifications</Text>{keys.map(([k,label])=><Button key={k}onPress={()=>setP({...p,[k]:!p[k]})}>{label}: {p[k]?'ON':'OFF'}</Button>)}<Button onPress={()=>void setNotificationPreferences(p).then(()=>setS('Settings saved.')).catch(e=>setS(e instanceof Error?e.message:'Unable to save settings.'))}>Save settings</Button></YStack>
-  {s?<Text>{s}</Text>:null}<Button chromeless onPress={()=>router.back()}>Back</Button></YStack></ScrollView>;
+  </YStack></BentoCard>
+  <BentoCard title="Notifications" description="Choose which community events notify you."><YStack gap="$2">{keys.map(([k,label])=><Button key={k}onPress={()=>setP({...p,[k]:!p[k]})}>{label}: {p[k]?'ON':'OFF'}</Button>)}<Button onPress={()=>void setNotificationPreferences(p).then(()=>setS('Settings saved.')).catch(e=>setS(e instanceof Error?e.message:'Unable to save settings.'))}>Save settings</Button></YStack>
+  </YStack></BentoCard>
+  {s?<Text color="$colorPress">{s}</Text>:null}<Button chromeless onPress={()=>router.back()}>Back</Button></YStack></ScrollView>;
 }
