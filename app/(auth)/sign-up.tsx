@@ -23,7 +23,7 @@ export default function SignUpScreen() {
     setBusy(false);
   }
 
-  return <YStack flex={1} p="$5" jc="center" gap="$4" bg="$background">
+  return <YStack flex={1} p="$5" justifyContent="center" gap="$4" bg="$background">
     <YStack gap="$2"><Text fontSize="$3" fontWeight="800" color="$colorPress">X-APP</Text><H1 fontSize="$10">Create account.</H1><Paragraph color="$colorPress">Your username is sent as signup metadata; backend profile creation remains authoritative.</Paragraph></YStack>
     <YStack gap="$3">
       <Input autoCapitalize="none" placeholder="Username" value={username} onChangeText={setUsername} />
