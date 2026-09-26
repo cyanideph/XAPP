@@ -82,7 +82,7 @@ export function MessageList({ messages, currentUserId, hasMore, loadingOlder, on
               <XStack gap="$2" mt="$2" items="center">
                 {onReply ? <XButton size="$2" chromeless onPress={() => onReply(message)}>Reply</XButton> : null}
                 {(onReact || (onReport && !own) || (own && (onEdit || onDelete))) ? (
-                  <Menu>
+                  <Menu native={false}>
                     <Menu.Trigger asChild action="press">
                       <XButton size="$2" chromeless>More</XButton>
                     </Menu.Trigger>
