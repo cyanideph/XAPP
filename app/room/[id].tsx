@@ -3,7 +3,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { Alert } from 'react-native';
 import { Button, H1, Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
 import { MessageComposer } from '../../src/components/MessageComposer';
-import { listOnlineRoomMembers, listRoomMembers, listRoomCoHosts, setRoomCoHost, kickRoomMember, moderateRoomMember, strikeRoomMember, setRoomChatSettings, setRoomLock, setRoomMemberChatPreferences, setRoomPinnedMessage, type RoomMember } from '../../src/features/chat/backend';
+import { listOnlineRoomMembers, listRoomMembers, listRoomCoHosts, setRoomCoHost, kickRoomMember, moderateRoomMember, strikeRoomMember, setRoomChatSettings, setRoomLock, setRoomMemberChatPreferences, setRoomPinnedMessage, createRoomReport, listRoomReports, updateRoomReport, type RoomMember, type RoomReport } from '../../src/features/chat/backend';
 import { createRoomInvite, listOnlineUsers } from '../../src/lib/backend';
 import { MessageList } from '../../src/components/MessageList';
 import { useSession } from '../../src/hooks/useSession';
@@ -35,6 +35,10 @@ export default function RoomScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [roomPinned, setRoomPinned] = useState(false);
   const [room, setRoom] = useState<Room | null>(null);
+  const [reports, setReports] = useState<RoomReport[]>([]);
+  const [reportTarget, setReportTarget] = useState<{ messageId?: string; userId?: string; label: string } | null>(null);
+  const [reportReason, setReportReason] = useState('');
+  const [reportBusy, setReportBusy] = useState(false);
   const [roomError, setRoomError] = useState<string | null>(null);
   const loadRoom = useCallback(async () => {
     try { setRoomError(null); setRoom(await getRoom(id)); }
@@ -99,8 +103,9 @@ export default function RoomScreen() {
     setAdminBusy('load');
     setRoomError(null);
     try {
-      const rows = await listRoomCoHosts(id);
+      const [rows, reportRows] = await Promise.all([listRoomCoHosts(id), listRoomReports(id, null, 50, 0)]);
       setCoHostIds(new Set((Array.isArray(rows) ? rows : []).map(row => row.user_id)));
+      setReports(Array.isArray(reportRows) ? reportRows : []);
       setAdminOpen(true);
     } catch (e) {
       setRoomError(e instanceof Error ? e.message : 'Unable to load Room administration.');
@@ -158,6 +163,46 @@ export default function RoomScreen() {
       },
     ]);
   }, [coHostIds, id]);
+
+  const openReport = useCallback((target: { messageId?: string; userId?: string; label: string }) => {
+    setReportTarget(target);
+    setReportReason('');
+    setRoomError(null);
+  }, []);
+
+  const submitReport = useCallback(async () => {
+    if (!reportTarget || reportBusy) return;
+    const reason = reportReason.trim();
+    if (reason.length < 3) {
+      setRoomError('Please provide a short reason for the report.');
+      return;
+    }
+    setReportBusy(true);
+    setRoomError(null);
+    try {
+      await createRoomReport(id, reason, reportTarget.userId ?? null, reportTarget.messageId ?? null);
+      setReportTarget(null);
+      setReportReason('');
+    } catch (e) {
+      setRoomError(e instanceof Error ? e.message : 'Unable to submit report.');
+    } finally {
+      setReportBusy(false);
+    }
+  }, [id, reportBusy, reportReason, reportTarget]);
+
+  const resolveReport = useCallback(async (reportId: string, status: 'resolved' | 'dismissed') => {
+    if (reportBusy) return;
+    setReportBusy(true);
+    setRoomError(null);
+    try {
+      const updated = await updateRoomReport(reportId, status, status === 'resolved' ? 'Reviewed by Room staff' : 'Dismissed by Room staff');
+      setReports(current => current.map(report => report.id === reportId ? updated : report));
+    } catch (e) {
+      setRoomError(e instanceof Error ? e.message : 'Unable to update report.');
+    } finally {
+      setReportBusy(false);
+    }
+  }, [reportBusy]);
 
   const loadSettings = useCallback(async () => {
     setSettingsBusy('load');
@@ -245,9 +290,20 @@ export default function RoomScreen() {
       <H1 fontSize="$7">{room?.name ?? 'Room'}</H1><Text fontSize="$2" color="$colorPress">{room?.province_code ? `${room.province_code} · ` : ''}{onlineMembers.filter(member => member.is_online).length} online</Text>{room?.description ? <Paragraph color="$colorPress">{room.description}</Paragraph> : null}{room?.announcement ? <Paragraph fontWeight="800">{room.announcement}</Paragraph> : null}{room?.view_only ? <Text color="$colorPress">View-only room</Text> : null}{room?.is_locked ? <Text color="$red10">Room locked</Text> : null}{roomError ? <Paragraph color="$red10">{roomError}</Paragraph> : null}{error ? <Paragraph color="$red10">{error}</Paragraph> : null}
     </YStack>
     {loading ? <YStack flex={1} style={{ alignItems: "center", justifyContent: "center" }}><Spinner /></YStack> :
-      <YStack flex={1}><MessageList messages={messages} currentUserId={session?.user.id} hasMore={hasMore} onLoadOlder={loadOlder} profiles={profiles} onReply={m => { setEditTarget(null); setReplyTarget(m); }} onEdit={m => { setReplyTarget(null); setEditTarget(m); }} onDelete={m => remove(m.id)} onReact={(m,r) => react(m.id,r)} /></YStack>}
+      <YStack flex={1}><MessageList messages={messages} currentUserId={session?.user.id} hasMore={hasMore} onLoadOlder={loadOlder} profiles={profiles} onReply={m => { setEditTarget(null); setReplyTarget(m); }} onEdit={m => { setReplyTarget(null); setEditTarget(m); }} onDelete={m => remove(m.id)} onReact={(m,r) => react(m.id,r)} onReport={m => openReport({ messageId: m.id, userId: m.sender_id, label: 'message' })} /></YStack>}
     {replyTarget ? <YStack px="$3" pt="$2"><Text fontSize="$2" color="$colorPress">Replying to: {replyTarget.body.slice(0, 80)}</Text></YStack> : null}
     {onlineMembers.length ? <XStack px="$3" pb="$2" gap="$2" flexWrap="wrap"><Text fontSize="$2" color="$colorPress">Online:</Text>{onlineMembers.filter(member => member.is_online).slice(0, 8).map(member => <Text key={member.user_id} fontSize="$2">{member.nickname || 'Member'}</Text>)}</XStack> : null}
+    {reportTarget ? <YStack mx="$3" mb="$2" gap="$2" p="$3" borderWidth={1} borderColor="$borderColor">
+      <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+        <Text fontSize="$3" fontWeight="800">Report {reportTarget.label}</Text>
+        <Text color="$colorPress" onPress={() => setReportTarget(null)}>Cancel</Text>
+      </XStack>
+      <Text fontSize="$2" color="$colorPress">Your report is visible to Room staff for review.</Text>
+      <Input value={reportReason} onChangeText={setReportReason} placeholder="Reason for report" multiline />
+      <Button size="$2" disabled={reportBusy} onPress={() => { void submitReport(); }}>
+        {reportBusy ? 'Submitting…' : 'Submit report'}
+      </Button>
+    </YStack> : null}
     <YStack px="$3" pb="$2" gap="$2">
       <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
         <Text fontSize="$3" fontWeight="800">Members {members.length ? `(${members.length})` : ''}</Text>
@@ -267,6 +323,21 @@ export default function RoomScreen() {
         </XStack>
       </XStack>
       {membersOpen ? <YStack gap="$2">
+        <Text fontSize="$3" fontWeight="800" pt="$2">Reports ({reports.length})</Text>
+        {reports.length ? reports.map(report => (
+          <YStack key={'report-' + report.id} gap="$2" p="$2" borderWidth={1} borderColor="$borderColor">
+            <Text fontWeight="700">{report.status.toUpperCase()}</Text>
+            <Text fontSize="$2">Reason: {report.reason}</Text>
+            {report.message_id ? <Text fontSize="$2" color="$colorPress">Message: {report.message_id}</Text> : null}
+            {report.reported_user_id ? <Text fontSize="$2" color="$colorPress">Member: {report.reported_user_id}</Text> : null}
+            <XStack gap="$2" flexWrap="wrap">
+              {report.status !== 'resolved' && report.status !== 'dismissed' ? <>
+                <Button size="$2" disabled={reportBusy} onPress={() => { void resolveReport(report.id, 'resolved'); }}>Resolve</Button>
+                <Button size="$2" disabled={reportBusy} onPress={() => { void resolveReport(report.id, 'dismissed'); }}>Dismiss</Button>
+              </> : null}
+            </XStack>
+          </YStack>
+        )) : <Text fontSize="$2" color="$colorPress">No reports found.</Text>}
         {members.map(member => {
           const profile = member.profile;
           return <XStack key={member.user_id} gap="$2" style={{ alignItems: 'center' }}>
@@ -360,6 +431,7 @@ export default function RoomScreen() {
               <Button size="$2" disabled={busy} onPress={() => runAdminAction(member, 'ban')}>Ban 24h</Button>
               <Button size="$2" disabled={busy} onPress={() => runAdminAction(member, 'kick')}>Kick</Button>
               <Button size="$2" disabled={busy} onPress={() => runAdminAction(member, 'strike')}>Strike</Button>
+              {!isSelf ? <Button size="$2" disabled={reportBusy} onPress={() => openReport({ userId: member.user_id, label: label + ' (member)' })}>Report</Button> : null}
             </XStack> : null}
           </YStack>;
         })}
