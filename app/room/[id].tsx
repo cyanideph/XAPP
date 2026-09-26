@@ -50,7 +50,7 @@ export default function RoomScreen() {
   }, [id]);
   useEffect(() => { void loadRoom(); }, [loadRoom]);
 
-  const { messages, loading, sending, error, hasMore, loadOlder, send, sendMedia, sendSticker, reply, edit, remove, react, profiles, onTyping } = useChatMessages({ scope: 'room', id });
+  const { messages, loading, sending, error, hasMore, loadOlder, send, sendMedia, sendSticker, reply, edit, remove, react, profiles, typingUsers, onTyping } = useChatMessages({ scope: 'room', id });
   useEffect(() => { let active = true; const refresh = async () => { try { const online = await listOnlineRoomMembers(id, 20, 0); if (active) setOnlineMembers(Array.isArray(online) ? online : []); } catch {} }; void refresh(); const timer = setInterval(refresh, 30000); return () => { active = false; clearInterval(timer); }; }, [id]);
   const loadMembers = useCallback(async () => {
     setMembersLoading(true);
@@ -394,6 +394,7 @@ export default function RoomScreen() {
     {loading ? <YStack flex={1} style={{ alignItems: "center", justifyContent: "center" }}><Spinner /></YStack> :
       <YStack flex={1}><MessageList messages={messages} currentUserId={session?.user.id} pinnedMessageId={room?.pinned_message_id ?? null} hasMore={hasMore} onLoadOlder={loadOlder} profiles={profiles} onReply={m => { setEditTarget(null); setReplyTarget(m); }} onEdit={m => { setReplyTarget(null); setEditTarget(m); }} onDelete={m => remove(m.id)} onReact={(m,r) => react(m.id,r)} onReport={m => openReport({ messageId: m.id, userId: m.sender_id, label: 'message' })} /></YStack>}
     {replyTarget ? <YStack px="$3" pt="$2"><Text fontSize="$2" color="$colorPress">Replying to: {(replyTarget.body ?? '').slice(0, 80)}</Text></YStack> : null}
+    {Object.keys(typingUsers).length ? <XStack px="$3" pb="$2" style={{ alignItems: 'center' }}><Text fontSize="$2" color="$colorPress">{Object.keys(typingUsers).map(userId => profiles[userId]?.display_name || profiles[userId]?.username || 'Someone').slice(0, 2).join(', ')} {Object.keys(typingUsers).length === 1 ? 'is' : 'are'} typing…</Text></XStack> : null}
     {onlineMembers.length ? <XStack px="$3" pb="$2" gap="$2" flexWrap="wrap"><Text fontSize="$2" color="$colorPress">Online:</Text>{onlineMembers.filter(member => member.is_online).slice(0, 8).map(member => <Text key={member.user_id} fontSize="$2">{member.nickname || 'Member'}</Text>)}</XStack> : null}
     {reportTarget ? <YStack mx="$3" mb="$2" gap="$2" p="$3" borderWidth={1} borderColor="$borderColor">
       <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
