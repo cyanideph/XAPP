@@ -6,9 +6,28 @@ import { tamaguiConfig } from '../tamagui.config';
 import { useSession } from '../src/hooks/useSession';
 import { XAppThemeProvider, useXAppTheme } from '../src/theme/theme';
 
+function AppNavigation() {
+  const theme = useTheme();
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        headerStyle: { backgroundColor: theme.background.val },
+        headerTintColor: theme.color.val,
+        headerTitleStyle: { color: theme.color.val, fontWeight: '700' },
+        headerShadowVisible: false,
+      }}
+    >
+      <Stack.Screen name="(auth)" />
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="room/[id]" options={{ headerShown: true, title: 'Room' }} />
+      <Stack.Screen name="conversation/[id]" options={{ headerShown: true, title: 'Chat' }} />
+    </Stack>
+  );
+}
+
 function AppShell() {
   const { resolvedMode } = useXAppTheme();
-  const theme = useTheme();
   const { session, loading } = useSession();
   const pathname = usePathname();
   const router = useRouter();
@@ -27,20 +46,7 @@ function AppShell() {
           <Spinner color="$brandBackground" />
         </YStack>
       ) : (
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            headerStyle: { backgroundColor: theme.background.val },
-            headerTintColor: theme.color.val,
-            headerTitleStyle: { color: theme.color.val, fontWeight: '700' },
-            headerShadowVisible: false,
-          }}
-        >
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="room/[id]" options={{ headerShown: true, title: 'Room' }} />
-          <Stack.Screen name="conversation/[id]" options={{ headerShown: true, title: 'Chat' }} />
-        </Stack>
+        <AppNavigation />
       )}
     </TamaguiProvider>
   );
