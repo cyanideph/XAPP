@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { H1, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
-import { BentoCard } from '../../src/components/BentoCard';
 import { XButton } from '../../src/components/XButton';
 import { MessageComposer } from '../../src/components/MessageComposer';
 import { MessageList } from '../../src/components/MessageList';
@@ -49,7 +48,9 @@ export default function ConversationScreen() {
   return (
     <YStack flex={1} bg="$background">
       <YStack px="$4" pt="$3" pb="$2" gap="$3">
-        <BentoCard title="CONVERSATION" description="Private chat">
+        <YStack gap="$3">
+<Text fontSize="$5" fontWeight="800">CONVERSATION</Text>
+<Paragraph color="$colorPress">Private chat</Paragraph>
           <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
             <YStack flex={1}>
               <H1 fontSize="$7" fontWeight="900">Chat</H1>
@@ -59,7 +60,7 @@ export default function ConversationScreen() {
             </YStack>
             <XButton size="$2" chromeless onPress={() => router.back()}>Done</XButton>
           </XStack>
-        </BentoCard>
+        </YStack>
         {error ? <Paragraph color="$red10">{error}</Paragraph> : null}
       </YStack>
 
