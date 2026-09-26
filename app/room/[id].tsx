@@ -1,8 +1,9 @@
 import { useCallback, useState, useEffect } from 'react';
 import { useLocalSearchParams } from 'expo-router';
+import { Alert } from 'react-native';
 import { Button, H1, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
 import { MessageComposer } from '../../src/components/MessageComposer';
-import { listOnlineRoomMembers, listRoomMembers, type RoomMember } from '../../src/features/chat/backend';
+import { listOnlineRoomMembers, listRoomMembers, listRoomCoHosts, setRoomCoHost, kickRoomMember, moderateRoomMember, strikeRoomMember, type RoomMember } from '../../src/features/chat/backend';
 import { createRoomInvite, listOnlineUsers } from '../../src/lib/backend';
 import { MessageList } from '../../src/components/MessageList';
 import { useSession } from '../../src/hooks/useSession';
@@ -23,6 +24,9 @@ export default function RoomScreen() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteLoading, setInviteLoading] = useState(false);
   const [inviteBusy, setInviteBusy] = useState<string | null>(null);
+  const [coHostIds, setCoHostIds] = useState<Set<string>>(new Set());
+  const [adminOpen, setAdminOpen] = useState(false);
+  const [adminBusy, setAdminBusy] = useState<string | null>(null);
   const [room, setRoom] = useState<Room | null>(null);
   const [roomError, setRoomError] = useState<string | null>(null);
   const loadRoom = useCallback(async () => {
@@ -84,6 +88,70 @@ export default function RoomScreen() {
     }
   }, [id, inviteBusy]);
 
+  const loadAdministration = useCallback(async () => {
+    setAdminBusy('load');
+    setRoomError(null);
+    try {
+      const rows = await listRoomCoHosts(id);
+      setCoHostIds(new Set((Array.isArray(rows) ? rows : []).map(row => row.user_id)));
+      setAdminOpen(true);
+    } catch (e) {
+      setRoomError(e instanceof Error ? e.message : 'Unable to load Room administration.');
+    } finally {
+      setAdminBusy(null);
+    }
+  }, [id]);
+
+  const runAdminAction = useCallback((member: RoomMember, action: 'cohost' | 'kick' | 'mute' | 'ban' | 'strike') => {
+    const label = member.profile?.display_name || member.profile?.username || member.nickname || 'member';
+    const confirmText = action === 'cohost'
+      ? (coHostIds.has(member.user_id) ? `Remove ${label} as co-host?` : `Make ${label} a co-host?`)
+      : action === 'kick'
+        ? `Kick ${label} from this Room?`
+        : action === 'mute'
+          ? `Mute ${label} for 60 minutes?`
+          : action === 'ban'
+            ? `Ban ${label} for 24 hours?`
+            : `Issue a 24-hour strike to ${label}?`;
+    Alert.alert('Room administration', confirmText, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Confirm',
+        style: action === 'ban' || action === 'kick' ? 'destructive' : 'default',
+        onPress: () => { void (async () => {
+          setAdminBusy(member.user_id);
+          setRoomError(null);
+          try {
+            if (action === 'cohost') {
+              const enabled = !coHostIds.has(member.user_id);
+              await setRoomCoHost(id, member.user_id, enabled);
+              setCoHostIds(current => {
+                const next = new Set(current);
+                if (enabled) next.add(member.user_id); else next.delete(member.user_id);
+                return next;
+              });
+            } else if (action === 'kick') {
+              await kickRoomMember(id, member.user_id, true, 'Room moderation');
+              setMembers(current => current.filter(row => row.user_id !== member.user_id));
+            } else if (action === 'mute') {
+              await moderateRoomMember(id, member.user_id, 'mute', 60, 'Room moderation');
+              setMembers(current => current.map(row => row.user_id === member.user_id ? { ...row, muted_until: new Date(Date.now() + 60 * 60000).toISOString() } : row));
+            } else if (action === 'ban') {
+              await moderateRoomMember(id, member.user_id, 'ban', 1440, 'Room moderation');
+              setMembers(current => current.map(row => row.user_id === member.user_id ? { ...row, banned_until: new Date(Date.now() + 1440 * 60000).toISOString() } : row));
+            } else {
+              await strikeRoomMember(id, member.user_id, 1440, 'Room moderation');
+            }
+          } catch (e) {
+            setRoomError(e instanceof Error ? e.message : 'Room administration action failed.');
+          } finally {
+            setAdminBusy(null);
+          }
+        })(); },
+      },
+    ]);
+  }, [coHostIds, id]);
+
   const submit = async (body: string) => {
     if (replyTarget) { await reply(replyTarget.id, body); setReplyTarget(null); }
     else if (editTarget) { await edit(editTarget.id, body); setEditTarget(null); }
@@ -101,6 +169,9 @@ export default function RoomScreen() {
       <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
         <Text fontSize="$3" fontWeight="800">Members {members.length ? `(${members.length})` : ''}</Text>
         <XStack gap="$2">
+          <Button size="$2" chromeless disabled={adminBusy === 'load'} onPress={() => { void loadAdministration(); }}>
+            {adminBusy === 'load' ? 'Loading…' : 'Admin'}
+          </Button>
           <Button size="$2" chromeless disabled={inviteLoading} onPress={() => { void loadInviteCandidates(); }}>
             {inviteLoading ? 'Loading…' : 'Invite'}
           </Button>
@@ -118,6 +189,36 @@ export default function RoomScreen() {
           </XStack>;
         })}
         {!members.length ? <Text color="$colorPress">No members found.</Text> : null}
+      </YStack> : null}
+      {adminOpen ? <YStack gap="$2" pt="$2">
+        <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+          <Text fontSize="$3" fontWeight="800">Room administration</Text>
+          <Text color="$colorPress" onPress={() => setAdminOpen(false)}>Hide</Text>
+        </XStack>
+        <Text fontSize="$2" color="$colorPress">Controls are enforced by the Supabase Room authorization rules.</Text>
+        {members.map(member => {
+          const label = member.profile?.display_name || member.profile?.username || member.nickname || 'Member';
+          const isSelf = member.user_id === session?.user.id;
+          const busy = adminBusy === member.user_id;
+          return <YStack key={`admin-${member.user_id}`} gap="$2" p="$2" borderWidth={1} borderColor="$borderColor">
+            <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+              <YStack flex={1}>
+                <Text fontWeight="700">{label}</Text>
+                <Text fontSize="$2" color="$colorPress">@{member.profile?.username || 'unknown'} · {member.role}{coHostIds.has(member.user_id) ? ' · co-host' : ''}</Text>
+              </YStack>
+              {busy ? <Spinner size="small" /> : null}
+            </XStack>
+            {!isSelf && member.role !== 'owner' ? <XStack gap="$2" flexWrap="wrap">
+              <Button size="$2" disabled={busy} onPress={() => runAdminAction(member, 'cohost')}>
+                {coHostIds.has(member.user_id) ? 'Remove co-host' : 'Make co-host'}
+              </Button>
+              <Button size="$2" disabled={busy} onPress={() => runAdminAction(member, 'mute')}>Mute 60m</Button>
+              <Button size="$2" disabled={busy} onPress={() => runAdminAction(member, 'ban')}>Ban 24h</Button>
+              <Button size="$2" disabled={busy} onPress={() => runAdminAction(member, 'kick')}>Kick</Button>
+              <Button size="$2" disabled={busy} onPress={() => runAdminAction(member, 'strike')}>Strike</Button>
+            </XStack> : null}
+          </YStack>;
+        })}
       </YStack> : null}
       {inviteOpen ? <YStack gap="$2" pt="$2">
         <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
