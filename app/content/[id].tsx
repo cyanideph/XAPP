@@ -115,7 +115,9 @@ export default function ContentDetail() {
             </YStack>
           </YStack>
         ) : (
-          <BentoCard title={item.title || 'Community post'} description={`@${item.author?.username || 'user'} · ${item.kind}`}>
+          <YStack gap="$3">
+<Text fontSize="$5" fontWeight="800">{item.title || 'Community post'}</Text>
+<Paragraph color="$colorPress">{`@${item.author?.username || 'user'} · ${item.kind}`}</Paragraph>
             <YStack gap="$3">
               {item.body ? <Paragraph fontSize="$5">{item.body}</Paragraph> : null}
               <XStack gap="$2" flexWrap="wrap">
