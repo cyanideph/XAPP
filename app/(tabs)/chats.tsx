@@ -67,7 +67,7 @@ export default function ChatsScreen() {
 
     try {
       const [chatRows, conversationRows, inviteRows] = await Promise.all([
-        listPublicRooms(20, 0),
+        listPublicChats(20, 0),
         listMyConversations(20),
         listPendingConversationInvites(50),
       ]);
