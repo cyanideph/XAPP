@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, ScrollView } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
+import { Input, Menu, Paragraph, Spinner, Text, XStack, YGroup, YStack } from 'tamagui';
 import { XButton } from '../../src/components/XButton';
+import { XListItem } from '../../src/components/XListItem';
 import {
   addContentComment,
   deleteContent,
@@ -120,10 +121,19 @@ export default function ContentDetail() {
 <Paragraph color="$colorPress">{`@${item.author?.username || 'user'} · ${item.kind}`}</Paragraph>
             <YStack gap="$3">
               {item.body ? <Paragraph fontSize="$5">{item.body}</Paragraph> : null}
-              <XStack gap="$2" flexWrap="wrap">
+              <XStack gap="$2" items="center">
                 <XButton disabled={busy} onPress={() => void act(() => toggleContentReaction(item.id, 'like'))}>Like</XButton>
-                <XButton disabled={busy} chromeless onPress={() => void act(() => toggleContentSave(item.id))}>Save</XButton>
-                <XButton disabled={busy} chromeless onPress={() => void act(() => repostContent(item.id))}>Repost</XButton>
+                <Menu>
+                  <Menu.Trigger asChild action="press">
+                    <XButton size="$2" chromeless disabled={busy}>More</XButton>
+                  </Menu.Trigger>
+                  <Menu.Portal>
+                    <Menu.Content>
+                      <Menu.Item onSelect={() => { void act(() => toggleContentSave(item.id)); }}><Menu.ItemTitle>Save</Menu.ItemTitle></Menu.Item>
+                      <Menu.Item onSelect={() => { void act(() => repostContent(item.id)); }}><Menu.ItemTitle>Repost</Menu.ItemTitle></Menu.Item>
+                    </Menu.Content>
+                  </Menu.Portal>
+                </Menu>
               </XStack>
             </YStack>
           </YStack>
@@ -133,13 +143,18 @@ export default function ContentDetail() {
           <YStack gap="$3">
 <Text fontSize="$5" fontWeight="800">Poll</Text>
 <Paragraph color="$colorPress">Choose an option.</Paragraph>
-            <YStack gap="$2">
+            <YGroup borderWidth={1} borderColor="$borderColor">
               {pollOptions.map(option => (
-                <XButton key={option.id} disabled={busy} onPress={() => void act(() => voteContentPoll(item.id, option.id))}>
-                  {option.label}
-                </XButton>
+                <YGroup.Item key={option.id}>
+                  <XListItem
+                    title={option.label}
+                    iconAfter={<Text color="$colorPress">›</Text>}
+                    onPress={() => { void act(() => voteContentPoll(item.id, option.id)); }}
+                    disabled={busy}
+                  />
+                </YGroup.Item>
               ))}
-            </YStack>
+            </YGroup>
           </YStack>
         ) : null}
 
@@ -163,26 +178,33 @@ export default function ContentDetail() {
               {replyTo ? <XButton chromeless onPress={() => setReplyTo(null)}>Cancel reply</XButton> : null}
             </XStack>
 
-            {comments.map(comment => (
-              <YStack key={comment.id} gap="$2" p="$3" borderWidth={1} borderColor="$borderColor" rounded="$4">
-                <Text fontWeight="800">@{comment.author?.username || 'user'}</Text>
-                <Text>{comment.body}</Text>
-                <XStack gap="$2">
-                  <XButton size="$2" onPress={() => void act(() => toggleContentCommentVote(comment.id, 1))}>Like</XButton>
-                  <XButton size="$2" chromeless onPress={() => setReplyTo(comment.id)}>Reply</XButton>
-                  <XButton
-                    size="$2"
-                    chromeless
-                    onPress={() => void act(async () => {
-                      await deleteContentComment(comment.id);
-                      setComments(values => values.filter(value => value.id !== comment.id));
-                    })}
-                  >
-                    Delete
-                  </XButton>
-                </XStack>
-              </YStack>
-            ))}
+            <YGroup borderWidth={1} borderColor="$borderColor">
+              {comments.map(comment => (
+                <YGroup.Item key={comment.id}>
+                  <XListItem
+                    title={<Text fontWeight="800">@{comment.author?.username || 'user'}</Text>}
+                    subTitle={comment.body}
+                    iconAfter={
+                      <Menu>
+                        <Menu.Trigger asChild action="press">
+                          <XButton size="$2" chromeless>More</XButton>
+                        </Menu.Trigger>
+                        <Menu.Portal>
+                          <Menu.Content>
+                            <Menu.Item onSelect={() => { void act(() => toggleContentCommentVote(comment.id, 1)); }}><Menu.ItemTitle>Like</Menu.ItemTitle></Menu.Item>
+                            <Menu.Item onSelect={() => setReplyTo(comment.id)}><Menu.ItemTitle>Reply</Menu.ItemTitle></Menu.Item>
+                            <Menu.Item destructive onSelect={() => { void act(async () => {
+                              await deleteContentComment(comment.id);
+                              setComments(values => values.filter(value => value.id !== comment.id));
+                            }); }}><Menu.ItemTitle>Delete</Menu.ItemTitle></Menu.Item>
+                          </Menu.Content>
+                        </Menu.Portal>
+                      </Menu>
+                    }
+                  />
+                </YGroup.Item>
+              ))}
+            </YGroup>
           </YStack>
         </YStack>
 
