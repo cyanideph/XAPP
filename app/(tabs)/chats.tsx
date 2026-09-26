@@ -3,6 +3,7 @@ import { RefreshControl, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { H1, Input, ListItem, Paragraph, Separator, Spinner, Text, XStack, YGroup, YStack } from 'tamagui';
 import { XButton } from '../../src/components/XButton';
+import { XIcon } from '../../src/components/XIcon';
 import {
   listMyConversations, searchPublicRooms, listPendingConversationInvites, listPublicChats,
   markNotificationRead, respondConversationInvite, type ConversationInvite, type ConversationListItem,
@@ -139,9 +140,10 @@ export default function ChatsScreen() {
                 const unread = Boolean(conversation.last_read_at && new Date(conversation.updated_at).getTime() > new Date(conversation.last_read_at).getTime());
                 return (
                   <ListItem key={conversation.id}
-  title={unread ? `● ${conversationTitle(conversation)}` : conversationTitle(conversation)}
+  title={conversationTitle(conversation)}
+  icon={unread ? <XIcon name="circleDot" size={18} color="#8B85FF" /> : <XIcon name="message" size={18} color="#A78BFA" />}
   subTitle={conversation.participant ? `@${conversation.participant.username} · ${formatUpdatedAt(conversation.updated_at)}` : `Open conversation · ${formatUpdatedAt(conversation.updated_at)}`}
-  iconAfter={<Text color="$colorPress">›</Text>}
+  iconAfter={<XIcon name="chevronRight" size={20} color="#8B85FF" />}
   onPress={() => router.push({ pathname: '/conversation/[id]', params: { id: conversation.id } })}
 />
                 );
@@ -160,7 +162,7 @@ export default function ChatsScreen() {
                 </YStack>
                 <XStack gap="$2" items="center">
                   <Input flex={1} value={roomQuery} onChangeText={setRoomQuery} placeholder="Search public rooms" returnKeyType="search" onSubmitEditing={() => { void searchRooms(); }} />
-                  <XButton disabled={roomSearching} onPress={() => { void searchRooms(); }}>{roomSearching ? 'Searching…' : 'Search'}</XButton>
+                  <XButton icon={<XIcon name="search" size={18} color="#FFFFFF" />} disabled={roomSearching} onPress={() => { void searchRooms(); }}>{roomSearching ? 'Searching…' : 'Search'}</XButton>
                 </XStack>
               </YStack>
 
