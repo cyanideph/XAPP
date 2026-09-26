@@ -1,4 +1,4 @@
-name: XAPP Expo Preview
+name: XAPP Expo Validation
 
 on:
   push:
@@ -18,8 +18,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  preview:
-    name: Expo Preview Validation
+  validation:
+    name: Expo Validation
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -43,53 +43,3 @@ jobs:
 
       - name: Typecheck
         run: npm run typecheck
-
-      - name: Start Expo Go tunnel preview
-        env:
-          CI: "0"
-          EXPO_NO_TELEMETRY: "1"
-        run: |
-          npm install --no-save --no-audit --no-fund @expo/ngrok
-          npx expo start --tunnel --go --port 8081 > expo-preview.log 2>&1 &
-          EXPO_PID=$!
-
-          echo "Waiting for Expo tunnel..."
-          EXPO_URL=""
-          for i in {1..60}; do
-            if ! kill -0 "$EXPO_PID" 2>/dev/null; then
-              echo "Expo server stopped unexpectedly."
-              cat expo-preview.log
-              exit 1
-            fi
-
-            RESPONSE=$(curl -fsS "http://127.0.0.1:8081/_expo/open?platform=android&runtime=expo" 2>/dev/null || true)
-            EXPO_URL=$(node -e 'try { const x=JSON.parse(process.argv[1]); process.stdout.write(x.url || "") } catch {}' "$RESPONSE")
-
-            if [ -n "$EXPO_URL" ]; then
-              break
-            fi
-            sleep 5
-          done
-
-          if [ -z "$EXPO_URL" ]; then
-            echo "Could not obtain Expo Go tunnel URL."
-            cat expo-preview.log
-            exit 1
-          fi
-
-          echo "EXPO PREVIEW URL: $EXPO_URL"
-          {
-            echo "## XAPP Expo Go Preview"
-            echo
-            echo "**Expo Go URL:** `$EXPO_URL`"
-            echo
-            echo "Scan the QR shown in the workflow logs while this preview job is running."
-          } >> "$GITHUB_STEP_SUMMARY"
-
-          echo
-          echo "================ EXPO GO QR ================"
-          npx --yes qrcode-terminal@0.12.0 "$EXPO_URL" || true
-          echo "============================================="
-          echo
-          echo "Preview remains available for 8 minutes."
-          sleep 480
