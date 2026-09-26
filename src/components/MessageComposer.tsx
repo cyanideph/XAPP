@@ -35,7 +35,7 @@ export function MessageComposer({ onSend, disabled, editValue, onEditCancel, onT
   }
 
   return (
-    <XStack gap="$2" p="$3" borderTopWidth={1} borderColor="$borderColor" alignItems="center">
+    <XStack gap="$2" p="$3" borderTopWidth={1} borderColor="$borderColor" style={{ alignItems: "center" }}>
       <Input
         flex={1}
         value={value}
