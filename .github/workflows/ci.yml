@@ -27,11 +27,12 @@ jobs:
         run: npx expo-doctor@latest
       - name: Typecheck
         run: npm run typecheck
+
   preview:
     name: Expo Go Tunnel Preview
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 8
     needs: validation
     steps:
       - uses: actions/checkout@v4
@@ -48,40 +49,44 @@ jobs:
         run: |
           set -euo pipefail
           rm -f expo-preview.log
+
           npx expo start --tunnel --go > expo-preview.log 2>&1 &
           EXPO_PID=$!
-          trap 'kill $EXPO_PID 2>/dev/null || true' EXIT
+          trap 'kill "$EXPO_PID" 2>/dev/null || true' EXIT
 
-          EXPO_URL=""
+          DEEP_LINK=""
           for i in {1..90}; do
-            if [ -f expo-preview.log ]; then
-              EXPO_URL=$(grep -oE 'exp://[^[:space:]]+' expo-preview.log | head -n 1 | sed 's/[]\r\n,)]*$//' || true)
-            fi
-            if [ -n "$EXPO_URL" ]; then break; fi
             if ! kill -0 "$EXPO_PID" 2>/dev/null; then
               cat expo-preview.log
-              echo "Expo process exited before a tunnel URL was produced."
+              echo "ERROR: Expo exited before the tunnel became ready."
               exit 1
+            fi
+
+            DEEP_LINK=$(curl -fsS --max-time 5 "http://127.0.0.1:8081/_expo/open?platform=android&runtime=expo" 2>/dev/null \
+              | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const x=JSON.parse(s);process.stdout.write(x.url||x.deepLink||"")}catch{}})' || true)
+
+            if [[ "$DEEP_LINK" == exp://* ]]; then
+              break
             fi
             sleep 2
           done
 
           cat expo-preview.log
 
-          if [ -z "$EXPO_URL" ]; then
-            echo "ERROR: Expo tunnel started but no Expo Go URL was found."
+          if [[ "$DEEP_LINK" != exp://* ]]; then
+            echo "ERROR: Expo server started but no Expo Go deep link was returned."
+            tail -n 100 expo-preview.log
             exit 1
           fi
 
-          echo ""
           echo "=============================================="
-          echo "XAPP EXPO GO TUNNEL"
-          echo "Scan the QR code below with Expo Go:"
+          echo "XAPP EXPO GO TUNNEL READY"
+          echo "Expo Go URL: $DEEP_LINK"
           echo "=============================================="
-          node -e "require('qrcode-terminal').generate(process.argv[1], {small: true})" "$EXPO_URL"
-          echo ""
-          echo "Expo Go URL: $EXPO_URL"
+          echo "QR CODE:"
+          node -e "require('qrcode-terminal').generate(process.argv[1], {small: true})" "$DEEP_LINK"
           echo "=============================================="
-          echo ""
-          echo "Keeping the Expo tunnel alive for mobile testing..."
-          sleep 540
+          echo "Keep this GitHub Actions run open while testing."
+          echo "=============================================="
+
+          sleep 180
