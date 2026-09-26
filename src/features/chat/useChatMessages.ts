@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { deleteConversationMessage, deleteRoomMessage, editConversationMessage, editRoomMessage, joinRoom, leaveRoom, listConversationMessages, listProfiles, listRoomMessages, markConversationRead, markRoomRead, replyToConversationMessage, replyToRoomMessage, sendConversationMessage, sendRoomMessage, toggleRoomReaction, touchRoomPresence } from './backend';
+import { deleteConversationMessage, deleteRoomMessage, editConversationMessage, editRoomMessage, joinRoom, leaveRoom, listConversationMessages, listProfiles, listRoomMessages, markConversationRead, markRoomRead, replyToConversationMessage, replyToRoomMessage, sendConversationMessage, sendRoomMessage, sendRoomSticker, setRoomMessageMentions, toggleRoomReaction, touchRoomPresence } from './backend';
 import type { ChatMessage, ChatProfile } from './types';
 
 type Props = { scope: 'room' | 'conversation'; id: string };
@@ -158,15 +158,33 @@ export function useChatMessages({ scope, id }: Props) {
 
   const send = useCallback(async (body: string) => {
     const value = body.trim();
-    if (!value || sending) return;
+    if (!value || sending) return null;
     setSending(true);
     setError(null);
     try {
       await broadcastTyping(false);
       const message = scope === 'room' ? await sendRoomMessage(id, value) : await sendConversationMessage(id, value);
       if (message) setMessages(current => current.some(m => m.id === message.id) ? current : [...current, message]);
+      return message ?? null;
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to send message.');
+      throw e;
+    } finally {
+      setSending(false);
+    }
+  }, [broadcastTyping, id, scope, sending]);
+
+  const sendSticker = useCallback(async (stickerId: string) => {
+    if (scope !== 'room' || !stickerId.trim() || sending) return null;
+    setSending(true);
+    setError(null);
+    try {
+      await broadcastTyping(false);
+      const message = await sendRoomSticker(id, stickerId.trim());
+      if (message) setMessages(current => current.some(m => m.id === message.id) ? current : [...current, message]);
+      return message ?? null;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to send sticker.');
       throw e;
     } finally {
       setSending(false);
@@ -200,7 +218,7 @@ export function useChatMessages({ scope, id }: Props) {
 
   return {
     messages, loading, sending, error, hasMore, typingUsers, profiles,
-    send, reply, edit, remove, react, onTyping, loadOlder,
+    send, sendSticker, setRoomMessageMentions, reply, edit, remove, react, onTyping, loadOlder,
     reload: () => load(),
   };
 }
