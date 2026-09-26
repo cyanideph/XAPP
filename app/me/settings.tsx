@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { H1, Input, Paragraph, Spinner, Switch, Text, XStack, YGroup, YStack } from 'tamagui';
+import { Accordion, H1, Input, Paragraph, Separator, Spinner, Switch, Text, XStack, YGroup, YStack } from 'tamagui';
 import { XButton } from '../../src/components/XButton';
 import { getNotificationPreferences, setNotificationPreferences, NotificationPreferences } from '../../src/lib/backend';
 import { supabase } from '../../src/lib/supabase';
@@ -56,37 +56,70 @@ export default function Settings() {
     <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 64, paddingBottom: 40 }}>
       <YStack gap="$5">
         <H1>Settings.</H1>
-        <YStack gap="$3">
-          <Text fontSize="$5" fontWeight="800">Account security</Text>
-          <Paragraph color="$colorPress">Manage your password and email identity.</Paragraph>
-          <Input secureTextEntry placeholder="Current password" value={currentPassword} onChangeText={setCurrentPassword} />
-          <Input secureTextEntry placeholder="New password" value={newPassword} onChangeText={setNewPassword} />
-          <Input secureTextEntry placeholder="Confirm new password" value={confirmPassword} onChangeText={setConfirmPassword} />
-          <XButton disabled={busy} onPress={() => void changePassword()}>Change password</XButton>
-          <Input keyboardType="email-address" autoCapitalize="none" placeholder="Email address" value={email} onChangeText={setEmail} />
-          <XButton disabled={busy} onPress={() => void changeEmail()}>Change email</XButton>
-        </YStack>
 
-        <YStack gap="$3">
-          <Text fontSize="$5" fontWeight="800">Notifications</Text>
-          <Paragraph color="$colorPress">Choose which community events notify you.</Paragraph>
-          <YGroup>
-            {keys.map(([key, label]) => (
-              <YGroup.Item key={key}>
-                <XStack items="center" justify="space-between" px="$3" py="$3">
-                  <Text flex={1}>{label}</Text>
-                  <Switch size="$3" checked={Boolean(preferences[key])}
-                    onCheckedChange={checked => setPreferences({ ...preferences, [key]: checked })}>
-                    <Switch.Thumb />
-                  </Switch>
+        <Accordion type="multiple" defaultValue={['security', 'notifications']} overflow="hidden">
+          <Accordion.Item value="security">
+            <Accordion.Header>
+              <Accordion.Trigger unstyled p="$3" borderWidth={0} bg="$backgroundHover">
+                <XStack flex={1} items="center" justify="space-between" gap="$3">
+                  <YStack flex={1} gap="$1">
+                    <Text fontSize="$5" fontWeight="800">Account security</Text>
+                    <Paragraph color="$colorPress">Manage your password and email identity.</Paragraph>
+                  </YStack>
+                  <Text color="$colorPress">⌄</Text>
                 </XStack>
-              </YGroup.Item>
-            ))}
-          </YGroup>
-          <XButton onPress={() => void setNotificationPreferences(preferences)
-            .then(() => setStatus('Settings saved.'))
-            .catch(error => setStatus(error instanceof Error ? error.message : 'Unable to save settings.'))}>Save settings</XButton>
-        </YStack>
+              </Accordion.Trigger>
+            </Accordion.Header>
+            <Accordion.Content transition="medium" exitStyle={{ opacity: 0, y: -8 }} p="$3">
+              <YStack gap="$3">
+                <Input secureTextEntry placeholder="Current password" value={currentPassword} onChangeText={setCurrentPassword} />
+                <Input secureTextEntry placeholder="New password" value={newPassword} onChangeText={setNewPassword} />
+                <Input secureTextEntry placeholder="Confirm new password" value={confirmPassword} onChangeText={setConfirmPassword} />
+                <XButton disabled={busy} onPress={() => void changePassword()}>Change password</XButton>
+                <Separator />
+                <Input keyboardType="email-address" autoCapitalize="none" placeholder="Email address" value={email} onChangeText={setEmail} />
+                <XButton disabled={busy} onPress={() => void changeEmail()}>Change email</XButton>
+              </YStack>
+            </Accordion.Content>
+          </Accordion.Item>
+
+          <Separator />
+
+          <Accordion.Item value="notifications">
+            <Accordion.Header>
+              <Accordion.Trigger unstyled p="$3" borderWidth={0} bg="$backgroundHover">
+                <XStack flex={1} items="center" justify="space-between" gap="$3">
+                  <YStack flex={1} gap="$1">
+                    <Text fontSize="$5" fontWeight="800">Notifications</Text>
+                    <Paragraph color="$colorPress">Choose which community events notify you.</Paragraph>
+                  </YStack>
+                  <Text color="$colorPress">⌄</Text>
+                </XStack>
+              </Accordion.Trigger>
+            </Accordion.Header>
+            <Accordion.Content transition="medium" exitStyle={{ opacity: 0, y: -8 }} p="$3">
+              <YStack gap="$3">
+                <YGroup borderWidth={1} borderColor="$borderColor">
+                  {keys.map(([key, label], index) => (
+                    <YGroup.Item key={key}>
+                      <XStack items="center" justify="space-between" px="$3" py="$3">
+                        <Text flex={1}>{label}</Text>
+                        <Switch size="$3" checked={Boolean(preferences[key])}
+                          onCheckedChange={checked => setPreferences({ ...preferences, [key]: checked })}>
+                          <Switch.Thumb />
+                        </Switch>
+                      </XStack>
+                      {index < keys.length - 1 ? <Separator /> : null}
+                    </YGroup.Item>
+                  ))}
+                </YGroup>
+                <XButton onPress={() => void setNotificationPreferences(preferences)
+                  .then(() => setStatus('Settings saved.'))
+                  .catch(error => setStatus(error instanceof Error ? error.message : 'Unable to save settings.'))}>Save settings</XButton>
+              </YStack>
+            </Accordion.Content>
+          </Accordion.Item>
+        </Accordion>
 
         {status ? <Text color="$colorPress">{status}</Text> : null}
         <XButton chromeless onPress={() => router.back()}>Back</XButton>
