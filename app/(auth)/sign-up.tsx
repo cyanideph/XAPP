@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { router } from 'expo-router';
+import * as Linking from 'expo-linking';
 import { Button, H1, Input, Paragraph, Text, YStack } from 'tamagui';
 import { supabase } from '../../src/lib/supabase';
 
@@ -16,17 +17,19 @@ export default function SignUpScreen() {
     const emailValue = email.trim().toLowerCase();
     const usernameValue = username.trim();
     if (!supabase || !emailValue || !password || !usernameValue || busy) return;
+    if (password.length < 6) { setError('Password must be at least 6 characters.'); return; }
     if (password !== confirmPassword) { setError('Passwords do not match.'); return; }
     setBusy(true); setMessage(''); setError('');
     try {
+      const redirectTo = Linking.createURL('/restore');
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: emailValue,
         password,
-        options: { data: { username: usernameValue } },
+        options: { data: { username: usernameValue }, emailRedirectTo: redirectTo },
       });
       if (signUpError) { setError(signUpError.message); return; }
       if (data.session) router.replace('/(tabs)');
-      else setMessage('Account created. Check your email if confirmation is required, then sign in.');
+      else setMessage('Account created. Check your email to confirm your address, then sign in.');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to create account.');
     } finally { setBusy(false); }
