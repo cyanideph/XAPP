@@ -388,7 +388,7 @@ export default function RoomScreen() {
         {roomError ? <Paragraph color="$red10">{roomError}</Paragraph> : null}
         {error ? <Paragraph color="$red10">{error}</Paragraph> : null}
         <XStack gap="$2" items="center">
-          <Menu>
+          <Menu native={false}>
             <Menu.Trigger asChild action="press">
               <XButton size="$3">Manage</XButton>
             </Menu.Trigger>
@@ -527,7 +527,7 @@ export default function RoomScreen() {
           return <YGroup.Item key={`admin-${member.user_id}`}>
             <ListItem title={label}
               subTitle={`@${member.profile?.username || 'unknown'} · ${member.role}${coHostIds.has(member.user_id) ? ' · co-host' : ''}`}
-              iconAfter={busy ? <Spinner size="small" /> : <Menu>
+              iconAfter={busy ? <Spinner size="small" /> : <Menu native={false}>
                 <Menu.Trigger asChild action="press"><XButton size="$2" chromeless>Actions</XButton></Menu.Trigger>
                 <Menu.Portal>
                   <Menu.Content>
