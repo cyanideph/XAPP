@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { Button, H1, Input, Paragraph, Spinner, Text, YStack } from 'tamagui';
+import { XButton } from '../../src/components/XButton';
 import { BentoCard } from '../../src/components/BentoCard';
 import { getNotificationPreferences, setNotificationPreferences, NotificationPreferences } from '../../src/lib/backend';
 import { supabase } from '../../src/lib/supabase';
@@ -89,9 +90,9 @@ export default function Settings() {
             <Input secureTextEntry placeholder="Current password" value={currentPassword} onChangeText={setCurrentPassword} />
             <Input secureTextEntry placeholder="New password" value={newPassword} onChangeText={setNewPassword} />
             <Input secureTextEntry placeholder="Confirm new password" value={confirmPassword} onChangeText={setConfirmPassword} />
-            <Button disabled={busy} onPress={() => void changePassword()}>Change password</Button>
+            <XButton disabled={busy} onPress={() => void changePassword()}>Change password</XButton>
             <Input keyboardType="email-address" autoCapitalize="none" placeholder="Email address" value={email} onChangeText={setEmail} />
-            <Button disabled={busy} onPress={() => void changeEmail()}>Change email</Button>
+            <XButton disabled={busy} onPress={() => void changeEmail()}>Change email</XButton>
           </YStack>
         </BentoCard>
 
@@ -102,9 +103,9 @@ export default function Settings() {
                 {label}: {preferences[key] ? 'ON' : 'OFF'}
               </Button>
             ))}
-            <Button onPress={() => void setNotificationPreferences(preferences).then(() => setStatus('Settings saved.')).catch((error) => setStatus(error instanceof Error ? error.message : 'Unable to save settings.'))}>
+            <XButton onPress={() => void setNotificationPreferences(preferences).then(() => setStatus('Settings saved.')).catch((error) => setStatus(error instanceof Error ? error.message : 'Unable to save settings.'))}>
               Save settings
-            </Button>
+            </XButton>
           </YStack>
         </BentoCard>
 
