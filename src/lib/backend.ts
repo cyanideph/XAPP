@@ -458,8 +458,14 @@ export async function searchPublicChats(query: string, limit = 20) {
 }
 
 export async function searchContent(query: string, limit = 30, offset = 0) {
-  const page = await rpc<{ items?: ContentItem[]; has_more?: boolean }>('search_content', { p_query: query.trim(), p_room_id: null, p_limit: limit, p_offset: offset });
-  return { items: Array.isArray(page?.items) ? page.items : [], has_more: Boolean(page?.has_more) };
+  const data = await rpc<ContentItem[]>('search_content', {
+    p_query: query.trim(),
+    p_room_id: null,
+    p_limit: limit,
+    p_offset: offset,
+  });
+  const items = Array.isArray(data) ? data : [];
+  return { items, has_more: items.length >= limit };
 }
 export async function listCategoryContent(categoryId: string, limit = 50, beforeCreatedAt: string | null = null, beforeId: string | null = null) {
   const page = await rpc<{ items: ContentItem[]; has_more: boolean }>('list_category_content', { p_category_id: categoryId, p_limit: limit, p_before_created_at: beforeCreatedAt, p_before_id: beforeId });
