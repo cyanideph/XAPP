@@ -1,6 +1,35 @@
 import { Tabs } from 'expo-router';
-import { useTheme } from 'tamagui';
+import { useTheme, XStack } from 'tamagui';
 import { useXAppTheme } from '../../src/theme/theme';
+import { XIcon, type XAPPIconName } from '../../src/components/XIcon';
+
+const tabIcons: Record<string, XAPPIconName> = {
+  index: 'home',
+  discover: 'search',
+  chats: 'message',
+  me: 'user',
+};
+
+function TabIcon({ name, focused }: { name: XAPPIconName; focused: boolean }) {
+  return (
+    <XStack
+      width={36}
+      height={30}
+      rounded="$3"
+      items="center"
+      justify="center"
+      backgroundColor={focused ? '$brandBackground' : 'transparent'}
+    >
+      <XIcon
+        name={name}
+        size={20}
+        color={focused ? '#FFFFFF' : '#8B85FF'}
+        strokeWidth={focused ? 2.4 : 2.1}
+        accessibilityLabel={name}
+      />
+    </XStack>
+  );
+}
 
 export default function TabLayout() {
   const { resolvedMode } = useXAppTheme();
@@ -9,7 +38,7 @@ export default function TabLayout() {
 
   return (
     <Tabs
-      screenOptions={{
+      screenOptions={({ route }) => ({
         headerShown: false,
         sceneStyle: { backgroundColor: 'transparent' },
         tabBarActiveTintColor: theme.brandBackground?.val ?? theme.color.val,
@@ -29,7 +58,10 @@ export default function TabLayout() {
         tabBarIconStyle: {
           opacity: isDark ? 0.96 : 1,
         },
-      }}
+        tabBarIcon: ({ focused }) => (
+          <TabIcon name={tabIcons[route.name] ?? 'home'} focused={focused} />
+        ),
+      })}
     >
       <Tabs.Screen name="index" options={{ title: 'Home' }} />
       <Tabs.Screen name="discover" options={{ title: 'Discover' }} />
