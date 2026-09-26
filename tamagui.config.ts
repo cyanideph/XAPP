@@ -231,16 +231,76 @@ const themes = createV5Theme({
   }),
 });
 
+// XAPP-specific token layer on top of the complete Tamagui v5 preset.
+// These stay structural and reusable; semantic colors belong to themes above.
+const tokens = {
+  ...defaultConfig.tokens,
+  size: {
+    ...defaultConfig.tokens.size,
+    xxs: 4,
+    xs: 8,
+    sm: 12,
+    md: 16,
+    lg: 20,
+    xl: 24,
+    xxl: 32,
+    xxxl: 40,
+  },
+  space: {
+    ...defaultConfig.tokens.space,
+    xxs: 4,
+    xs: 8,
+    sm: 12,
+    md: 16,
+    lg: 20,
+    xl: 24,
+    xxl: 32,
+  },
+  radius: {
+    ...defaultConfig.tokens.radius,
+    xxs: 4,
+    xs: 8,
+    sm: 12,
+    md: 16,
+    lg: 20,
+    xl: 24,
+    pill: 999,
+  },
+  zIndex: {
+    ...defaultConfig.tokens.zIndex,
+    base: 0,
+    raised: 10,
+    overlay: 100,
+    modal: 1000,
+    toast: 1100,
+  },
+};
+
+// Typed responsive capabilities from Config v5. These are used by the UI
+// instead of hard-coded platform checks where responsive behavior is needed.
+const media = {
+  ...defaultConfig.media,
+  compact: { maxWidth: 599 },
+  tablet: { minWidth: 600, maxWidth: 1023 },
+  wide: { minWidth: 1024 },
+  shortScreen: { maxHeight: 720 },
+};
+
 export const tamaguiConfig = createTamagui({
   ...defaultConfig,
+  tokens,
+  media,
   themes,
   animations,
   settings: {
     ...defaultConfig.settings,
     styleCompat: 'react-native',
+    onlyAllowShorthands: true,
+    autocompleteSpecificTokens: 'except-special',
+    fastSchemeChange: true,
+    shouldAddPrefersColorThemes: true,
   },
 });
-
 export default tamaguiConfig;
 
 export type AppTamaguiConfig = typeof tamaguiConfig;
