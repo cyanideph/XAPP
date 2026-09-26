@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Button, Input, XStack } from 'tamagui';
+import { Input, XStack } from 'tamagui';
+import { XButton } from './XButton';
+
 
 type Props = {
   onSend: (body: string) => Promise<void>;
@@ -38,11 +40,11 @@ export function MessageComposer({ onSend, disabled, editValue, onEditCancel, onT
 
   return (
     <XStack gap="$2" p="$3" borderTopWidth={1} borderColor="$borderColor" style={{ alignItems: "center", flexWrap: "wrap" }}>
-      {!editing && onPickMedia ? <Button size="$2" chromeless disabled={disabled} onPress={() => { void onPickMedia(); }}>+ Media</Button> : null}
+      {!editing && onPickMedia ? <XButton size="$2" chromeless disabled={disabled} onPress={() => { void onPickMedia(); }}>+ Media</XButton> : null}
       {!editing && onSendSticker ? (
         <XStack gap="$1">
           {['smile', 'laugh', 'heart', 'thumbs_up', 'fire'].map(stickerId => (
-            <Button
+            <XButton
               key={stickerId}
               size="$2"
               chromeless
@@ -50,7 +52,7 @@ export function MessageComposer({ onSend, disabled, editValue, onEditCancel, onT
               onPress={() => { void onSendSticker(stickerId); }}
             >
               {stickerId === 'smile' ? ':)' : stickerId === 'laugh' ? ':D' : stickerId === 'heart' ? '<3' : stickerId === 'thumbs_up' ? '+1' : '🔥'}
-            </Button>
+            </XButton>
           ))}
         </XStack>
       ) : null}
@@ -63,8 +65,8 @@ export function MessageComposer({ onSend, disabled, editValue, onEditCancel, onT
         returnKeyType="send"
         disabled={disabled}
       />
-      {editing ? <Button size="$3" chromeless onPress={cancelEdit} disabled={disabled}>Cancel</Button> : null}
-      <Button onPress={submit} disabled={disabled || !value.trim()}>{editing ? 'Save' : 'Send'}</Button>
+      {editing ? <XButton size="$3" chromeless onPress={cancelEdit} disabled={disabled}>Cancel</XButton> : null}
+      <XButton onPress={submit} disabled={disabled || !value.trim()}>{editing ? 'Save' : 'Send'}</XButton>
     </XStack>
   );
 }
