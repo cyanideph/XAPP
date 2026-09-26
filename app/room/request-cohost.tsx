@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useLocalSearchParams, router } from 'expo-router';
 import { H1, ListItem, Paragraph, Text, XStack, YStack } from 'tamagui';
 import { XButton } from '../../src/components/XButton';
+import { XIcon } from '../../src/components/XIcon';
 import { cancelRoomCoHostRequest, requestRoomCoHost } from '../../src/features/chat/roomManagement';
 
 export default function RequestCoHostScreen() {
@@ -50,12 +51,12 @@ export default function RequestCoHostScreen() {
         <>
           <ListItem title="Request submitted" subTitle="Your co-host request is pending review." />
           <XStack gap="$2">
-            <XButton disabled={busy || !requestId} onPress={() => void cancel()}>Cancel request</XButton>
-            <XButton onPress={() => router.back()}>Done</XButton>
+            <XButton chromeless icon={<XIcon name="close" size={18} color="#8B85FF" />} disabled={busy || !requestId} onPress={() => void cancel()}>Cancel request</XButton>
+            <XButton icon={<XIcon name="check" size={18} color="#FFFFFF" />} onPress={() => router.back()}>Done</XButton>
           </XStack>
         </>
       ) : (
-        <XButton disabled={busy} onPress={() => void submit()}>
+        <XButton icon={<XIcon name="userPlus" size={18} color="#FFFFFF" />} disabled={busy} onPress={() => void submit()}>
           {busy ? 'Sending…' : 'Request co-host'}
         </XButton>
       )}
