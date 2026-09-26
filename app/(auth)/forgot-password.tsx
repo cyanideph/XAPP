@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { Button, H1, Input, Paragraph, Text, YStack } from 'tamagui';
+import { BentoCard } from '../../src/components/BentoCard';
 import { supabase } from '../../src/lib/supabase';
 
 export default function ForgotPasswordScreen() {
@@ -24,14 +25,22 @@ export default function ForgotPasswordScreen() {
     } finally { setBusy(false); }
   }
 
-  return <YStack flex={1} p="$5" style={{ justifyContent: 'center' }} gap="$4" bg="$background">
-    <YStack gap="$2"><Text fontSize="$3" fontWeight="800" color="$colorPress">X-APP</Text><H1 fontSize="$10">Reset password.</H1><Paragraph color="$colorPress">Enter your account email and check your inbox.</Paragraph></YStack>
-    <YStack gap="$3">
-      <Input autoCapitalize="none" autoCorrect={false} keyboardType="email-address" placeholder="Email" value={email} onChangeText={setEmail} />
-      {error ? <Paragraph color="$red10">{error}</Paragraph> : null}
-      {message ? <Paragraph>{message}</Paragraph> : null}
-      <Button onPress={() => { void submit(); }} disabled={busy || !email.trim()}>{busy ? 'Sending…' : 'Send reset link'}</Button>
+  return (
+    <YStack flex={1} p="$5" style={{ justifyContent: 'center' }} gap="$4" bg="$background">
+      <YStack gap="$2">
+        <Text fontSize="$3" fontWeight="900" color="$colorPress" letterSpacing={1}>X-APP</Text>
+        <H1 fontSize="$10" fontWeight="900">Reset password.</H1>
+        <Paragraph color="$colorPress">We will send a secure reset link to your account email.</Paragraph>
+      </YStack>
+      <BentoCard title="Password recovery" description="Enter the email associated with your account.">
+        <YStack gap="$3">
+          <Input autoCapitalize="none" autoCorrect={false} keyboardType="email-address" placeholder="Email" value={email} onChangeText={setEmail} />
+          {error ? <Paragraph color="$red10">{error}</Paragraph> : null}
+          {message ? <Paragraph>{message}</Paragraph> : null}
+          <Button onPress={() => { void submit(); }} disabled={busy || !email.trim()}>{busy ? 'Sending…' : 'Send reset link'}</Button>
+        </YStack>
+      </BentoCard>
       <Button chromeless onPress={() => router.replace('/(auth)/sign-in')}>Back to sign in</Button>
     </YStack>
-  </YStack>;
+  );
 }
