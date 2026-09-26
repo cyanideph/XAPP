@@ -171,7 +171,7 @@ export default function HomeScreen() {
               </XStack>
               <YGroup borderWidth="1" borderColor="$borderColor" rounded="$4" overflow="hidden">
                 {featured.map(item => (
-                  <ListItem key={item.profile.id} title={item.profile.display_name || item.profile.username} subTitle={item.profile.status_text || item.profile.bio || `@${item.profile.username}`} iconAfter={<Text color="$colorPress">›</Text>} onPress={() => router.push({ pathname: '/me/view-profile', params: { id: item.profile.id } })} />
+                  <YGroup.Item key={item.profile.id}><ListItem key={item.profile.id} title={item.profile.display_name || item.profile.username} subTitle={item.profile.status_text || item.profile.bio || `@${item.profile.username}`} iconAfter={<Text color="$colorPress">›</Text>} onPress={() => router.push({ pathname: '/me/view-profile', params: { id: item.profile.id } })} /></YGroup.Item>
                 ))}
               </YGroup>
             </YStack>
