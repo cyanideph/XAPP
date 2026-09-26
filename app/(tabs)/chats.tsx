@@ -5,7 +5,6 @@ import { Button, H1, Input, Paragraph, Spinner, Text, XStack, YStack } from 'tam
 import { BentoCard } from '../../src/components/BentoCard';
 import {
   listMyConversations,
-  listPublicRooms,
   searchPublicRooms,
   listPendingConversationInvites,
   listPublicChats,
