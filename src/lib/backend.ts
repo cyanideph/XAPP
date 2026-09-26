@@ -428,6 +428,24 @@ export type ContentComment = {
   created_at: string; updated_at: string; deleted_at: string | null;
   author?: { id: string; username: string; display_name: string | null; avatar_path: string | null } | null;
 };
+export type ProfileSearchResult = { id: string; username: string; display_name: string | null; avatar_path: string | null; bio?: string | null };
+export async function searchProfiles(query: string, limit = 20) {
+  const data = await rpc<ProfileSearchResult[]>('search_profiles', { p_query: query.trim(), p_limit: limit });
+  return Array.isArray(data) ? data : [];
+}
+export async function searchRooms(query: string, limit = 20) {
+  const data = await rpc<Room[]>('search_public_rooms', { p_query: query.trim(), p_limit: limit });
+  return Array.isArray(data) ? data : [];
+}
+export type PublicChatSearchResult = { id: string; name?: string | null; title?: string | null; kind?: string | null; [key: string]: unknown };
+export async function searchPublicChats(query: string, limit = 20) {
+  const chats = await listPublicChats(100, 0);
+  const q = query.trim().toLowerCase();
+  return (Array.isArray(chats) ? chats : []).filter((chat: PublicChatSearchResult) =>
+    Object.values(chat).some(value => typeof value === 'string' && value.toLowerCase().includes(q))
+  ).slice(0, limit);
+}
+
 export async function searchContent(query: string, limit = 30, offset = 0) {
   const page = await rpc<{ items?: ContentItem[]; has_more?: boolean }>('search_content', { p_query: query.trim(), p_room_id: null, p_limit: limit, p_offset: offset });
   return { items: Array.isArray(page?.items) ? page.items : [], has_more: Boolean(page?.has_more) };
