@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { H1, Paragraph, Separator, Spinner, Text, XStack, YStack } from 'tamagui';
-import { XButton } from '../../src/components/XButton';
-import { BentoCard } from '../../src/components/BentoCard';
+import { H1, ListItem, Paragraph, Separator, Spinner, Switch, Text, YGroup, YStack } from 'tamagui';
 import { getCurrentProfile, listFavorites, listNotifications } from '../../src/lib/backend';
 import { supabase } from '../../src/lib/supabase';
 import { useXAppTheme, type ThemeMode } from '../../src/theme/theme';
@@ -26,6 +24,7 @@ export default function MeScreen() {
   useEffect(() => { void load(); }, [load]);
 
   const modes: ThemeMode[] = ['system', 'light', 'dark'];
+  const setTheme = (next: ThemeMode) => setMode(next);
 
   return (
     <ScrollView
@@ -41,62 +40,58 @@ export default function MeScreen() {
           </Paragraph>
         </YStack>
 
-        <BentoCard title="Appearance" description={`Theme: ${mode} · currently ${resolvedMode}`}>
-          <YStack gap="$3">
-            <Text fontSize="$3" color="$colorPress">Choose how XAPP follows your device and personal preference.</Text>
-            <XStack gap="$2" flexWrap="wrap">
-              {modes.map(option => (
-                <XButton
-                  key={option}
-                  size="$3"
-                  chromeless={mode !== option}
-                  theme={mode === option ? 'accent' : undefined}
-                  onPress={() => setMode(option)}
-                >
-                  {mode === option ? `✓ ${option}` : option}
-                </XButton>
-              ))}
-            </XStack>
-          </YStack>
-        </BentoCard>
+        <YStack gap="$2">
+          <Text fontSize="$6" fontWeight="800">Appearance</Text>
+          <Text fontSize="$3" color="$colorPress">Theme: {mode} · currently {resolvedMode}</Text>
+          <YGroup borderWidth={1} borderColor="$borderColor" rounded="$4" overflow="hidden">
+            {modes.map((option, index) => (
+              <YGroup.Item key={option}>
+                <ListItem
+                  title={option === 'system' ? 'System default' : option === 'light' ? 'Light mode' : 'Dark mode'}
+                  subTitle={option === 'system' ? 'Follow your device' : `Use XAPP in ${option} mode`}
+                  iconAfter={<Switch size="$3" checked={mode === option} onCheckedChange={(checked) => { if (checked) setTheme(option); }} />}
+                  onPress={() => setTheme(option)}
+                />
+                {index < modes.length - 1 ? <Separator /> : null}
+              </YGroup.Item>
+            ))}
+          </YGroup>
+        </YStack>
 
         {loading ? <Spinner color="$brandBackground" /> : (
           <>
-            <YStack gap="$3">
-              <YStack gap="$1">
-                <Text fontSize="$6" fontWeight="800">Account</Text>
-                <Text fontSize="$3" color="$colorPress">Your identity and community activity.</Text>
-              </YStack>
-              <BentoCard title="Profile" value={profile ? `@${profile.username}` : 'Unavailable'} description={profile?.status_text || profile?.bio || 'Edit your public profile.'} onPress={() => router.push('/me/profile')} />
-              <BentoCard title="Notifications" value={String(unread)} description="Unread notifications" onPress={() => router.push('/me/notifications')} />
-              <XStack gap="$3" flexWrap="wrap">
-                <BentoCard flex={1} minW={220} title="Favorites" value={String(favorites.length)} description="People you saved" onPress={() => router.push('/me/list?kind=favorites')} />
-                <BentoCard flex={1} minW={220} title="Followers" description="People following you" onPress={() => router.push('/me/list?kind=followers')} />
-                <BentoCard flex={1} minW={220} title="Following" description="People you follow" onPress={() => router.push('/me/list?kind=following')} />
-              </XStack>
+            <YStack gap="$2">
+              <Text fontSize="$6" fontWeight="800">Account</Text>
+              <YGroup borderWidth={1} borderColor="$borderColor" rounded="$4" overflow="hidden">
+                <YGroup.Item><ListItem title="Profile" subTitle={profile ? `@${profile.username}` : 'Unavailable'} iconAfter="›" onPress={() => router.push('/me/profile')} /></YGroup.Item>
+                <Separator />
+                <YGroup.Item><ListItem title="Notifications" subTitle={unread ? `${unread} unread` : 'All caught up'} iconAfter="›" onPress={() => router.push('/me/notifications')} /></YGroup.Item>
+                <Separator />
+                <YGroup.Item><ListItem title="Favorites" subTitle={`${favorites.length} saved people`} iconAfter="›" onPress={() => router.push('/me/list?kind=favorites')} /></YGroup.Item>
+                <Separator />
+                <YGroup.Item><ListItem title="Followers" subTitle="People following you" iconAfter="›" onPress={() => router.push('/me/list?kind=followers')} /></YGroup.Item>
+                <Separator />
+                <YGroup.Item><ListItem title="Following" subTitle="People you follow" iconAfter="›" onPress={() => router.push('/me/list?kind=following')} /></YGroup.Item>
+              </YGroup>
             </YStack>
 
-            <Separator borderColor="$borderColor" />
-
-            <YStack gap="$3">
-              <YStack gap="$1">
-                <Text fontSize="$6" fontWeight="800">Community controls</Text>
-                <Text fontSize="$3" color="$colorPress">Manage account visibility and activity.</Text>
-              </YStack>
-              <XStack gap="$3" flexWrap="wrap">
-                <BentoCard flex={1} minW={220} title="Blocked users" description="Manage blocked accounts" onPress={() => router.push('/me/list?kind=blocked')} />
-                <BentoCard flex={1} minW={220} title="Profile visitors" description="See recent visitors" onPress={() => router.push('/me/list?kind=visitors')} />
-              </XStack>
+            <YStack gap="$2">
+              <Text fontSize="$6" fontWeight="800">Community</Text>
+              <YGroup borderWidth={1} borderColor="$borderColor" rounded="$4" overflow="hidden">
+                <YGroup.Item><ListItem title="Blocked users" subTitle="Manage blocked accounts" iconAfter="›" onPress={() => router.push('/me/list?kind=blocked')} /></YGroup.Item>
+                <Separator />
+                <YGroup.Item><ListItem title="Profile visitors" subTitle="See recent visitors" iconAfter="›" onPress={() => router.push('/me/list?kind=visitors')} /></YGroup.Item>
+              </YGroup>
             </YStack>
           </>
         )}
 
-        <Separator borderColor="$borderColor" />
-
-        <YStack gap="$3">
+        <YStack gap="$2">
           <Text fontSize="$6" fontWeight="800">Settings</Text>
-          <XButton onPress={() => router.push('/me/settings')}>Open settings</XButton>
-          {supabase ? <XButton chromeless onPress={() => { const client = supabase; if (!client) return; void client.auth.signOut(); }}>Sign out</XButton> : null}
+          <YGroup borderWidth={1} borderColor="$borderColor" rounded="$4" overflow="hidden">
+            <YGroup.Item><ListItem title="App settings" subTitle="Preferences and account settings" iconAfter="›" onPress={() => router.push('/me/settings')} /></YGroup.Item>
+            {supabase ? <><Separator /><YGroup.Item><ListItem title="Sign out" subTitle="End this session" color="$red10" onPress={() => { const client = supabase; if (client) void client.auth.signOut(); }} /></YGroup.Item></> : null}
+          </YGroup>
         </YStack>
       </YStack>
     </ScrollView>
