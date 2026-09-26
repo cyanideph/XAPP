@@ -1,6 +1,7 @@
 import { Image, Linking, ScrollView } from 'react-native';
 import { useEffect, useState } from 'react';
 import { Paragraph, Text, XStack, YStack } from 'tamagui';
+import { XButton } from './XButton';
 import type { ChatMessage, ChatProfile } from '../features/chat/types';
 import { createRoomMediaUrl } from '../features/chat/backend';
 
