@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { Button, H1, Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
+import { H1, Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
+import { XButton } from '../../src/components/XButton';
 import { BentoCard } from '../../src/components/BentoCard';
 import {
   checkIn,
@@ -120,17 +121,17 @@ export default function HomeScreen() {
         {error ? <BentoCard title="Unable to complete Home action" description={error} onPress={() => { void load(); }} /> : null}
 
         <BentoCard title="Check in" description={checkin ? (checkin.already_checked_in ? `Already checked in · ${checkin.streak} day streak · +${checkin.points} points` : `Checked in · ${checkin.streak} day streak · +${checkin.points} points`) : 'Keep your community streak going.'}>
-          <Button onPress={() => { void doCheckIn(); }} disabled={checkingIn || Boolean(checkin?.already_checked_in)}>
+          <XButton onPress={() => { void doCheckIn(); }} disabled={checkingIn || Boolean(checkin?.already_checked_in)}>
             {checkingIn ? 'Checking in…' : checkin?.already_checked_in ? 'Done today' : 'Check in'}
-          </Button>
+          </XButton>
         </BentoCard>
 
         <BentoCard title="Share something" description="Post a short update to the community.">
           <YStack gap="$2">
             <Input value={postBody} onChangeText={setPostBody} placeholder="What’s happening?" multiline />
-            <Button onPress={() => { void publish(); }} disabled={posting || !postBody.trim()}>
+            <XButton onPress={() => { void publish(); }} disabled={posting || !postBody.trim()}>
               {posting ? 'Posting…' : 'Post'}
-            </Button>
+            </XButton>
           </YStack>
         </BentoCard>
 
@@ -138,15 +139,15 @@ export default function HomeScreen() {
           <YStack gap="$2">
             <Text fontSize="$6" fontWeight="800">Topics</Text>
             <XStack gap="$2" flexWrap="wrap">
-              {categories.slice(0, 8).map(category => <Button key={category.id} size="$2" chromeless>{category.name}</Button>)}
+              {categories.slice(0, 8).map(category => <XButton key={category.id} size="$2" chromeless>{category.name}</XButton>)}
             </XStack>
           </YStack>
         ) : null}
 
         <YStack gap="$3">
-          <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+          <XStack items="center" justify="space-between">
             <Text fontSize="$6" fontWeight="800">Community feed</Text>
-            <Button size="$2" chromeless onPress={() => router.push('/(tabs)/discover')}>Discover</Button>
+            <XButton size="$2" chromeless onPress={() => router.push('/(tabs)/discover')}>Discover</XButton>
           </XStack>
           {loading ? <Spinner /> : feed.length ? feed.map(item => (
             <BentoCard
@@ -156,8 +157,8 @@ export default function HomeScreen() {
               value={item.kind}
             >
               <XStack gap="$2">
-                <Button size="$2" onPress={() => { void react(item.id); }}>Like</Button>
-                <Button size="$2" chromeless onPress={() => { void save(item.id); }}>Save</Button>
+                <XButton size="$2" onPress={() => { void react(item.id); }}>Like</XButton>
+                <XButton size="$2" chromeless onPress={() => { void save(item.id); }}>Save</XButton>
               </XStack>
             </BentoCard>
           )) : <BentoCard title="No community posts yet" description="Be the first to share something." />}
@@ -176,9 +177,9 @@ export default function HomeScreen() {
         </XStack>
 
         <YStack gap="$3">
-          <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+          <XStack items="center" justify="space-between">
             <Text fontSize="$6" fontWeight="800">Recently active</Text>
-            <Button size="$2" chromeless onPress={() => router.push('/(tabs)/discover')}>See all</Button>
+            <XButton size="$2" chromeless onPress={() => router.push('/(tabs)/discover')}>See all</XButton>
           </XStack>
           {loading ? <Spinner /> : onlineUsers.length ? onlineUsers.map(user => (
             <BentoCard key={user.user_id} title={user.display_name || user.username} description={user.status_text ? `@${user.username} · ${user.status_text}` : `@${user.username}`} />
@@ -186,9 +187,9 @@ export default function HomeScreen() {
         </YStack>
 
         <YStack gap="$3">
-          <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+          <XStack items="center" justify="space-between">
             <Text fontSize="$6" fontWeight="800">Public rooms</Text>
-            <Button size="$2" chromeless onPress={() => router.push('/(tabs)/discover')}>See all</Button>
+            <XButton size="$2" chromeless onPress={() => router.push('/(tabs)/discover')}>See all</XButton>
           </XStack>
           {loading ? <Spinner /> : rooms.length ? rooms.map(room => (
             <BentoCard key={room.id} title={room.name} description={room.province_code ? `${room.province_code} · ${room.description ?? 'Open realtime room'}` : (room.description ?? 'Open realtime room')} onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })} />
