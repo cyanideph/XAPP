@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { Button, Card, H1, Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
-import { BentoCard } from '../../src/components/BentoCard';
+import { H1, Input, ListItem, Menu, Paragraph, Separator, Spinner, Text, YGroup, XStack, YStack } from 'tamagui';
+import { XButton } from '../../src/components/XButton';
 import {
   listContentCategories, listCategoryContent, listOnlineUsers, listPublicChats, listPublicRooms,
   searchContent, searchProfiles, searchRooms, searchPublicChats, type ContentCategory, type ContentItem, type ProfileSearchResult, type Room, type PublicChatSearchResult,
@@ -23,14 +23,20 @@ export default function DiscoverScreen() {
   const [error, setError] = useState('');
 
   async function load() {
-    setLoading(true); setError('');
+    setLoading(true);
+    setError('');
     try {
       const [users, roomRows, chats, categoryRows] = await Promise.all([
         listOnlineUsers(50, 0), listPublicRooms(20, 0), listPublicChats(50, 0), listContentCategories(),
       ]);
       const nextRooms = Array.isArray(roomRows) ? roomRows as Room[] : [];
-      setRooms(nextRooms); setCategories(categoryRows);
-      setCounts({ users: Array.isArray(users) ? users.length : 0, rooms: nextRooms.length, chats: Array.isArray(chats) ? chats.length : 0 });
+      setRooms(nextRooms);
+      setCategories(categoryRows);
+      setCounts({
+        users: Array.isArray(users) ? users.length : 0,
+        rooms: nextRooms.length,
+        chats: Array.isArray(chats) ? chats.length : 0,
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to load Discover.');
     } finally { setLoading(false); }
@@ -46,11 +52,10 @@ export default function DiscoverScreen() {
       const [content, people, roomMatches, chats] = await Promise.all([
         searchContent(q, 20, 0), searchProfiles(q, 20), searchRooms(q, 20), searchPublicChats(q, 20),
       ]);
-      setResults(content.items); setPeopleResults(people); setRoomResults(roomMatches); setChatResults(chats);
-      setSelectedCategory(null);
-    }
-    catch (e) { setError(e instanceof Error ? e.message : 'Search failed.'); }
-    finally { setSearching(false); }
+      setResults(content.items); setPeopleResults(people); setRoomResults(roomMatches); setChatResults(chats); setSelectedCategory(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Search failed.');
+    } finally { setSearching(false); }
   }
 
   async function selectCategory(categoryId: string | null) {
@@ -62,80 +67,137 @@ export default function DiscoverScreen() {
     finally { setSearching(false); }
   }
 
-  return <ScrollView refreshControl={<RefreshControl refreshing={loading} onRefresh={load}/>} contentContainerStyle={{padding:20,paddingTop:64,paddingBottom:32}}>
-    <YStack gap="$5">
-      <YStack gap="$2">
-        <Text fontSize="$3" color="$colorPress" fontWeight="800" letterSpacing={1}>DISCOVER</Text>
-        <H1 fontSize="$10" fontWeight="900">Find your people.</H1>
-        <Paragraph color="$colorPress">Explore public rooms and community content.</Paragraph>
+  return (
+    <ScrollView
+      refreshControl={<RefreshControl refreshing={loading} onRefresh={() => { void load(); }} />}
+      contentContainerStyle={{ padding: 20, paddingTop: 64, paddingBottom: 40 }}
+    >
+      <YStack width="100%" maxW={960} self="center" gap="$6">
         <YStack gap="$2">
-          <Input value={query} onChangeText={setQuery} placeholder="Search community content" onSubmitEditing={() => void runSearch()}/>
-          <Button disabled={query.trim().length < 2 || searching} onPress={() => void runSearch()}>{searching ? 'Searching…' : 'Search'}</Button>
+          <Text fontSize="$3" color="$brandBackground" fontWeight="900" letterSpacing={1}>DISCOVER</Text>
+          <H1 fontSize="$10" fontWeight="900">Find your people.</H1>
+          <Paragraph color="$colorPress" size="$4">Explore rooms, conversations, people and community content.</Paragraph>
         </YStack>
-        {categories.length ? <YStack gap="$2">
-          <Text fontWeight="800">Topics</Text>
-          <XStack gap="$2" flexWrap="wrap">
-            <Button size="$3" chromeless={!selectedCategory} onPress={() => void selectCategory(null)}>All</Button>
-            {categories.map(category => <Button key={category.id} size="$3" chromeless={selectedCategory !== category.id} onPress={() => void selectCategory(category.id)}>{category.name}</Button>)}
+
+        <YStack gap="$2">
+          <Text fontSize="$3" color="$colorPress">Search people, rooms, public chats and posts.</Text>
+          <XStack gap="$2" items="center">
+            <Input flex={1} value={query} onChangeText={setQuery} placeholder="Search community" onSubmitEditing={() => { void runSearch(); }} returnKeyType="search" />
+            <XButton disabled={query.trim().length < 2 || searching} onPress={() => { void runSearch(); }}>{searching ? 'Searching…' : 'Search'}</XButton>
           </XStack>
-        </YStack> : null}
+        </YStack>
+
+        <YGroup>
+          <YGroup.Item><ListItem title="People" subTitle="recently active" iconAfter={<Text color="$brandBackground">{counts.users}</Text>} /></YGroup.Item>
+          <Separator />
+          <YGroup.Item><ListItem title="Rooms" subTitle="public spaces" iconAfter={<Text color="$brandBackground">{counts.rooms}</Text>} /></YGroup.Item>
+          <Separator />
+          <YGroup.Item><ListItem title="Public chats" subTitle="community conversations" iconAfter={<Text color="$brandBackground">{counts.chats}</Text>} /></YGroup.Item>
+        </YGroup>
+
+        {categories.length ? (
+          <YStack gap="$3">
+            <XStack items="center" justify="space-between">
+              <YStack gap="$1">
+                <Text fontSize="$6" fontWeight="800">Topics</Text>
+                <Text fontSize="$3" color="$colorPress">Browse community content by topic.</Text>
+              </YStack>
+              <XButton size="$2" chromeless onPress={() => { void selectCategory(null); }}>Clear</XButton>
+            </XStack>
+            <XStack gap="$2" items="center">
+              <XButton size="$3" chromeless={!selectedCategory} onPress={() => { void selectCategory(null); }}>All topics</XButton>
+              <Menu>
+                <Menu.Trigger asChild action="press">
+                  <XButton size="$3" chromeless>Choose topic</XButton>
+                </Menu.Trigger>
+                <Menu.Portal><Menu.Content>
+                  {categories.map(category => (
+                    <Menu.Item key={category.id} onSelect={() => { void selectCategory(category.id); }}>
+                      <Menu.ItemTitle>{category.name}</Menu.ItemTitle>
+                    </Menu.Item>
+                  ))}
+                </Menu.Content></Menu.Portal>
+              </Menu>
+            </XStack>
+          </YStack>
+        ) : null}
+
         <XStack gap="$2" flexWrap="wrap">
-          <Button onPress={() => router.push('/room/create')}>Create Room</Button>
-          <Button chromeless onPress={() => router.push('/room/invites')}>Room invitations</Button>
+          <XButton onPress={() => router.push('/room/create')}>Create room</XButton>
+          <XButton chromeless onPress={() => router.push('/room/invites')}>Invitations</XButton>
         </XStack>
-      </YStack>
-      {error ? <Paragraph color="$red10">{error}</Paragraph> : null}
-      {loading ? <Spinner/> : <>
-        <XStack gap="$3">
-          <BentoCard title="People" flex={1} value={String(counts.users)} description="recently active"/>
-          <BentoCard title="Rooms" flex={1} value={String(counts.rooms)} description="public"/>
-        </XStack>
-        <BentoCard title="Public chats" value={String(counts.chats)} description="Active public conversations."/>
-        {(peopleResults.length || roomResults.length || chatResults.length) ? <YStack gap="$3">
-          <Text fontSize="$6" fontWeight="800">People, rooms & chats</Text>
-          {peopleResults.map(person => <Card key={person.id} p="$3" borderWidth={1} borderColor="$borderColor">
-            <YStack gap="$2"><Text fontWeight="800">@{person.username}</Text>{person.display_name ? <Text>{person.display_name}</Text> : null}<Button size="$3" onPress={() => router.push({pathname:'/me/view-profile',params:{id:person.id}})}>Open profile</Button></YStack>
-          </Card>)}
-          {roomResults.map(room => <Card key={room.id} p="$3" borderWidth={1} borderColor="$borderColor">
-            <YStack gap="$2"><Text fontWeight="800">{room.name}</Text>{room.province_code ? <Text>{room.province_code}</Text> : null}<Button size="$3" onPress={() => router.push({pathname:'/room/[id]',params:{id:room.id}})}>Open room</Button></YStack>
-          </Card>)}
-          {chatResults.map(chat => <Card key={chat.id} p="$3" borderWidth={1} borderColor="$borderColor">
-            <YStack gap="$2"><Text fontWeight="800">{String(chat.name ?? chat.title ?? 'Public chat')}</Text><Button size="$3" onPress={() => router.push({pathname:'/chats'} as never)}>Open chats</Button></YStack>
-          </Card>)}
-        </YStack> : null}
-        {results.length ? <YStack gap="$3">
-          <XStack style={{alignItems:'center',justifyContent:'space-between'}}>
-            <Text fontSize="$6" fontWeight="800">{selectedCategory ? 'Topic posts' : 'Content results'}</Text>
-            <Text fontSize="$3" color="$colorPress">{results.length} loaded</Text>
-          </XStack>
-          {results.map(item => <Card key={item.id} p="$4" borderWidth={1} borderColor="$borderColor">
-            <YStack gap="$2">
-              <Text fontWeight="800">{item.title || item.kind}</Text>
-              <Text>@{item.author?.username || 'user'} · {item.kind}</Text>
-              {item.body ? <Paragraph>{item.body}</Paragraph> : null}
-              <Button size="$3" onPress={() => router.push({pathname:'/content/[id]',params:{id:item.id}})}>Open post</Button>
-            </YStack>
-          </Card>)}
-        </YStack> : null}
-        <YStack gap="$3">
-          <XStack style={{alignItems:'center',justifyContent:'space-between'}}>
-            <Text fontSize="$6" fontWeight="800">Public rooms</Text>
-            <Text fontSize="$3" color="$colorPress">{rooms.length} loaded</Text>
-          </XStack>
-          {rooms.map(room => <Card key={room.id} p="$4" borderWidth={1} borderColor="$borderColor" borderRadius="$6" bg="$background">
-            <YStack gap="$2">
-              <Text fontSize="$5" fontWeight="800">{room.name}</Text>
-              {room.province_code ? <Text fontSize="$3" color="$colorPress">{room.province_code}</Text> : null}
-              {room.description ? <Paragraph color="$colorPress">{room.description}</Paragraph> : null}
-              <XStack gap="$2" flexWrap="wrap">
-                <Button size="$3" onPress={() => router.push({pathname:'/room/[id]',params:{id:room.id}})}>Open room</Button>
-                <Button size="$3" chromeless onPress={() => router.push({pathname:'/room/manage',params:{id:room.id}})}>Manage</Button>
-                <Button size="$3" chromeless onPress={() => router.push({pathname:'/room/request-cohost',params:{id:room.id}})}>Request co-host</Button>
+
+        <Separator borderColor="$borderColor" />
+
+        {error ? <ListItem title="Something needs attention" subTitle={error} onPress={() => { void load(); }} /> : null}
+
+        {loading ? <Spinner color="$brandBackground" /> : (
+          <>
+            {(peopleResults.length || roomResults.length || chatResults.length) ? (
+              <YStack gap="$3">
+                <XStack items="center" justify="space-between">
+                  <Text fontSize="$6" fontWeight="800">Search results</Text>
+                  <Text fontSize="$3" color="$colorPress">Matches</Text>
+                </XStack>
+                {peopleResults.map(person => (
+                  <ListItem key={person.id} title={person.display_name || '@' + person.username} subTitle={'@' + person.username} iconAfter={<Text color="$colorPress">›</Text>} onPress={() => router.push({ pathname: '/me/view-profile', params: { id: person.id } })} />
+                ))}
+                {roomResults.map(room => (
+                  <ListItem key={room.id} title={room.name} subTitle={room.province_code ? room.province_code + ' · ' + (room.description ?? 'Open community room') : (room.description ?? 'Open community room')} iconAfter={<Text color="$colorPress">›</Text>} onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })} />
+                ))}
+                {chatResults.map(chat => (
+                  <ListItem key={chat.id} title={String(chat.name ?? chat.title ?? 'Public chat')} subTitle="Public conversation" iconAfter={<Text color="$colorPress">›</Text>} onPress={() => router.push('/(tabs)/chats')} />
+                ))}
+              </YStack>
+            ) : null}
+
+            {results.length ? (
+              <YStack gap="$3">
+                <XStack items="center" justify="space-between">
+                  <YStack gap="$1">
+                    <Text fontSize="$6" fontWeight="800">{selectedCategory ? 'Topic posts' : 'Content results'}</Text>
+                    <Text fontSize="$3" color="$colorPress">{results.length} loaded</Text>
+                  </YStack>
+                </XStack>
+                {results.map(item => (
+                  <ListItem key={item.id} title={item.title || item.kind} subTitle={'@' + (item.author?.username || 'user') + ' · ' + item.kind + (item.body ? ' · ' + item.body : '')} iconAfter={<Text color="$colorPress">›</Text>} onPress={() => router.push({ pathname: '/content/[id]', params: { id: item.id } })} />
+                ))}
+              </YStack>
+            ) : null}
+
+            <YStack gap="$3">
+              <XStack items="center" justify="space-between">
+                <YStack gap="$1">
+                  <Text fontSize="$6" fontWeight="800">Public rooms</Text>
+                  <Text fontSize="$3" color="$colorPress">{rooms.length} loaded</Text>
+                </YStack>
               </XStack>
+
+              {rooms.length ? rooms.map((room, index) => (
+                <ListItem key={room.id}
+                  title={room.name}
+                  subTitle={room.province_code ? room.province_code + ' · ' + (room.description ?? 'Open realtime room') : (room.description ?? 'Open realtime room')}
+                  iconAfter={
+                    <XStack gap="$2" items="center">
+                      <XButton size="$2" onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })}>Open</XButton>
+                      <Menu>
+                        <Menu.Trigger asChild action="press">
+                          <XButton size="$2" chromeless>More</XButton>
+                        </Menu.Trigger>
+                        <Menu.Portal><Menu.Content>
+                          <Menu.Item onSelect={() => router.push({ pathname: '/room/manage', params: { id: room.id } })}><Menu.ItemTitle>Manage room</Menu.ItemTitle></Menu.Item>
+                          <Menu.Item onSelect={() => router.push({ pathname: '/room/request-cohost', params: { id: room.id } })}><Menu.ItemTitle>Request co-host</Menu.ItemTitle></Menu.Item>
+                        </Menu.Content></Menu.Portal>
+                      </Menu>
+                    </XStack>
+                  } />
+              )) : (
+                <ListItem title="No public rooms yet" subTitle="Create the first community room or refresh to check again." onPress={() => { void load(); }} />
+              )}
             </YStack>
-          </Card>)}
-        </YStack>
-      </>}
-    </YStack>
-  </ScrollView>;
+          </>
+        )}
+      </YStack>
+    </ScrollView>
+  );
 }

@@ -1,11 +1,26 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, ScrollView } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Button, Card, H1, Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
+import { Input, Menu, Paragraph, Spinner, Text, XStack, YGroup, YStack } from 'tamagui';
+import { XButton } from '../../src/components/XButton';
+import { XListItem } from '../../src/components/XListItem';
 import {
-  addContentComment, deleteContent, deleteContentComment, editContent, getContent, getCurrentProfile, listContentComments,
-  listPollOptions, repostContent, toggleContentCommentVote, toggleContentReaction, toggleContentSave,
-  voteContentPoll, type ContentComment, type ContentItem, type PollOption,
+  addContentComment,
+  deleteContent,
+  deleteContentComment,
+  editContent,
+  getContent,
+  getCurrentProfile,
+  listContentComments,
+  listPollOptions,
+  repostContent,
+  toggleContentCommentVote,
+  toggleContentReaction,
+  toggleContentSave,
+  voteContentPoll,
+  type ContentComment,
+  type ContentItem,
+  type PollOption,
 } from '../../src/lib/backend';
 
 export default function ContentDetail() {
@@ -25,7 +40,8 @@ export default function ContentDetail() {
 
   const load = useCallback(async () => {
     if (!id) return;
-    setLoading(true); setError('');
+    setLoading(true);
+    setError('');
     try {
       const [found, profile] = await Promise.all([getContent(id), getCurrentProfile()]);
       if (!found) throw new Error('Content not found.');
@@ -37,69 +53,184 @@ export default function ContentDetail() {
       setPollOptions(found.kind === 'poll' ? await listPollOptions(id) : []);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to load content.');
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
 
   useEffect(() => { void load(); }, [load]);
 
   const act = async (fn: () => Promise<unknown>) => {
-    setBusy(true); setError('');
-    try { await fn(); } catch (e) { setError(e instanceof Error ? e.message : 'Action failed.'); }
+    setBusy(true);
+    setError('');
+    try { await fn(); }
+    catch (e) { setError(e instanceof Error ? e.message : 'Action failed.'); }
     finally { setBusy(false); }
   };
 
-  if (loading) return <YStack flex={1} style={{ justifyContent: 'center', alignItems: 'center' }}><Spinner /></YStack>;
-  if (!item) return <YStack flex={1} p="$4" gap="$4"><Paragraph>{error || 'Content not found.'}</Paragraph><Button onPress={() => router.back()}>Back</Button></YStack>;
+  if (loading) {
+    return (
+      <YStack flex={1} bg="$background" items="center" justify="center">
+        <Spinner color="$brandBackground" />
+      </YStack>
+    );
+  }
+
+  if (!item) {
+    return (
+      <YStack flex={1} p="$4" gap="$4" bg="$background">
+        <Paragraph>{error || 'Content not found.'}</Paragraph>
+        <XButton onPress={() => router.back()}>Back</XButton>
+      </YStack>
+    );
+  }
 
   const isOwner = currentUserId === item.author_id;
 
-  return <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 64, paddingBottom: 32 }}>
-    <YStack gap="$4">
-      <Button chromeless onPress={() => router.back()}>Back</Button>
-      {error ? <Paragraph color="$red10">{error}</Paragraph> : null}
-      {editing ? <Card p="$4" borderWidth={1} borderColor="$borderColor"><YStack gap="$3">
-        <Text fontWeight="800">Edit post</Text>
-        <Input value={editTitle} onChangeText={setEditTitle} placeholder="Title" />
-        <Input value={editBody} onChangeText={setEditBody} multiline placeholder="Post text" />
-        <XStack gap="$2"><Button disabled={busy || !editBody.trim()} onPress={() => void act(async () => {
-          const updated = await editContent(item.id, editTitle.trim() || null, editBody.trim(), item.metadata);
-          setItem(updated); setEditing(false);
-        })}>Save</Button><Button chromeless onPress={() => setEditing(false)}>Cancel</Button></XStack>
-      </YStack></Card> : <YStack gap="$3">
-        <H1>{item.title || 'Community post'}</H1>
-        <Text>@{item.author?.username || 'user'} · {item.kind}</Text>
-        {item.body ? <Paragraph fontSize="$5">{item.body}</Paragraph> : null}
-        <XStack gap="$2" flexWrap="wrap">
-          <Button disabled={busy} onPress={() => void act(() => toggleContentReaction(item.id, 'like'))}>Like</Button>
-          <Button disabled={busy} chromeless onPress={() => void act(() => toggleContentSave(item.id))}>Save</Button>
-          <Button disabled={busy} chromeless onPress={() => void act(() => repostContent(item.id))}>Repost</Button>
-        </XStack>
-      </YStack>}
+  return (
+    <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 64, paddingBottom: 32 }}>
+      <YStack gap="$4">
+        <XButton chromeless onPress={() => router.back()}>Back</XButton>
+        {error ? <Paragraph color="$red10">{error}</Paragraph> : null}
 
-      {item.kind === 'poll' ? <YStack gap="$2"><Text fontSize="$6" fontWeight="800">Poll</Text>{pollOptions.map(option =>
-        <Button key={option.id} disabled={busy} onPress={() => void act(() => voteContentPoll(item.id, option.id))}>{option.label}</Button>
-      )}</YStack> : null}
+        {editing ? (
+          <YStack gap="$3">
+<Text fontSize="$5" fontWeight="800">Edit post</Text>
+<Paragraph color="$colorPress">Update your community post.</Paragraph>
+            <YStack gap="$3">
+              <Input value={editTitle} onChangeText={setEditTitle} placeholder="Title" />
+              <Input value={editBody} onChangeText={setEditBody} multiline placeholder="Post text" />
+              <XStack gap="$2">
+                <XButton
+                  disabled={busy || !editBody.trim()}
+                  onPress={() => void act(async () => {
+                    const updated = await editContent(item.id, editTitle.trim() || null, editBody.trim(), item.metadata);
+                    setItem(updated);
+                    setEditing(false);
+                  })}
+                >
+                  Save
+                </XButton>
+                <XButton chromeless onPress={() => setEditing(false)}>Cancel</XButton>
+              </XStack>
+            </YStack>
+          </YStack>
+        ) : (
+          <YStack gap="$3">
+<Text fontSize="$5" fontWeight="800">{item.title || 'Community post'}</Text>
+<Paragraph color="$colorPress">{`@${item.author?.username || 'user'} · ${item.kind}`}</Paragraph>
+            <YStack gap="$3">
+              {item.body ? <Paragraph fontSize="$5">{item.body}</Paragraph> : null}
+              <XStack gap="$2" items="center">
+                <XButton disabled={busy} onPress={() => void act(() => toggleContentReaction(item.id, 'like'))}>Like</XButton>
+                <Menu>
+                  <Menu.Trigger asChild action="press">
+                    <XButton size="$2" chromeless disabled={busy}>More</XButton>
+                  </Menu.Trigger>
+                  <Menu.Portal>
+                    <Menu.Content>
+                      <Menu.Item onSelect={() => { void act(() => toggleContentSave(item.id)); }}><Menu.ItemTitle>Save</Menu.ItemTitle></Menu.Item>
+                      <Menu.Item onSelect={() => { void act(() => repostContent(item.id)); }}><Menu.ItemTitle>Repost</Menu.ItemTitle></Menu.Item>
+                    </Menu.Content>
+                  </Menu.Portal>
+                </Menu>
+              </XStack>
+            </YStack>
+          </YStack>
+        )}
 
-      <YStack gap="$2">
-        <Text fontSize="$6" fontWeight="800">Comments</Text>
-        <Input value={body} onChangeText={setBody} placeholder={replyTo ? "Write a reply" : "Write a comment"} />
-        <XStack gap="$2"><Button disabled={busy || !body.trim()} onPress={() => void act(async () => {
-          await addContentComment(item.id, body.trim(), replyTo); setBody(''); setReplyTo(null); setComments(await listContentComments(item.id, 50));
-        })}>{replyTo ? "Reply" : "Comment"}</Button>{replyTo ? <Button chromeless onPress={() => setReplyTo(null)}>Cancel reply</Button> : null}</XStack>
+        {item.kind === 'poll' ? (
+          <YStack gap="$3">
+<Text fontSize="$5" fontWeight="800">Poll</Text>
+<Paragraph color="$colorPress">Choose an option.</Paragraph>
+            <YGroup borderWidth={1} borderColor="$borderColor">
+              {pollOptions.map(option => (
+                <YGroup.Item key={option.id}>
+                  <XListItem
+                    title={option.label}
+                    iconAfter={<Text color="$colorPress">›</Text>}
+                    onPress={() => { void act(() => voteContentPoll(item.id, option.id)); }}
+                    disabled={busy}
+                  />
+                </YGroup.Item>
+              ))}
+            </YGroup>
+          </YStack>
+        ) : null}
+
+        <YStack gap="$3">
+<Text fontSize="$5" fontWeight="800">Comments</Text>
+<Paragraph color="$colorPress">Join the conversation.</Paragraph>
+          <YStack gap="$2">
+            <Input value={body} onChangeText={setBody} placeholder={replyTo ? 'Write a reply' : 'Write a comment'} />
+            <XStack gap="$2">
+              <XButton
+                disabled={busy || !body.trim()}
+                onPress={() => void act(async () => {
+                  await addContentComment(item.id, body.trim(), replyTo);
+                  setBody('');
+                  setReplyTo(null);
+                  setComments(await listContentComments(item.id, 50));
+                })}
+              >
+                {replyTo ? 'Reply' : 'Comment'}
+              </XButton>
+              {replyTo ? <XButton chromeless onPress={() => setReplyTo(null)}>Cancel reply</XButton> : null}
+            </XStack>
+
+            <YGroup borderWidth={1} borderColor="$borderColor">
+              {comments.map(comment => (
+                <YGroup.Item key={comment.id}>
+                  <XListItem
+                    title={<Text fontWeight="800">@{comment.author?.username || 'user'}</Text>}
+                    subTitle={comment.body}
+                    iconAfter={
+                      <Menu>
+                        <Menu.Trigger asChild action="press">
+                          <XButton size="$2" chromeless>More</XButton>
+                        </Menu.Trigger>
+                        <Menu.Portal>
+                          <Menu.Content>
+                            <Menu.Item onSelect={() => { void act(() => toggleContentCommentVote(comment.id, 1)); }}><Menu.ItemTitle>Like</Menu.ItemTitle></Menu.Item>
+                            <Menu.Item onSelect={() => setReplyTo(comment.id)}><Menu.ItemTitle>Reply</Menu.ItemTitle></Menu.Item>
+                            <Menu.Item destructive onSelect={() => { void act(async () => {
+                              await deleteContentComment(comment.id);
+                              setComments(values => values.filter(value => value.id !== comment.id));
+                            }); }}><Menu.ItemTitle>Delete</Menu.ItemTitle></Menu.Item>
+                          </Menu.Content>
+                        </Menu.Portal>
+                      </Menu>
+                    }
+                  />
+                </YGroup.Item>
+              ))}
+            </YGroup>
+          </YStack>
+        </YStack>
+
+        {isOwner ? (
+          <XStack gap="$2">
+            <XButton disabled={busy} onPress={() => setEditing(true)}>Edit</XButton>
+            <XButton
+              disabled={busy}
+              chromeless
+              onPress={() => Alert.alert('Delete post', 'Delete this post?', [
+                { text: 'Cancel' },
+                {
+                  text: 'Delete',
+                  style: 'destructive',
+                  onPress: () => void act(async () => {
+                    await deleteContent(item.id);
+                    router.back();
+                  }),
+                },
+              ])}
+            >
+              Delete
+            </XButton>
+          </XStack>
+        ) : null}
       </YStack>
-
-      {comments.map(c => <Card key={c.id} p="$3" borderWidth={1} borderColor="$borderColor"><YStack gap="$2">
-        <Text fontWeight="800">@{c.author?.username || 'user'}</Text>
-        <Text>{c.body}</Text>
-        <XStack gap="$2"><Button size="$2" onPress={() => void act(() => toggleContentCommentVote(c.id, 1))}>Like</Button>
-          <Button size="$2" chromeless onPress={() => setReplyTo(c.id)}>Reply</Button>
-          <Button size="$2" chromeless onPress={() => void act(async () => {
-            await deleteContentComment(c.id); setComments(v => v.filter(x => x.id !== c.id));
-          })}>Delete</Button>
-        </XStack>
-      </YStack></Card>)}
-
-      {isOwner ? <XStack gap="$2"><Button disabled={busy} onPress={() => setEditing(true)}>Edit</Button><Button disabled={busy} chromeless onPress={() => Alert.alert('Delete post', 'Delete this post?', [{text:'Cancel'}, {text:'Delete', style:'destructive', onPress: () => void act(async () => { await deleteContent(item.id); router.back(); })}])}>Delete</Button></XStack> : null}
-    </YStack>
-  </ScrollView>;
+    </ScrollView>
+  );
 }

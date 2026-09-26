@@ -8,7 +8,9 @@ type BentoCardProps = {
   icon?: ReactNode;
   children?: ReactNode;
   flex?: number;
+  minW?: number;
   onPress?: () => void;
+  delay?: number;
 };
 
 export function BentoCard({
@@ -18,25 +20,32 @@ export function BentoCard({
   icon,
   children,
   flex = 1,
+  minW,
   onPress,
+  delay = 0,
 }: BentoCardProps) {
   return (
     <Card
       flex={flex}
+      minW={minW}
       bg="$background"
       borderWidth={1}
       borderColor="$borderColor"
-      borderRadius="$6"
+      rounded="$6"
       p="$4"
       minHeight={132}
-      pressStyle={{ opacity: 0.92, scale: 0.99 }}
+      transition={['quick', { delay }]}
+      enterStyle={{ opacity: 0, y: 10 }}
+      pressStyle={{ opacity: 0.92, scale: 0.985 }}
+      hoverStyle={{
+        borderColor: '$borderColorHover',
+        bg: '$backgroundHover',
+      }}
       onPress={onPress}
     >
-      <YStack flex={1} style={{ justifyContent: "space-between" }} gap="$3">
-        <XStack style={{ alignItems: "center", justifyContent: "space-between" }}>
-          <Text fontSize="$3" fontWeight="700" color="$color">
-            {title}
-          </Text>
+      <YStack flex={1} gap="$3" justify="space-between">
+        <XStack items="center" justify="space-between">
+          <Text fontSize="$3" fontWeight="700" color="$color">{title}</Text>
           {icon}
         </XStack>
         {value ? <Text fontSize="$9" fontWeight="800" color="$color">{value}</Text> : null}

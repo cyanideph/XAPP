@@ -2,7 +2,8 @@ import { useCallback, useState, useEffect } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { Button, H1, Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
+import { H1, Input, ListItem, Menu, Paragraph, Separator, Spinner, Switch, Text, XStack, YGroup, YStack } from 'tamagui';
+import { XButton } from '../../src/components/XButton';
 import { MessageComposer } from '../../src/components/MessageComposer';
 import { listOnlineRoomMembers, listRoomMembers, listRoomCoHosts, setRoomCoHost, kickRoomMember, moderateRoomMember, strikeRoomMember, setRoomChatSettings, setRoomLock, setRoomMemberChatPreferences, setRoomPinnedMessage, setRoomMessageMentions, createRoomReport, listRoomReports, updateRoomReport, uploadRoomMedia, attachRoomMediaToMessage, deleteRoomMedia, type RoomMember, type RoomReport } from '../../src/features/chat/backend';
 import { createRoomInvite, listOnlineUsers } from '../../src/lib/backend';
@@ -50,7 +51,7 @@ export default function RoomScreen() {
   }, [id]);
   useEffect(() => { void loadRoom(); }, [loadRoom]);
 
-  const { messages, loading, sending, error, hasMore, loadOlder, send, sendMedia, sendSticker, reply, edit, remove, react, profiles, onTyping } = useChatMessages({ scope: 'room', id });
+  const { messages, loading, sending, error, hasMore, loadOlder, send, sendMedia, sendSticker, reply, edit, remove, react, profiles, typingUsers, onTyping } = useChatMessages({ scope: 'room', id });
   useEffect(() => { let active = true; const refresh = async () => { try { const online = await listOnlineRoomMembers(id, 20, 0); if (active) setOnlineMembers(Array.isArray(online) ? online : []); } catch {} }; void refresh(); const timer = setInterval(refresh, 30000); return () => { active = false; clearInterval(timer); }; }, [id]);
   const loadMembers = useCallback(async () => {
     setMembersLoading(true);
@@ -366,183 +367,203 @@ export default function RoomScreen() {
     }
   };
   return <YStack flex={1} bg="$background">
-    <YStack p="$4" borderBottomWidth={1} borderColor="$borderColor">
-      <H1 fontSize="$7">{room?.name ?? 'Room'}</H1><Text fontSize="$2" color="$colorPress">{room?.province_code ? `${room.province_code} · ` : ''}{onlineMembers.filter(member => member.is_online).length} online</Text>{room?.description ? <Paragraph color="$colorPress">{room.description}</Paragraph> : null}{room?.announcement ? <Paragraph fontWeight="800">{room.announcement}</Paragraph> : null}{room?.view_only ? <Text color="$colorPress">View-only room</Text> : null}{room?.is_locked ? <Text color="$red10">Room locked</Text> : null}{roomError ? <Paragraph color="$red10">{roomError}</Paragraph> : null}{error ? <Paragraph color="$red10">{error}</Paragraph> : null}
+    <YStack px="$4" pt="$3" pb="$2" gap="$3">
+      <YStack gap="$3">
+        <XStack items="center" justify="space-between">
+          <YStack flex={1} gap="$1">
+            <Text fontSize="$2" color="$colorPress" fontWeight="800" letterSpacing={1}>ROOM</Text>
+            <H1 fontSize="$7" fontWeight="900">{room?.name ?? 'Room'}</H1>
+            <Text fontSize="$2" color="$colorPress">
+              {room?.province_code ? `${room.province_code} · ` : ''}{onlineMembers.filter(member => member.is_online).length} online
+            </Text>
+          </YStack>
+          <Text bg="$brandSoft" color="$brandColor" px="$3" py="$2" rounded="$6" fontWeight="800">{onlineMembers.filter(member => member.is_online).length}</Text>
+        </XStack>
+        {room?.description ? <Paragraph color="$colorPress">{room.description}</Paragraph> : null}
+        <XStack gap="$2" flexWrap="wrap">
+          {room?.announcement ? <Text bg="$backgroundHover" color="$colorPress" px="$2" py="$1" rounded="$4" fontSize="$2">{room.announcement}</Text> : null}
+          {room?.view_only ? <Text bg="$backgroundHover" color="$colorPress" px="$2" py="$1" rounded="$4" fontSize="$2">View-only</Text> : null}
+          {room?.is_locked ? <Text bg="$red3" color="$red10" px="$2" py="$1" rounded="$4" fontSize="$2">Locked</Text> : null}
+        </XStack>
+        {roomError ? <Paragraph color="$red10">{roomError}</Paragraph> : null}
+        {error ? <Paragraph color="$red10">{error}</Paragraph> : null}
+        <XStack gap="$2" items="center">
+          <Menu>
+            <Menu.Trigger asChild action="press">
+              <XButton size="$3">Manage</XButton>
+            </Menu.Trigger>
+            <Menu.Portal>
+              <Menu.Content>
+                <Menu.Item key="members" onSelect={() => { if (membersOpen) setMembersOpen(false); else void loadMembers(); }}>
+                  <Menu.ItemTitle>{membersOpen ? 'Hide members' : 'Members'}</Menu.ItemTitle>
+                </Menu.Item>
+                <Menu.Item key="invite" onSelect={() => { void loadInviteCandidates(); }}>
+                  <Menu.ItemTitle>Invite people</Menu.ItemTitle>
+                </Menu.Item>
+                <Menu.Item key="admin" onSelect={() => { void loadAdministration(); }}>
+                  <Menu.ItemTitle>Administration</Menu.ItemTitle>
+                </Menu.Item>
+                <Menu.Item key="settings" onSelect={() => { void loadSettings(); }}>
+                  <Menu.ItemTitle>Room settings</Menu.ItemTitle>
+                </Menu.Item>
+              </Menu.Content>
+            </Menu.Portal>
+          </Menu>
+        </XStack>
+      </YStack>
     </YStack>
-    {loading ? <YStack flex={1} style={{ alignItems: "center", justifyContent: "center" }}><Spinner /></YStack> :
+
+    {loading ? <YStack flex={1} items="center" justify="center"><Spinner /></YStack> :
       <YStack flex={1}><MessageList messages={messages} currentUserId={session?.user.id} pinnedMessageId={room?.pinned_message_id ?? null} hasMore={hasMore} onLoadOlder={loadOlder} profiles={profiles} onReply={m => { setEditTarget(null); setReplyTarget(m); }} onEdit={m => { setReplyTarget(null); setEditTarget(m); }} onDelete={m => remove(m.id)} onReact={(m,r) => react(m.id,r)} onReport={m => openReport({ messageId: m.id, userId: m.sender_id, label: 'message' })} /></YStack>}
+
     {replyTarget ? <YStack px="$3" pt="$2"><Text fontSize="$2" color="$colorPress">Replying to: {(replyTarget.body ?? '').slice(0, 80)}</Text></YStack> : null}
-    {onlineMembers.length ? <XStack px="$3" pb="$2" gap="$2" flexWrap="wrap"><Text fontSize="$2" color="$colorPress">Online:</Text>{onlineMembers.filter(member => member.is_online).slice(0, 8).map(member => <Text key={member.user_id} fontSize="$2">{member.nickname || 'Member'}</Text>)}</XStack> : null}
+    {Object.keys(typingUsers).length ? <XStack px="$3" pb="$2" items="center"><Text fontSize="$2" color="$colorPress">{Object.keys(typingUsers).map(userId => profiles[userId]?.display_name || profiles[userId]?.username || 'Someone').slice(0, 2).join(', ')} {Object.keys(typingUsers).length === 1 ? 'is' : 'are'} typing…</Text></XStack> : null}
+    {onlineMembers.length ? <XStack px="$3" pb="$2" gap="$2" flexWrap="wrap"><Text fontSize="$2" color="$colorPress">Online:</Text>{onlineMembers.filter(member => member.is_online).slice(0, 8).map(member => <Text key={member.user_id} bg="$backgroundHover" color="$colorPress" px="$2" py="$1" rounded="$4" fontSize="$2">{member.nickname || "Member"}</Text>)}</XStack> : null}
+
     {reportTarget ? <YStack mx="$3" mb="$2" gap="$2" p="$3" borderWidth={1} borderColor="$borderColor">
-      <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+      <XStack items="center" justify="space-between">
         <Text fontSize="$3" fontWeight="800">Report {reportTarget.label}</Text>
-        <Text color="$colorPress" onPress={() => setReportTarget(null)}>Cancel</Text>
+        <XButton size="$2" chromeless onPress={() => setReportTarget(null)}>Cancel</XButton>
       </XStack>
       <Text fontSize="$2" color="$colorPress">Your report is visible to Room staff for review.</Text>
       <Input value={reportReason} onChangeText={setReportReason} placeholder="Reason for report" multiline />
-      <Button size="$2" disabled={reportBusy} onPress={() => { void submitReport(); }}>
+      <XButton size="$2" disabled={reportBusy} onPress={() => { void submitReport(); }}>
         {reportBusy ? 'Submitting…' : 'Submit report'}
-      </Button>
+      </XButton>
     </YStack> : null}
-    <YStack px="$3" pb="$2" gap="$2">
-      <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+
+    {membersOpen ? <YStack px="$3" pb="$2" gap="$2">
+      <XStack items="center" justify="space-between">
         <Text fontSize="$3" fontWeight="800">Members {members.length ? `(${members.length})` : ''}</Text>
-        <XStack gap="$2">
-          <Button size="$2" chromeless disabled={adminBusy === 'load'} onPress={() => { void loadAdministration(); }}>
-            {adminBusy === 'load' ? 'Loading…' : 'Admin'}
-          </Button>
-          <Button size="$2" chromeless disabled={settingsBusy === 'load'} onPress={() => { void loadSettings(); }}>
-            {settingsBusy === 'load' ? 'Loading…' : 'Settings'}
-          </Button>
-          <Button size="$2" chromeless disabled={inviteLoading} onPress={() => { void loadInviteCandidates(); }}>
-            {inviteLoading ? 'Loading…' : 'Invite'}
-          </Button>
-          <Text onPress={() => { if (membersOpen) setMembersOpen(false); else void loadMembers(); }} color="$colorPress">
-            {membersOpen ? 'Hide' : membersLoading ? 'Loading…' : 'Show'}
-          </Text>
-        </XStack>
+        <XButton size="$2" chromeless onPress={() => setMembersOpen(false)}>Hide</XButton>
       </XStack>
-      {membersOpen ? <YStack gap="$2">
-        <Text fontSize="$3" fontWeight="800" pt="$2">Reports ({reports.length})</Text>
-        {reports.length ? reports.map(report => (
-          <YStack key={'report-' + report.id} gap="$2" p="$2" borderWidth={1} borderColor="$borderColor">
-            <Text fontWeight="700">{report.status.toUpperCase()}</Text>
-            <Text fontSize="$2">Reason: {report.reason}</Text>
-            {report.message_id ? <Text fontSize="$2" color="$colorPress">Message: {report.message_id}</Text> : null}
-            {report.reported_user_id ? <Text fontSize="$2" color="$colorPress">Member: {report.reported_user_id}</Text> : null}
-            <XStack gap="$2" flexWrap="wrap">
-              {report.status !== 'resolved' && report.status !== 'dismissed' ? <>
-                <Button size="$2" disabled={reportBusy} onPress={() => { void resolveReport(report.id, 'resolved'); }}>Resolve</Button>
-                <Button size="$2" disabled={reportBusy} onPress={() => { void resolveReport(report.id, 'dismissed'); }}>Dismiss</Button>
-              </> : null}
-            </XStack>
-          </YStack>
-        )) : <Text fontSize="$2" color="$colorPress">No reports found.</Text>}
+      <YGroup borderWidth={1} borderColor="$borderColor">
         {members.map(member => {
           const profile = member.profile;
-          return <XStack key={member.user_id} gap="$2" style={{ alignItems: 'center' }}>
-            <Text fontWeight="700">{member.nickname || profile?.display_name || profile?.username || 'Member'}</Text>
-            <Text fontSize="$2" color="$colorPress">@{profile?.username || 'unknown'} · {member.role}</Text>
-          </XStack>;
+          return <YGroup.Item key={member.user_id}>
+            <ListItem
+              title={member.nickname || profile?.display_name || profile?.username || 'Member'}
+              subTitle={`@${profile?.username || 'unknown'} · ${member.role}`}
+              iconAfter={<Text color="$colorPress">›</Text>}
+            />
+          </YGroup.Item>;
         })}
-        {!members.length ? <Text color="$colorPress">No members found.</Text> : null}
-      </YStack> : null}
-      {settingsOpen ? <YStack gap="$2" pt="$2" borderWidth={1} borderColor="$borderColor" p="$2">
-        <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
-          <Text fontSize="$3" fontWeight="800">Room settings</Text>
-          <Text color="$colorPress" onPress={() => setSettingsOpen(false)}>Hide</Text>
-        </XStack>
-        <Text fontSize="$2" color="$colorPress">Room controls are enforced by Supabase authorization.</Text>
-        <Text fontWeight="700">Announcement</Text>
-        <Input value={announcementDraft} onChangeText={setAnnouncementDraft} placeholder="Optional Room announcement" />
-        <XStack gap="$2" flexWrap="wrap">
-          <Button size="$2" disabled={settingsBusy !== null} onPress={() => setViewOnlyDraft(value => !value)}>
-            {viewOnlyDraft ? 'View-only: ON' : 'View-only: OFF'}
-          </Button>
-          <Button size="$2" disabled={settingsBusy !== null} onPress={() => setMembersCanInviteDraft(value => !value)}>
-            {membersCanInviteDraft ? 'Member invites: ON' : 'Member invites: OFF'}
-          </Button>
-          <Button size="$2" disabled={settingsBusy !== null} onPress={() => { void saveChatSettings(); }}>
-            {settingsBusy === 'chat' ? 'Saving…' : 'Save chat settings'}
-          </Button>
-        </XStack>
-        <XStack gap="$2" flexWrap="wrap">
-          <Button size="$2" disabled={settingsBusy !== null} onPress={() => { void toggleRoomLock(); }}>
-            {settingsBusy === 'lock' ? 'Updating…' : room?.is_locked ? 'Unlock Room' : 'Lock Room'}
-          </Button>
-          <Button size="$2" disabled={settingsBusy !== null} onPress={() => { void pinRoomMessage(null); }}>
-            {settingsBusy === 'unpin' ? 'Clearing…' : 'Clear pinned message'}
-          </Button>
-        </XStack>
-        <Text fontWeight="700">Pinned message</Text>
-        {room?.pinned_message_id ? (
-          <YStack gap="$1" p="$2" borderWidth={1} borderColor="$borderColor">
-            <Text fontSize="$2" color="$colorPress">Pinned message ID: {room.pinned_message_id}</Text>
-            {messages.filter(message => message.id === room.pinned_message_id).map(message => (
-              <Text key={message.id}>{message.body}</Text>
-            ))}
-          </YStack>
-        ) : <Text fontSize="$2" color="$colorPress">No message is pinned.</Text>}
-        <Text fontSize="$2" color="$colorPress">Choose a recent Room message to pin.</Text>
+      </YGroup>
+      {!members.length ? <Text color="$colorPress">No members found.</Text> : null}
+    </YStack> : null}
+
+    {settingsOpen ? <YStack px="$3" pb="$2" gap="$2">
+      <XStack items="center" justify="space-between">
+        <Text fontSize="$3" fontWeight="800">Room settings</Text>
+        <XButton size="$2" chromeless onPress={() => setSettingsOpen(false)}>Hide</XButton>
+      </XStack>
+      <Text fontSize="$2" color="$colorPress">Room controls are enforced by Supabase authorization.</Text>
+      <Input value={announcementDraft} onChangeText={setAnnouncementDraft} placeholder="Optional Room announcement" />
+      <YGroup borderWidth={1} borderColor="$borderColor">
+        <YGroup.Item>
+          <ListItem title="View-only mode" subTitle={viewOnlyDraft ? 'Members can read but not send messages.' : 'Members can send messages.'}
+            iconAfter={<Switch size="$3" checked={viewOnlyDraft} onCheckedChange={setViewOnlyDraft} disabled={settingsBusy !== null} />} />
+        </YGroup.Item>
+        <Separator />
+        <YGroup.Item>
+          <ListItem title="Member invites" subTitle={membersCanInviteDraft ? 'Members can invite people.' : 'Only staff can invite people.'}
+            iconAfter={<Switch size="$3" checked={membersCanInviteDraft} onCheckedChange={setMembersCanInviteDraft} disabled={settingsBusy !== null} />} />
+        </YGroup.Item>
+        <Separator />
+        <YGroup.Item>
+          <ListItem title={room?.is_locked ? 'Unlock Room' : 'Lock Room'} subTitle={room?.is_locked ? 'Allow normal room access.' : 'Restrict room access.'}
+            onPress={() => { void toggleRoomLock(); }} disabled={settingsBusy !== null} />
+        </YGroup.Item>
+        <Separator />
+        <YGroup.Item>
+          <ListItem title="Save chat settings" subTitle={settingsBusy === 'chat' ? 'Saving…' : 'Apply announcement and room access changes.'}
+            onPress={() => { void saveChatSettings(); }} disabled={settingsBusy !== null} />
+        </YGroup.Item>
+      </YGroup>
+
+      <Text fontSize="$3" fontWeight="800" pt="$2">Pinned message</Text>
+      {room?.pinned_message_id ? (
+        <ListItem title={messages.find(message => message.id === room.pinned_message_id)?.body || 'Pinned message'} subTitle={`ID: ${room.pinned_message_id}`} iconAfter={<XButton size="$2" chromeless onPress={() => { void pinRoomMessage(null); }}>Clear</XButton>} />
+      ) : <Text fontSize="$2" color="$colorPress">No message is pinned.</Text>}
+      <YGroup borderWidth={1} borderColor="$borderColor">
         {messages.slice(0, 10).map(message => (
-          <XStack key={'pin-' + message.id} gap="$2" style={{ alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text flex={1} numberOfLines={2}>{message.body}</Text>
-            <Button size="$2" disabled={settingsBusy !== null} onPress={() => { void pinRoomMessage(message.id); }}>
-              {settingsBusy === 'pin-' + message.id ? 'Pinning…' : room?.pinned_message_id === message.id ? 'Pinned' : 'Pin'}
-            </Button>
-          </XStack>
+          <YGroup.Item key={'pin-' + message.id}>
+            <ListItem title={message.body} subTitle={room?.pinned_message_id === message.id ? 'Currently pinned' : 'Pin this message'}
+              onPress={() => { void pinRoomMessage(message.id); }} disabled={settingsBusy !== null} />
+          </YGroup.Item>
         ))}
-        <Text fontWeight="700">My Room preferences</Text>
-        <XStack gap="$2" flexWrap="wrap">
-          <Button size="$2" disabled={settingsBusy !== null} onPress={() => setNotificationsEnabled(value => !value)}>
-            {notificationsEnabled ? 'Notifications: ON' : 'Notifications: OFF'}
-          </Button>
-          <Button size="$2" disabled={settingsBusy !== null} onPress={() => setRoomPinned(value => !value)}>
-            {roomPinned ? 'Room pinned: ON' : 'Room pinned: OFF'}
-          </Button>
-          <Button size="$2" disabled={settingsBusy !== null} onPress={() => { void saveMemberPreferences(); }}>
-            {settingsBusy === 'prefs' ? 'Saving…' : 'Save my preferences'}
-          </Button>
-        </XStack>
-      </YStack> : null}
-      {adminOpen ? <YStack gap="$2" pt="$2">
-        <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
-          <Text fontSize="$3" fontWeight="800">Room administration</Text>
-          <Text color="$colorPress" onPress={() => setAdminOpen(false)}>Hide</Text>
-        </XStack>
-        <Text fontSize="$2" color="$colorPress">Controls are enforced by the Supabase Room authorization rules.</Text>
+      </YGroup>
+
+      <Text fontSize="$3" fontWeight="800" pt="$2">My Room preferences</Text>
+      <YGroup borderWidth={1} borderColor="$borderColor">
+        <YGroup.Item>
+          <ListItem title="Notifications" subTitle={notificationsEnabled ? 'Room notifications are enabled.' : 'Room notifications are muted.'}
+            iconAfter={<Switch size="$3" checked={notificationsEnabled} onCheckedChange={setNotificationsEnabled} disabled={settingsBusy !== null} />} />
+        </YGroup.Item>
+        <Separator />
+        <YGroup.Item>
+          <ListItem title="Pin Room" subTitle={roomPinned ? 'Pinned in your room list.' : 'Not pinned in your room list.'}
+            iconAfter={<Switch size="$3" checked={roomPinned} onCheckedChange={setRoomPinned} disabled={settingsBusy !== null} />} />
+        </YGroup.Item>
+        <Separator />
+        <YGroup.Item>
+          <ListItem title="Save my preferences" subTitle={settingsBusy === 'prefs' ? 'Saving…' : 'Apply your room preferences.'}
+            onPress={() => { void saveMemberPreferences(); }} disabled={settingsBusy !== null} />
+        </YGroup.Item>
+      </YGroup>
+    </YStack> : null}
+
+    {adminOpen ? <YStack px="$3" pb="$2" gap="$2">
+      <XStack items="center" justify="space-between">
+        <Text fontSize="$3" fontWeight="800">Room administration</Text>
+        <XButton size="$2" chromeless onPress={() => setAdminOpen(false)}>Hide</XButton>
+      </XStack>
+      <Text fontSize="$2" color="$colorPress">Controls are enforced by the Supabase Room authorization rules.</Text>
+      <YGroup borderWidth={1} borderColor="$borderColor">
         {members.map(member => {
           const label = member.profile?.display_name || member.profile?.username || member.nickname || 'Member';
           const isSelf = member.user_id === session?.user.id;
           const busy = adminBusy === member.user_id;
-          return <YStack key={`admin-${member.user_id}`} gap="$2" p="$2" borderWidth={1} borderColor="$borderColor">
-            <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
-              <YStack flex={1}>
-                <Text fontWeight="700">{label}</Text>
-                <Text fontSize="$2" color="$colorPress">@{member.profile?.username || 'unknown'} · {member.role}{coHostIds.has(member.user_id) ? ' · co-host' : ''}</Text>
-              </YStack>
-              {busy ? <Spinner size="small" /> : null}
-            </XStack>
-            {!isSelf && member.role !== 'owner' ? <XStack gap="$2" flexWrap="wrap">
-              <Button size="$2" disabled={busy} onPress={() => runAdminAction(member, 'cohost')}>
-                {coHostIds.has(member.user_id) ? 'Remove co-host' : 'Make co-host'}
-              </Button>
-              <Button size="$2" disabled={busy} onPress={() => runAdminAction(member, 'mute')}>Mute 60m</Button>
-              <Button size="$2" disabled={busy} onPress={() => runAdminAction(member, 'ban')}>Ban 24h</Button>
-              <Button size="$2" disabled={busy} onPress={() => runAdminAction(member, 'kick')}>Kick</Button>
-              <Button size="$2" disabled={busy} onPress={() => runAdminAction(member, 'strike')}>Strike</Button>
-              {!isSelf ? <Button size="$2" disabled={reportBusy} onPress={() => openReport({ userId: member.user_id, label: label + ' (member)' })}>Report</Button> : null}
-            </XStack> : null}
-          </YStack>;
+          return <YGroup.Item key={`admin-${member.user_id}`}>
+            <ListItem title={label}
+              subTitle={`@${member.profile?.username || 'unknown'} · ${member.role}${coHostIds.has(member.user_id) ? ' · co-host' : ''}`}
+              iconAfter={busy ? <Spinner size="small" /> : <Menu>
+                <Menu.Trigger asChild action="press"><XButton size="$2" chromeless>Actions</XButton></Menu.Trigger>
+                <Menu.Portal>
+                  <Menu.Content>
+                    {!isSelf && member.role !== 'owner' ? <>
+                      <Menu.Item key="cohost" onSelect={() => runAdminAction(member, 'cohost')}><Menu.ItemTitle>{coHostIds.has(member.user_id) ? 'Remove co-host' : 'Make co-host'}</Menu.ItemTitle></Menu.Item>
+                      <Menu.Item key="mute" onSelect={() => runAdminAction(member, 'mute')}><Menu.ItemTitle>Mute 60m</Menu.ItemTitle></Menu.Item>
+                      <Menu.Item key="strike" onSelect={() => runAdminAction(member, 'strike')}><Menu.ItemTitle>Strike 24h</Menu.ItemTitle></Menu.Item>
+                      <Menu.Item key="report" onSelect={() => openReport({ userId: member.user_id, label: label + ' (member)' })}><Menu.ItemTitle>Report member</Menu.ItemTitle></Menu.Item>
+                      <Menu.Item key="kick" destructive onSelect={() => runAdminAction(member, 'kick')}><Menu.ItemTitle>Kick</Menu.ItemTitle></Menu.Item>
+                      <Menu.Item key="ban" destructive onSelect={() => runAdminAction(member, 'ban')}><Menu.ItemTitle>Ban 24h</Menu.ItemTitle></Menu.Item>
+                    </> : <Menu.Item key="none" disabled><Menu.ItemTitle>No actions available</Menu.ItemTitle></Menu.Item>}
+                  </Menu.Content>
+                </Menu.Portal>
+              </Menu>} />
+          </YGroup.Item>;
         })}
-      </YStack> : null}
-      {inviteOpen ? <YStack gap="$2" pt="$2">
-        <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
-          <Text fontSize="$3" fontWeight="800">Invite people</Text>
-          <Text color="$colorPress" onPress={() => setInviteOpen(false)}>Hide</Text>
-        </XStack>
-        <Input value={inviteQuery} onChangeText={setInviteQuery} placeholder="Search by username or name" returnKeyType="search" onSubmitEditing={() => { void loadInviteCandidates(inviteQuery); }} />
-        <Button size="$2" disabled={inviteLoading || inviteQuery.trim().length < 2} onPress={() => { void loadInviteCandidates(inviteQuery); }}>
-          {inviteLoading ? 'Searching…' : 'Search'}
-        </Button>
+      </YGroup>
+    </YStack> : null}
+
+    {inviteOpen ? <YStack px="$3" pb="$2" gap="$2">
+      <XStack items="center" justify="space-between">
+        <Text fontSize="$3" fontWeight="800">Invite people</Text>
+        <XButton size="$2" chromeless onPress={() => setInviteOpen(false)}>Hide</XButton>
+      </XStack>
+      <Input value={inviteQuery} onChangeText={setInviteQuery} placeholder="Search by username or name" returnKeyType="search" onSubmitEditing={() => { void loadInviteCandidates(inviteQuery); }} />
+      <YGroup borderWidth={1} borderColor="$borderColor">
         {inviteCandidates.map(user => (
-          <XStack key={user.user_id} gap="$2" style={{ alignItems: 'center', justifyContent: 'space-between' }}>
-            <YStack flex={1}>
-              <Text fontWeight="700">{user.display_name || user.username}</Text>
-              <Text fontSize="$2" color="$colorPress">@{user.username}</Text>
-            </YStack>
-            <Button
-              size="$2"
-              disabled={inviteBusy === user.user_id}
-              onPress={() => { void inviteUser(user.user_id); }}
-            >
-              {inviteBusy === user.user_id ? 'Sending…' : 'Invite'}
-            </Button>
-          </XStack>
+          <YGroup.Item key={user.user_id}>
+            <ListItem title={user.display_name || user.username} subTitle={`@${user.username}`}
+              iconAfter={<XButton size="$2" chromeless disabled={inviteBusy === user.user_id} onPress={() => { void inviteUser(user.user_id); }}>{inviteBusy === user.user_id ? 'Sending…' : 'Invite'}</XButton>} />
+          </YGroup.Item>
         ))}
-        {!inviteCandidates.length ? <Text color="$colorPress">No matching people available to invite.</Text> : null}
-      </YStack> : null}
-    </YStack>
+      </YGroup>
+      {!inviteCandidates.length ? <Text color="$colorPress">No matching people available to invite.</Text> : null}
+    </YStack> : null}
+
     <MessageComposer onSend={submit} onSendSticker={async stickerId => { await sendSticker(stickerId); }} onPickMedia={pickMedia} disabled={sending || loading || mediaBusy || room?.view_only || room?.is_locked} editValue={editTarget?.body ?? null} onEditCancel={() => setEditTarget(null)} onTyping={onTyping} />
   </YStack>;
 }

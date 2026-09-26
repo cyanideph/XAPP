@@ -1,17 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { Button, H1, Input, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
-import { BentoCard } from '../../src/components/BentoCard';
+import { H1, Input, ListItem, Paragraph, Separator, Spinner, Text, XStack, YGroup, YStack } from 'tamagui';
+import { XButton } from '../../src/components/XButton';
 import {
-  listMyConversations,
-  searchPublicRooms,
-  listPendingConversationInvites,
-  listPublicChats,
-  markNotificationRead,
-  respondConversationInvite,
-  type ConversationInvite,
-  type ConversationListItem,
+  listMyConversations, searchPublicRooms, listPendingConversationInvites, listPublicChats,
+  markNotificationRead, respondConversationInvite, type ConversationInvite, type ConversationListItem,
 } from '../../src/lib/backend';
 
 type PublicChat = {
@@ -25,9 +19,7 @@ type PublicChat = {
 
 function conversationTitle(conversation: ConversationListItem) {
   if (conversation.title) return conversation.title;
-  if (conversation.participant) {
-    return conversation.participant.display_name || conversation.participant.username;
-  }
+  if (conversation.participant) return conversation.participant.display_name || conversation.participant.username;
   return conversation.kind === 'direct' ? 'Direct conversation' : 'Conversation';
 }
 
@@ -60,25 +52,17 @@ export default function ChatsScreen() {
   const [roomSearching, setRoomSearching] = useState(false);
 
   const load = useCallback(async (isRefresh = false) => {
-    if (isRefresh) setRefreshing(true);
-    else setLoading(true);
+    if (isRefresh) setRefreshing(true); else setLoading(true);
     setError(null);
-
     try {
       const [chatRows, conversationRows, inviteRows] = await Promise.all([
-        listPublicChats(20, 0),
-        listMyConversations(20),
-        listPendingConversationInvites(50),
+        listPublicChats(20, 0), listMyConversations(20), listPendingConversationInvites(50),
       ]);
       setPublicChats(Array.isArray(chatRows) ? chatRows as PublicChat[] : []);
-      setConversations(conversationRows);
-      setInvites(inviteRows);
+      setConversations(conversationRows); setInvites(inviteRows);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to load Chats.');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
+    } finally { setLoading(false); setRefreshing(false); }
   }, []);
 
   useEffect(() => { void load(); }, [load]);
@@ -86,8 +70,7 @@ export default function ChatsScreen() {
   const searchRooms = useCallback(async () => {
     const query = roomQuery.trim();
     if (!query) { await load(true); return; }
-    setRoomSearching(true);
-    setError(null);
+    setRoomSearching(true); setError(null);
     try {
       const rows = await searchPublicRooms(query, 20);
       setPublicChats(Array.isArray(rows) ? rows as PublicChat[] : []);
@@ -98,9 +81,7 @@ export default function ChatsScreen() {
 
   const respondToInvite = useCallback(async (invite: ConversationInvite, accept: boolean) => {
     if (inviteBusy) return;
-    setInviteBusy(invite.invite_id);
-    setError(null);
-
+    setInviteBusy(invite.invite_id); setError(null);
     try {
       await respondConversationInvite(invite.invite_id, accept);
       await markNotificationRead(invite.notification_id);
@@ -108,120 +89,94 @@ export default function ChatsScreen() {
       if (accept) await load(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to respond to invitation.');
-    } finally {
-      setInviteBusy(null);
-    }
+    } finally { setInviteBusy(null); }
   }, [inviteBusy, load]);
 
   return (
     <ScrollView
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { void load(true); }} />}
-      contentContainerStyle={{ padding: 20, paddingTop: 64, paddingBottom: 32 }}
+      contentContainerStyle={{ padding: 20, paddingTop: 64, paddingBottom: 40 }}
     >
-      <YStack gap="$5">
+      <YStack width="100%" maxW={960} self="center" gap="$6">
         <YStack gap="$2">
-          <Text fontSize="$3" color="$colorPress" fontWeight="800" letterSpacing={1}>CHATS</Text>
+          <Text fontSize="$3" color="$brandBackground" fontWeight="900" letterSpacing={1}>CHATS</Text>
           <H1 fontSize="$10" fontWeight="900">Conversations.</H1>
-          <Paragraph color="$colorPress">Rooms and private conversations, in one place.</Paragraph>
+          <Paragraph color="$colorPress" size="$4">Rooms and private conversations, in one place.</Paragraph>
         </YStack>
 
-        {error ? (
-          <BentoCard title="Unable to load Chats" description={error} onPress={() => { void load(); }} />
-        ) : null}
+        {error ? <ListItem title="Unable to load Chats" subTitle={error} onPress={() => { void load(); }} /> : null}
 
-        {loading ? <Spinner /> : (
+        {loading ? <Spinner color="$brandBackground" /> : (
           <>
             {invites.length ? (
               <YStack gap="$3">
-                <Text fontSize="$6" fontWeight="800">Conversation invites</Text>
+                <YStack gap="$1">
+                  <Text fontSize="$6" fontWeight="800">Conversation invites</Text>
+                  <Text fontSize="$3" color="$colorPress">{invites.length} pending</Text>
+                </YStack>
                 {invites.map(invite => (
-                  <BentoCard
-                    key={invite.invite_id}
-                    title={inviteTitle(invite)}
-                    description={invite.inviter ? `@${invite.inviter.username} invited you` : 'You have a pending conversation invitation.'}
-                  >
-                    <XStack gap="$2">
-                      <Button
-                        size="$3"
-                        disabled={inviteBusy === invite.invite_id}
-                        onPress={() => { void respondToInvite(invite, true); }}
-                      >
-                        Accept
-                      </Button>
-                      <Button
-                        size="$3"
-                        chromeless
-                        disabled={inviteBusy === invite.invite_id}
-                        onPress={() => { void respondToInvite(invite, false); }}
-                      >
-                        Decline
-                      </Button>
-                    </XStack>
-                  </BentoCard>
+                  <ListItem key={invite.invite_id}
+  title={inviteTitle(invite)}
+  subTitle={invite.inviter ? `@${invite.inviter.username} invited you` : 'You have a pending conversation invitation.'}
+  iconAfter={<XStack gap="$2">
+    <XButton size="$2" disabled={inviteBusy === invite.invite_id} onPress={() => { void respondToInvite(invite, true); }}>Accept</XButton>
+    <XButton size="$2" chromeless disabled={inviteBusy === invite.invite_id} onPress={() => { void respondToInvite(invite, false); }}>Decline</XButton>
+  </XStack>}
+/>
                 ))}
+                <Separator borderColor="$borderColor" />
               </YStack>
             ) : null}
 
             <YStack gap="$3">
-              <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                <Text fontSize="$6" fontWeight="800">Your conversations</Text>
-                <Text fontSize="$3" color="$colorPress">{conversations.length} shown</Text>
+              <XStack items="center" justify="space-between">
+                <YStack gap="$1">
+                  <Text fontSize="$6" fontWeight="800">Your conversations</Text>
+                  <Text fontSize="$3" color="$colorPress">{conversations.length} shown</Text>
+                </YStack>
               </XStack>
-
-              {conversations.length ? conversations.map(conversation => {
-                const unread = Boolean(
-                  conversation.last_read_at &&
-                  new Date(conversation.updated_at).getTime() > new Date(conversation.last_read_at).getTime(),
-                );
-
+              {conversations.length ? <YGroup borderWidth={1} borderColor="$borderColor" rounded="$4" overflow="hidden">{conversations.map(conversation => {
+                const unread = Boolean(conversation.last_read_at && new Date(conversation.updated_at).getTime() > new Date(conversation.last_read_at).getTime());
                 return (
-                  <BentoCard
-                    key={conversation.id}
-                    title={unread ? `● ${conversationTitle(conversation)}` : conversationTitle(conversation)}
-                    description={
-                      conversation.participant
-                        ? `@${conversation.participant.username} · ${formatUpdatedAt(conversation.updated_at)}`
-                        : `Open conversation · ${formatUpdatedAt(conversation.updated_at)}`
-                    }
-                    onPress={() => router.push({ pathname: '/conversation/[id]', params: { id: conversation.id } })}
-                  />
+                  <ListItem key={conversation.id}
+  title={unread ? `● ${conversationTitle(conversation)}` : conversationTitle(conversation)}
+  subTitle={conversation.participant ? `@${conversation.participant.username} · ${formatUpdatedAt(conversation.updated_at)}` : `Open conversation · ${formatUpdatedAt(conversation.updated_at)}`}
+  iconAfter={<Text color="$colorPress">›</Text>}
+  onPress={() => router.push({ pathname: '/conversation/[id]', params: { id: conversation.id } })}
+/>
                 );
-              }) : (
-                <BentoCard
-                  title="No conversations yet"
-                  description="Open a profile or accept an invitation to start chatting."
-                />
+              })}</YGroup> : (
+                <ListItem title="No conversations yet" subTitle="Open a profile or accept an invitation to start chatting." />
               )}
             </YStack>
+
+            <Separator borderColor="$borderColor" />
 
             <YStack gap="$3">
               <YStack gap="$2">
-                <Input value={roomQuery} onChangeText={setRoomQuery} placeholder="Search public rooms" returnKeyType="search" onSubmitEditing={() => { void searchRooms(); }} />
-                <Button size="$3" disabled={roomSearching} onPress={() => { void searchRooms(); }}>{roomSearching ? 'Searching…' : 'Search rooms'}</Button>
+                <YStack gap="$1">
+                  <Text fontSize="$6" fontWeight="800">Public rooms</Text>
+                  <Text fontSize="$3" color="$colorPress">Find a room to join the conversation.</Text>
+                </YStack>
+                <XStack gap="$2" items="center">
+                  <Input flex={1} value={roomQuery} onChangeText={setRoomQuery} placeholder="Search public rooms" returnKeyType="search" onSubmitEditing={() => { void searchRooms(); }} />
+                  <XButton disabled={roomSearching} onPress={() => { void searchRooms(); }}>{roomSearching ? 'Searching…' : 'Search'}</XButton>
+                </XStack>
               </YStack>
-              <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                <Text fontSize="$6" fontWeight="800">Public rooms</Text>
-                <Text fontSize="$3" color="$colorPress">{publicChats.length} shown</Text>
-              </XStack>
 
-              {publicChats.length ? publicChats.map(room => (
-                <BentoCard
-                  key={room.id}
-                  title={room.name}
-                  description={
-                    room.province_code
-                      ? `${room.province_code} · ${room.description ?? 'Open realtime room'}`
-                      : (room.description ?? 'Open realtime room')
-                  }
-                  value={`${room.member_count ?? 0} members · ${room.online_count ?? 0} online`}
-                  onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })}
-                />
-              )) : (
-                <BentoCard title="No public rooms available" description="Refresh to check the community again." />
+              {publicChats.length ? <YGroup borderWidth={1} borderColor="$borderColor" rounded="$4" overflow="hidden">{publicChats.map(room => (
+                <ListItem key={room.id}
+  title={room.name}
+  subTitle={room.province_code ? `${room.province_code} · ${room.description ?? 'Open realtime room'}` : (room.description ?? 'Open realtime room')}
+  iconAfter={<Text color="$colorPress">{room.member_count ?? 0} · {room.online_count ?? 0}</Text>}
+  onPress={() => router.push({ pathname: '/room/[id]', params: { id: room.id } })}
+/>
+              ))}</YGroup> : (
+                <ListItem title="No public rooms available" subTitle="Refresh to check the community again." />
               )}
             </YStack>
 
-            <Button chromeless onPress={() => router.push('/(tabs)/discover')}>Discover more rooms</Button>
+            <XButton chromeless onPress={() => router.push('/(tabs)/discover')}>Discover more rooms</XButton>
           </>
         )}
       </YStack>

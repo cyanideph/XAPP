@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { useLocalSearchParams } from 'expo-router';
-import { H1, Paragraph, Spinner, Text, YStack } from 'tamagui';
+import { router, useLocalSearchParams } from 'expo-router';
+import { H1, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
+import { XButton } from '../../src/components/XButton';
 import { MessageComposer } from '../../src/components/MessageComposer';
 import { MessageList } from '../../src/components/MessageList';
 import { useSession } from '../../src/hooks/useSession';
@@ -12,19 +13,100 @@ export default function ConversationScreen() {
   const { session } = useSession();
   const [replyTarget, setReplyTarget] = useState<ChatMessage | null>(null);
   const [editTarget, setEditTarget] = useState<ChatMessage | null>(null);
-  const { messages, loading, sending, error, hasMore, loadOlder, send, reply, edit, remove, profiles, onTyping } = useChatMessages({ scope: 'conversation', id });
+  const {
+    messages,
+    loading,
+    sending,
+    error,
+    hasMore,
+    loadOlder,
+    send,
+    reply,
+    edit,
+    remove,
+    profiles,
+    typingUsers,
+    onTyping,
+  } = useChatMessages({ scope: 'conversation', id });
+
   const submit = async (body: string) => {
-    if (replyTarget) { await reply(replyTarget.id, body); setReplyTarget(null); }
-    else if (editTarget) { await edit(editTarget.id, body); setEditTarget(null); }
-    else await send(body);
+    if (replyTarget) {
+      await reply(replyTarget.id, body);
+      setReplyTarget(null);
+    } else if (editTarget) {
+      await edit(editTarget.id, body);
+      setEditTarget(null);
+    } else {
+      await send(body);
+    }
   };
-  return <YStack flex={1} bg="$background">
-    <YStack p="$4" borderBottomWidth={1} borderColor="$borderColor">
-      <H1 fontSize="$7">Chat</H1>{error ? <Paragraph color="$red10">{error}</Paragraph> : null}
+
+  const typingNames = Object.keys(typingUsers)
+    .map(userId => profiles[userId]?.display_name || profiles[userId]?.username || 'Someone')
+    .slice(0, 2);
+
+  return (
+    <YStack flex={1} bg="$background">
+      <YStack px="$4" pt="$3" pb="$2" gap="$3">
+        <YStack gap="$3">
+<Text fontSize="$5" fontWeight="800">CONVERSATION</Text>
+<Paragraph color="$colorPress">Private chat</Paragraph>
+          <XStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+            <YStack flex={1}>
+              <H1 fontSize="$7" fontWeight="900">Chat</H1>
+              <Paragraph color="$colorPress">
+                {messages.length ? `${messages.length} messages loaded` : 'Start the conversation.'}
+              </Paragraph>
+            </YStack>
+            <XButton size="$2" chromeless onPress={() => router.back()}>Done</XButton>
+          </XStack>
+        </YStack>
+        {error ? <Paragraph color="$red10">{error}</Paragraph> : null}
+      </YStack>
+
+      {loading ? (
+        <YStack flex={1} style={{ alignItems: 'center', justifyContent: 'center' }}>
+          <Spinner />
+        </YStack>
+      ) : (
+        <YStack flex={1}>
+          <MessageList
+            messages={messages}
+            currentUserId={session?.user.id}
+            hasMore={hasMore}
+            onLoadOlder={loadOlder}
+            profiles={profiles}
+            onReply={message => { setEditTarget(null); setReplyTarget(message); }}
+            onEdit={message => { setReplyTarget(null); setEditTarget(message); }}
+            onDelete={message => remove(message.id)}
+          />
+        </YStack>
+      )}
+
+      {typingNames.length ? (
+        <XStack px="$4" pb="$2" style={{ alignItems: 'center' }}>
+          <Text fontSize="$2" color="$colorPress">
+            {typingNames.join(', ')} {typingNames.length === 1 ? 'is' : 'are'} typing…
+          </Text>
+        </XStack>
+      ) : null}
+
+      {replyTarget ? (
+        <YStack px="$3" pt="$2">
+          <YStack gap="$1">
+<Text fontSize="$4" fontWeight="800">Replying</Text>
+<Text color="$colorPress">{(replyTarget.body ?? '').slice(0, 80) || 'Message'}</Text>
+</YStack>
+        </YStack>
+      ) : null}
+
+      <MessageComposer
+        onSend={submit}
+        disabled={sending || loading}
+        editValue={editTarget?.body ?? null}
+        onEditCancel={() => setEditTarget(null)}
+        onTyping={onTyping}
+      />
     </YStack>
-    {loading ? <YStack flex={1} style={{ alignItems: "center", justifyContent: "center" }}><Spinner /></YStack> :
-      <YStack flex={1}><MessageList messages={messages} currentUserId={session?.user.id} hasMore={hasMore} onLoadOlder={loadOlder} profiles={profiles} onReply={m => { setEditTarget(null); setReplyTarget(m); }} onEdit={m => { setReplyTarget(null); setEditTarget(m); }} onDelete={m => remove(m.id)} /></YStack>}
-    {replyTarget ? <YStack px="$3" pt="$2"><Text fontSize="$2" color="$colorPress">Replying to: {(replyTarget.body ?? '').slice(0, 80)}</Text></YStack> : null}
-    <MessageComposer onSend={submit} disabled={sending || loading} editValue={editTarget?.body ?? null} onEditCancel={() => setEditTarget(null)} onTyping={onTyping} />
-  </YStack>;
+  );
 }

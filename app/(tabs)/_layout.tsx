@@ -1,16 +1,33 @@
 import { Tabs } from 'expo-router';
-import { useColorScheme } from 'react-native';
+import { useTheme } from 'tamagui';
+import { useXAppTheme } from '../../src/theme/theme';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme() ?? 'light';
-  const active = colorScheme === 'dark' ? '#8B85FF' : '#4F46E5';
+  const { resolvedMode } = useXAppTheme();
+  const theme = useTheme();
+  const isDark = resolvedMode === 'dark';
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: active,
-        tabBarStyle: { borderTopWidth: 0 },
+        tabBarActiveTintColor: theme.brandBackground?.val ?? theme.color.val,
+        tabBarInactiveTintColor: theme.colorPress?.val ?? theme.color.val,
+        tabBarStyle: {
+          backgroundColor: theme.background.val,
+          borderTopWidth: 1,
+          borderTopColor: theme.borderColor.val,
+          height: 72,
+          paddingTop: 8,
+          paddingBottom: 10,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '600',
+        },
+        tabBarIconStyle: {
+          opacity: isDark ? 0.96 : 1,
+        },
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Home' }} />
