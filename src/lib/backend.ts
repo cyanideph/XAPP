@@ -423,6 +423,17 @@ export async function checkIn() {
 }
 
 
+export type HiddenContent = ContentItem & { is_hidden: boolean };
+export async function createContentCategory(name: string, slug: string, description: string | null, kind: string) {
+  return rpc<ContentCategory>('create_content_category', { p_name: name.trim(), p_slug: slug.trim(), p_description: description?.trim() || null, p_kind: kind.trim() });
+}
+export async function assignContentCategory(contentId: string, categoryId: string) { return rpc('assign_content_category', { p_content_id: contentId, p_category_id: categoryId }); }
+export async function removeContentCategory(contentId: string, categoryId: string) { return rpc('remove_content_category', { p_content_id: contentId, p_category_id: categoryId }); }
+export async function listHiddenContent(limit = 50, offset = 0) { const data = await rpc<HiddenContent[]>('list_hidden_content', { p_limit: limit, p_offset: offset }); return Array.isArray(data) ? data : []; }
+export async function setContentVisibility(contentId: string, hidden: boolean) { return rpc<boolean>('set_content_visibility', { p_content_id: contentId, p_hidden: hidden }); }
+export async function setContentFeatured(contentId: string, featured: boolean) { return rpc<boolean>('set_content_featured', { p_content_id: contentId, p_featured: featured }); }
+export async function setFeaturedProfile(profileId: string, durationHours: number) { return rpc('set_featured_profile', { p_profile_id: profileId, p_duration_hours: durationHours }); }
+export async function reorderFeaturedProfiles(profileIds: string[]) { return rpc('reorder_featured_profiles', { p_profile_ids: profileIds }); }
 export type ContentComment = {
   id: string; content_id: string; author_id: string; parent_id: string | null; body: string;
   created_at: string; updated_at: string; deleted_at: string | null;
