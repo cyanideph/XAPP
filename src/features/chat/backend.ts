@@ -12,7 +12,27 @@ export async function joinRoom(roomId: string) { return rpc('join_room', { p_roo
 export async function leaveRoom(roomId: string) { return rpc('leave_room', { p_room_id: roomId }); }
 export async function touchRoomPresence(roomId: string) { return rpc('touch_room_presence', { p_room_id: roomId }); }
 export async function listOnlineRoomMembers(roomId: string, limit = 20, offset = 0, onlineFor = '2 minutes') { return rpc('list_online_room_members', { p_room_id: roomId, p_limit: limit, p_offset: offset, p_online_for: onlineFor }); }
-export async function listRoomMembers(roomId: string, limit = 50, offset = 0) { return rpc('list_room_members', { p_room_id: roomId, p_limit: limit, p_offset: offset }); }
+export type RoomMember = {
+  user_id: string;
+  role: string;
+  nickname: string | null;
+  joined_at: string;
+  last_seen_at: string | null;
+  muted_until: string | null;
+  banned_until: string | null;
+  last_read_at: string | null;
+  chat_notifications_enabled: boolean;
+  is_pinned: boolean;
+  profile?: ChatProfile | null;
+};
+
+export async function listRoomMembers(roomId: string, limit = 50, offset = 0) {
+  const rows = await rpc<RoomMember[]>('list_room_members', { p_room_id: roomId, p_limit: limit, p_offset: offset });
+  if (!Array.isArray(rows) || rows.length === 0) return [];
+  const profiles = await listProfiles(rows.map(row => row.user_id));
+  const profileById = new Map(profiles.map(profile => [profile.id, profile]));
+  return rows.map(row => ({ ...row, profile: profileById.get(row.user_id) ?? null }));
+}
 
 export async function listRoomMessages(roomId: string, beforeCreatedAt: string | null = null, beforeId: string | null = null, limit = 50) {
   return rpc<MessagePage>('list_room_messages', { p_room_id: roomId, p_before_created_at: beforeCreatedAt, p_before_id: beforeId, p_limit: limit });
