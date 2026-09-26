@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { Button, H1, Paragraph, Spinner, Text, XStack, YStack } from 'tamagui';
@@ -12,29 +12,35 @@ export default function HomeScreen() {
   const [online, setOnline] = useState(0);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  async function load() {
-    setLoading(true);
+  const load = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+    setError(null);
+
     try {
       const [onlineData, roomData] = await Promise.all([
         listOnlineUsers(200, 0),
         listPublicRooms(6, 0),
       ]);
+
       setOnline(Array.isArray(onlineData) ? onlineData.length : 0);
       setRooms(Array.isArray(roomData) ? roomData as Room[] : []);
-    } catch {
-      setOnline(0);
-      setRooms([]);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to load Home data.');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  }
+  }, []);
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { void load(); }, [load]);
 
   return (
     <ScrollView
-      refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { void load(true); }} />}
       contentContainerStyle={{ padding: 20, paddingTop: 64, paddingBottom: 32 }}
     >
       <YStack gap="$5">
@@ -43,6 +49,14 @@ export default function HomeScreen() {
           <H1 fontSize="$10" fontWeight="900">Your space.</H1>
           <Paragraph color="$colorPress">People, rooms and conversations at a glance.</Paragraph>
         </YStack>
+
+        {error ? (
+          <BentoCard
+            title="Unable to load Home"
+            description={error}
+            onPress={() => { void load(); }}
+          />
+        ) : null}
 
         <XStack gap="$3">
           <BentoCard title="Online" flex={1}>
