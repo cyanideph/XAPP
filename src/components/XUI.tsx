@@ -4,36 +4,23 @@ import type { ComponentProps, ReactNode } from 'react';
 export type XButtonProps = ComponentProps<typeof Button> & { loading?: boolean };
 
 export function XButton({ loading = false, disabled, children, ...props }: XButtonProps) {
-  return (
-    <Button {...props} disabled={disabled || loading} borderRadius="$6" fontWeight="700"
-      pressStyle={{ opacity: 0.88, scale: 0.985 }}
-      hoverStyle={{ backgroundColor: '$backgroundHover' }}
-      focusStyle={{ borderColor: '$borderColorFocus' }}>
-      {loading ? 'Loading…' : children}
-    </Button>
-  );
+  return <Button {...props} disabled={disabled || loading} borderRadius="$6" fontWeight="700"
+    pressStyle={{ opacity: 0.88, scale: 0.985 }} hoverStyle={{ backgroundColor: '$backgroundHover' }}
+    focusStyle={{ borderColor: '$borderColorFocus' }}>{loading ? 'Loading…' : children}</Button>;
 }
 
 export function XInput({ label, error, ...props }: ComponentProps<typeof Input> & { label?: string; error?: string }) {
-  return (
-    <YStack gap="$2" width="100%">
-      {label ? <Text fontSize="$3" fontWeight="700" color="$color">{label}</Text> : null}
-      <Input {...props} width="100%" borderRadius="$5" borderWidth={1}
-        borderColor={error ? '$red8' : '$borderColor'} backgroundColor="$background" color="$color"
-        placeholderTextColor="$placeholderColor" focusStyle={{ borderColor: '$borderColorFocus' }} />
-      {error ? <Text fontSize="$2" color="$red10">{error}</Text> : null}
-    </YStack>
-  );
+  return <YStack gap="$2" width="100%">
+    {label ? <Text fontSize="$3" fontWeight="700" color="$color">{label}</Text> : null}
+    <Input {...props} width="100%" borderRadius="$5" borderWidth={1} borderColor={error ? '$borderColorPress' : '$borderColor'}
+      backgroundColor="$background" color="$color" placeholderTextColor="$placeholderColor" focusStyle={{ borderColor: '$borderColorFocus' }} />
+    {error ? <Text fontSize="$2" color="$colorPress">{error}</Text> : null}
+  </YStack>;
 }
 
-export function XBadge({ children, tone = 'neutral' }: { children: ReactNode; tone?: 'neutral' | 'accent' | 'success' }) {
-  const palette = {
-    neutral: { bg: '$backgroundPress', color: '$color' },
-    accent: { bg: '$blue4', color: '$blue11' },
-    success: { bg: '$green4', color: '$green11' },
-  }[tone];
-  return <XStack bg={palette.bg} px="$3" py="$2" borderRadius="$10" items="center" self="flex-start">
-    <Text fontSize="$2" fontWeight="700" color={palette.color}>{children}</Text>
+export function XBadge({ children }: { children: ReactNode }) {
+  return <XStack bg="$backgroundPress" px="$3" py="$2" borderRadius="$10" items="center" self="flex-start">
+    <Text fontSize="$2" fontWeight="700" color="$color">{children}</Text>
   </XStack>;
 }
 
