@@ -19,8 +19,10 @@ export function useChatMessages({ scope, id }: Props) {
   const channelRef = useRef<ReturnType<NonNullable<typeof supabase>['channel']> | null>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const selfIdRef = useRef<string | null>(null);
+  const loadRequestRef = useRef(0);
 
   const load = useCallback(async (before: Cursor | null = null) => {
+    const requestId = ++loadRequestRef.current;
     setLoading(true);
     setError(null);
     try {
@@ -28,17 +30,27 @@ export function useChatMessages({ scope, id }: Props) {
       const page = scope === 'room'
         ? await listRoomMessages(id, before?.created_at ?? null, before?.id ?? null, 50)
         : await listConversationMessages(id, before?.created_at ?? null, before?.id ?? null, 50);
+      if (requestId !== loadRequestRef.current) return;
+
       const incoming = Array.isArray(page?.items) ? page.items : [];
       setMessages(current => before ? [...incoming.reverse(), ...current] : [...incoming].reverse());
       setHasMore(Boolean(page?.has_more));
       setCursor(page?.next_cursor ?? null);
+
       const ids = [...new Set(incoming.map((item: ChatMessage) => item.sender_id))];
-      if (ids.length) { const people = await listProfiles(ids); setProfiles(current => ({ ...current, ...Object.fromEntries(people.map(person => [person.id, person])) })); }
+      if (ids.length) {
+        const people = await listProfiles(ids);
+        if (requestId !== loadRequestRef.current) return;
+        setProfiles(current => ({ ...current, ...Object.fromEntries(people.map(person => [person.id, person])) }));
+      }
+
       if (!before) scope === 'room' ? await markRoomRead(id) : await markConversationRead(id);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to load messages.');
+      if (requestId === loadRequestRef.current) {
+        setError(e instanceof Error ? e.message : 'Unable to load messages.');
+      }
     } finally {
-      setLoading(false);
+      if (requestId === loadRequestRef.current) setLoading(false);
     }
   }, [id, scope]);
 
@@ -51,7 +63,15 @@ export function useChatMessages({ scope, id }: Props) {
     const channel = supabase.channel(topic, { config: { private: true } });
     channelRef.current = channel;
 
-    const refresh = () => { if (active) load().catch(() => undefined); };
+    let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+    const refresh = () => {
+      if (!active || refreshTimer) return;
+      refreshTimer = setTimeout(() => {
+        refreshTimer = null;
+        if (active) load().catch(() => undefined);
+      }, 100);
+    };
+
     if (scope === 'room') {
       channel.on('broadcast', { event: 'message.created' }, refresh);
       channel.on('broadcast', { event: 'message.updated' }, refresh);
@@ -89,6 +109,7 @@ export function useChatMessages({ scope, id }: Props) {
     return () => {
       active = false;
       clearInterval(cleanupTimer);
+      if (refreshTimer) clearTimeout(refreshTimer);
       if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
       channelRef.current = null;
       if (supabase) void supabase.removeChannel(channel);
