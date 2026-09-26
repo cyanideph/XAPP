@@ -44,6 +44,7 @@ export type ConversationListItem = {
   kind: string;
   title: string | null;
   updated_at: string;
+  last_read_at: string | null;
   participant: {
     id: string;
     username: string;
@@ -62,10 +63,10 @@ export async function listMyConversations(limit = 20) {
 
   const { data: memberships, error: membershipError } = await supabase
     .from('conversation_members')
-    .select('conversation_id, conversations(id,kind,title,updated_at)')
+    .select('conversation_id,last_read_at,conversations(id,kind,title,updated_at)')
     .eq('user_id', userId)
     .order('joined_at', { ascending: false })
-    .limit(limit);
+    .limit(100);
 
   if (membershipError) throw membershipError;
 
@@ -77,9 +78,18 @@ export async function listMyConversations(limit = 20) {
         kind: conversation.kind,
         title: conversation.title,
         updated_at: conversation.updated_at,
+        last_read_at: row.last_read_at,
       } : null;
     })
-    .filter((row): row is { id: string; kind: string; title: string | null; updated_at: string } => Boolean(row));
+    .filter((row): row is {
+      id: string;
+      kind: string;
+      title: string | null;
+      updated_at: string;
+      last_read_at: string | null;
+    } => Boolean(row))
+    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+    .slice(0, limit);
 
   if (!rows.length) return [];
 
@@ -104,6 +114,73 @@ export async function listMyConversations(limit = 20) {
     ...row,
     participant: participantByConversation.get(row.id) ?? null,
   }));
+}
+
+export type ConversationInvite = {
+  notification_id: string;
+  invite_id: string;
+  conversation_id: string;
+  conversation_title: string | null;
+  inviter: { id: string; username: string; display_name: string | null } | null;
+  created_at: string;
+};
+
+export async function listPendingConversationInvites(limit = 50) {
+  const page = await rpc<{
+    items: Array<{
+      id: string;
+      actor_id: string | null;
+      type: string;
+      payload: Record<string, unknown>;
+      read_at: string | null;
+      created_at: string;
+    }>;
+  }>('list_notifications', {
+    p_before_created_at: null,
+    p_before_id: null,
+    p_limit: limit,
+  });
+
+  const notifications = Array.isArray(page?.items) ? page.items : [];
+  const invites = notifications.filter(item => item.type === 'conversation_invite' && !item.read_at);
+  if (!invites.length) return [] as ConversationInvite[];
+
+  const actorIds = [...new Set(invites.map(item => item.actor_id).filter((id): id is string => Boolean(id)))];
+  if (!supabase) throw new Error('Supabase is not configured.');
+
+  const { data: profiles, error } = actorIds.length
+    ? await supabase.from('profiles').select('id,username,display_name').in('id', actorIds)
+    : { data: [], error: null };
+
+  if (error) throw error;
+
+  const profileById = new Map((profiles ?? []).map(row => [row.id, row]));
+
+  return invites
+    .map(item => {
+      const inviteId = String(item.payload?.invite_id ?? '');
+      const conversationId = String(item.payload?.conversation_id ?? '');
+      if (!inviteId || !conversationId) return null;
+
+      const invite: ConversationInvite = {
+        notification_id: item.id,
+        invite_id: inviteId,
+        conversation_id: conversationId,
+        conversation_title: null,
+        inviter: item.actor_id ? profileById.get(item.actor_id) ?? null : null,
+        created_at: item.created_at,
+      };
+      return invite;
+    })
+    .filter((item): item is ConversationInvite => Boolean(item));
+}
+
+export async function respondConversationInvite(inviteId: string, accept: boolean) {
+  return rpc('respond_conversation_invite', { p_invite_id: inviteId, p_accept: accept });
+}
+
+export async function markNotificationRead(notificationId: string) {
+  return rpc('mark_notification_read', { p_notification_id: notificationId });
 }
 
 export async function listFavorites(limit = 20, offset = 0) {
