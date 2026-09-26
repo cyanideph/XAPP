@@ -82,7 +82,7 @@ export default function ManageRoomScreen() {
                   title={report.reason}
                   subTitle={`${report.status.toUpperCase()}${report.message_id ? ` · Message ${report.message_id.slice(0, 8)}` : ''}`}
                   iconAfter={
-                    <Menu>
+                    <Menu native={false}>
                       <Menu.Trigger asChild action="press">
                         <XButton size="$2" chromeless disabled={busy !== null}>Actions</XButton>
                       </Menu.Trigger>
@@ -158,7 +158,7 @@ export default function ManageRoomScreen() {
                   subTitle={`@${member.profile?.username || 'unknown'} · ${member.role}${coHost ? ' · co-host' : ''}`}
                   iconAfter={
                     member.role === 'owner' ? undefined : (
-                      <Menu>
+                      <Menu native={false}>
                         <Menu.Trigger asChild action="press">
                           <XButton size="$2" chromeless disabled={memberBusy}>Actions</XButton>
                         </Menu.Trigger>
