@@ -138,7 +138,7 @@ export default function HomeScreen() {
               <Text fontSize="$6" fontWeight="800">Topics</Text>
               <XButton size="$2" chromeless onPress={() => router.push('/(tabs)/discover')}>Explore</XButton>
             </XStack>
-            <Menu>
+            <Menu native={false}>
               <Menu.Trigger asChild action="press">
                 <XButton size="$3" chromeless>Browse topics</XButton>
               </Menu.Trigger>
@@ -168,7 +168,7 @@ export default function HomeScreen() {
           {loading ? <Spinner /> : feed.length ? feed.map(item => (
             <ListItem key={item.id} title={item.author?.display_name || item.author?.username || 'Community member'} subTitle={(item.body || item.title || 'Community post') + ' · ' + item.kind} iconAfter={<XStack gap="$2" items="center">
               <XButton size="$2" onPress={() => { void react(item.id); }}>Like</XButton>
-              <Menu>
+              <Menu native={false}>
                 <Menu.Trigger asChild action="press"><XButton size="$2" chromeless>More</XButton></Menu.Trigger>
                 <Menu.Portal><Menu.Content>
                   <Menu.Item onSelect={() => { void save(item.id); }}><Menu.ItemTitle>Save</Menu.ItemTitle></Menu.Item>
