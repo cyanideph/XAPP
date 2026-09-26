@@ -203,7 +203,7 @@ export default function ContentDetail() {
                 p="$3"
                 borderWidth={1}
                 borderColor="$borderColor"
-                borderRadius="$4"
+                rounded="$4"
               >
                 <Text fontWeight="800">@{comment.author?.username || 'user'}</Text>
                 <Text>{comment.body}</Text>
