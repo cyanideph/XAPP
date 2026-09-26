@@ -1,6 +1,6 @@
 import { Image, Linking, ScrollView } from 'react-native';
 import { useEffect, useState } from 'react';
-import { Paragraph, Text, XStack, YStack } from 'tamagui';
+import { Menu, Paragraph, Text, XStack, YStack } from 'tamagui';
 import { XButton } from './XButton';
 import type { ChatMessage, ChatProfile } from '../features/chat/types';
 import { createRoomMediaUrl } from '../features/chat/backend';
@@ -79,20 +79,32 @@ export function MessageList({ messages, currentUserId, hasMore, loadingOlder, on
                 ? <Text fontSize="$2" color={own ? '$background' : '$colorPress'}>{message.kind}</Text>
                 : null}
               {message.edited_at ? <Text fontSize="$2" color={own ? '$background' : '$colorPress'}>edited</Text> : null}
-              <XStack gap="$2" mt="$2" flexWrap="wrap">
+              <XStack gap="$2" mt="$2" items="center">
                 {onReply ? <XButton size="$2" chromeless onPress={() => onReply(message)}>Reply</XButton> : null}
-                {onReact ? (
-                  <XStack gap="$1" flexWrap="wrap">
-                    {reactionOptions.map(reaction => (
-                      <XButton key={reaction} size="$2" chromeless onPress={() => onReact(message, reaction)}>
-                        {reaction === 'like' ? 'Like' : reaction === 'love' ? 'Love' : reaction === 'laugh' ? 'Haha' : reaction === 'sad' ? 'Sad' : 'Angry'}
-                      </XButton>
-                    ))}
-                  </XStack>
+                {(onReact || (onReport && !own) || (own && (onEdit || onDelete))) ? (
+                  <Menu>
+                    <Menu.Trigger asChild action="press">
+                      <XButton size="$2" chromeless>More</XButton>
+                    </Menu.Trigger>
+                    <Menu.Portal>
+                      <Menu.Content>
+                        {onReact ? (
+                          <>
+                            <Menu.Item key="reaction-label" disabled><Menu.ItemTitle>React</Menu.ItemTitle></Menu.Item>
+                            {reactionOptions.map(reaction => (
+                              <Menu.Item key={reaction} onSelect={() => { void onReact(message, reaction); }}>
+                                <Menu.ItemTitle>{reaction === 'like' ? 'Like' : reaction === 'love' ? 'Love' : reaction === 'laugh' ? 'Haha' : reaction === 'sad' ? 'Sad' : 'Angry'}</Menu.ItemTitle>
+                              </Menu.Item>
+                            ))}
+                          </>
+                        ) : null}
+                        {onReport && !own ? <Menu.Item key="report" onSelect={() => onReport(message)}><Menu.ItemTitle>Report</Menu.ItemTitle></Menu.Item> : null}
+                        {own && onEdit ? <Menu.Item key="edit" onSelect={() => onEdit(message)}><Menu.ItemTitle>Edit</Menu.ItemTitle></Menu.Item> : null}
+                        {own && onDelete ? <Menu.Item key="delete" destructive onSelect={() => { void onDelete(message); }}><Menu.ItemTitle>Delete</Menu.ItemTitle></Menu.Item> : null}
+                      </Menu.Content>
+                    </Menu.Portal>
+                  </Menu>
                 ) : null}
-                {onReport && !own ? <XButton size="$2" chromeless onPress={() => onReport(message)}>Report</XButton> : null}
-                {own && onEdit ? <XButton size="$2" chromeless onPress={() => onEdit(message)}>Edit</XButton> : null}
-                {own && onDelete ? <XButton size="$2" chromeless onPress={() => onDelete(message)}>Delete</XButton> : null}
               </XStack>
             </YStack>
           );
