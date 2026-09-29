@@ -5,10 +5,12 @@ import { ImageBackground } from 'react-native';
 import { Spinner, YStack, TamaguiProvider } from 'tamagui';
 import { tamaguiConfig } from '../tamagui.config';
 import { useSession } from '../src/hooks/useSession';
+import { AppProviders } from '../src/providers/AppProviders';
 import { XAppThemeProvider, useXAppTheme } from '../src/theme/theme';
 
 function AppNavigation() {
   const theme = useTheme();
+
   return (
     <Stack
       screenOptions={{
@@ -24,6 +26,8 @@ function AppNavigation() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="room/[id]" options={{ headerShown: true, title: 'Room' }} />
       <Stack.Screen name="conversation/[id]" options={{ headerShown: true, title: 'Chat' }} />
+      <Stack.Screen name="content/[id]" options={{ headerShown: true, title: 'Post' }} />
+      <Stack.Screen name="+not-found" />
     </Stack>
   );
 }
@@ -33,7 +37,11 @@ function AppShell() {
   const { session, loading } = useSession();
   const pathname = usePathname();
   const router = useRouter();
-  const inAuth = pathname.startsWith('/(auth)') || pathname === '/sign-in' || pathname === '/sign-up' || pathname === '/restore';
+  const inAuth =
+    pathname.startsWith('/(auth)') ||
+    pathname === '/sign-in' ||
+    pathname === '/sign-up' ||
+    pathname === '/restore';
 
   useEffect(() => {
     if (loading) return;
@@ -61,9 +69,9 @@ function AppShell() {
           }}
         />
         {loading ? (
-        <YStack flex={1} bg="$background" items="center" justify="center">
-          <Spinner color="$brandBackground" />
-        </YStack>
+          <YStack flex={1} bg="$background" items="center" justify="center">
+            <Spinner color="$brandBackground" />
+          </YStack>
         ) : (
           <AppNavigation />
         )}
@@ -75,7 +83,9 @@ function AppShell() {
 export default function RootLayout() {
   return (
     <XAppThemeProvider>
-      <AppShell />
+      <AppProviders>
+        <AppShell />
+      </AppProviders>
     </XAppThemeProvider>
   );
 }
