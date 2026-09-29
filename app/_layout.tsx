@@ -2,13 +2,17 @@ import { Stack, usePathname, useRouter } from 'expo-router';
 import { useTheme } from 'tamagui';
 import { useEffect } from 'react';
 import { ImageBackground } from 'react-native';
+import NetInfo from '@react-native-community/netinfo';
 import { Spinner, YStack, TamaguiProvider } from 'tamagui';
 import { tamaguiConfig } from '../tamagui.config';
 import { useSession } from '../src/hooks/useSession';
 import { XAppThemeProvider, useXAppTheme } from '../src/theme/theme';
+import { QueryProvider } from '../src/context/query-context';
+import { useAppStore } from '../src/store/app-store';
 
 function AppNavigation() {
   const theme = useTheme();
+
   return (
     <Stack
       screenOptions={{
@@ -33,7 +37,20 @@ function AppShell() {
   const { session, loading } = useSession();
   const pathname = usePathname();
   const router = useRouter();
-  const inAuth = pathname.startsWith('/(auth)') || pathname === '/sign-in' || pathname === '/sign-up' || pathname === '/restore';
+  const setOnline = useAppStore((state) => state.setOnline);
+  const inAuth =
+    pathname.startsWith('/(auth)') ||
+    pathname === '/sign-in' ||
+    pathname === '/sign-up' ||
+    pathname === '/restore';
+
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      setOnline(Boolean(state.isConnected && state.isInternetReachable !== false));
+    });
+
+    return unsubscribe;
+  }, [setOnline]);
 
   useEffect(() => {
     if (loading) return;
@@ -61,9 +78,9 @@ function AppShell() {
           }}
         />
         {loading ? (
-        <YStack flex={1} bg="$background" items="center" justify="center">
-          <Spinner color="$brandBackground" />
-        </YStack>
+          <YStack flex={1} bg="$background" items="center" justify="center">
+            <Spinner color="$brandBackground" />
+          </YStack>
         ) : (
           <AppNavigation />
         )}
@@ -74,8 +91,10 @@ function AppShell() {
 
 export default function RootLayout() {
   return (
-    <XAppThemeProvider>
-      <AppShell />
-    </XAppThemeProvider>
+    <QueryProvider>
+      <XAppThemeProvider>
+        <AppShell />
+      </XAppThemeProvider>
+    </QueryProvider>
   );
 }
