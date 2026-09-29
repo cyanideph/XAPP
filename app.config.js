@@ -13,9 +13,15 @@ module.exports = {
     orientation: 'portrait',
     userInterfaceStyle: 'automatic',
     scheme: 'xapp',
+    newArchEnabled: true,
     plugins: ['expo-router'],
+    experiments: {
+      typedRoutes: true,
+      reactCompiler: true,
+    },
     android: {
       package: 'com.xapp.mobile',
+      edgeToEdgeEnabled: true,
     },
     ios: {
       bundleIdentifier: 'com.xapp.mobile',
